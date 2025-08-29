@@ -31,6 +31,7 @@ export async function saveToGoogleSheets(
     const row: GoogleSheetsRow = {
       timestamp: intakeData.timestamp,
       sessionId: intakeData.sessionId,
+      currentRoles: intakeData.currentRoles?.join(', ') || 'None selected',
       rawResponses: JSON.stringify(intakeData),
       impactAnalysis: JSON.stringify(aiAnalysis),
       learnerProfile: aiAnalysis.learnerProfile,
@@ -43,6 +44,7 @@ export async function saveToGoogleSheets(
       [
         row.timestamp,
         row.sessionId,
+        row.currentRoles,
         row.rawResponses,
         row.impactAnalysis,
         row.learnerProfile,
@@ -56,7 +58,7 @@ export async function saveToGoogleSheets(
 
     const result = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Sheet1!A:F', // Adjust range based on your sheet structure
+      range: 'Sheet1!A:G', // Updated range to include new column
       valueInputOption: 'RAW',
       requestBody: {
         values,

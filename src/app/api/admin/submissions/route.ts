@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Read all data from the sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Sheet1!A:F', // All columns
+      range: 'Sheet1!A:G', // Updated range to include new column
     })
 
     const rows = response.data.values || []
@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
           id: index + 1,
           timestamp: row[0],
           sessionId: row[1],
+          currentRoles: row[2] || 'None selected',
           learnerType: rawResponses.learnerType || 'Unknown',
           skillStage: rawResponses.skillStage || 'Unknown',
           varkPreferences: rawResponses.varkPreferences || {},

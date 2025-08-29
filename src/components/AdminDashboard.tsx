@@ -7,6 +7,7 @@ interface Submission {
   id: number
   timestamp: string
   sessionId: string
+  currentRoles: string
   learnerType: string
   skillStage: string
   varkPreferences: any
@@ -72,13 +73,14 @@ export default function AdminDashboard() {
   const exportToCSV = () => {
     if (!data?.submissions) return
     
-    const headers = ['ID', 'Timestamp', 'Session ID', 'Learner Type', 'Skill Stage', 'Learner Profile']
+    const headers = ['ID', 'Timestamp', 'Session ID', 'Current Roles', 'Learner Type', 'Skill Stage', 'Learner Profile']
     const csvContent = [
       headers.join(','),
       ...data.submissions.map(sub => [
         sub.id,
         sub.timestamp,
         sub.sessionId,
+        sub.currentRoles || 'None selected',
         sub.learnerType,
         sub.skillStage,
         sub.learnerProfile
@@ -188,6 +190,9 @@ export default function AdminDashboard() {
                     Submission
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                    Current Roles
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
                     Learner Profile
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
@@ -217,6 +222,11 @@ export default function AdminDashboard() {
                             {new Date(submission.timestamp).toLocaleDateString()}
                           </div>
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {submission.currentRoles || 'None selected'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

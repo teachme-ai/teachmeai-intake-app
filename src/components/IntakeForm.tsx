@@ -6,6 +6,7 @@ import { IntakeResponse } from '@/types'
 export default function IntakeForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const [responses, setResponses] = useState<Partial<IntakeResponse>>({
+    currentRoles: [],
     varkPreferences: {
       visual: 3,
       audio: 3,
@@ -123,6 +124,7 @@ export default function IntakeForm() {
             setIsComplete(false)
             setCurrentStep(1)
             setResponses({
+              currentRoles: [],
               varkPreferences: {
                 visual: 3,
                 audio: 3,
@@ -254,6 +256,38 @@ function Step1({ responses, onInputChange }: { responses: Partial<IntakeResponse
       </div>
       
       <div className="space-y-6">
+        {/* Role Selection Question */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            Which of these sounds like your current role?
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              'BFSI',
+              'Manufacturing', 
+              'Sales & Marketing',
+              'IT Consultancy'
+            ].map((role) => (
+              <label key={role} className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={responses.currentRoles?.includes(role) || false}
+                  onChange={(e) => {
+                    const currentRoles = responses.currentRoles || []
+                    if (e.target.checked) {
+                      onInputChange('currentRoles', [...currentRoles, role])
+                    } else {
+                      onInputChange('currentRoles', currentRoles.filter(r => r !== role))
+                    }
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-3 text-sm font-medium text-gray-900">{role}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
         <QuestionSlider
           label="How confident are you at setting your own learning goals and adjusting if stuck?"
           value={responses.goalSettingConfidence || 3}

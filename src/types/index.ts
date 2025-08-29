@@ -1,4 +1,7 @@
 export interface IntakeResponse {
+  // Professional Role
+  currentRoles: string[]; // Selected roles from BFSI, Manufacturing, Sales & Marketing, IT Consultancy
+  
   // Learner Profile & Self-Regulation
   goalSettingConfidence: number; // 1-5
   newApproachesFrequency: number; // 1-5
@@ -50,6 +53,7 @@ export interface IMPACTAnalysis {
 export interface GoogleSheetsRow {
   timestamp: string;
   sessionId: string;
+  currentRoles: string; // Comma-separated roles
   rawResponses: string;
   impactAnalysis: string;
   learnerProfile: string;
