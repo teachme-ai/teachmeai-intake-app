@@ -18,6 +18,14 @@ An interactive web application that collects learner intake data through guided 
 - **Database**: Google Sheets API
 - **Deployment**: Vercel (recommended)
 
+## 🔄 Automated Builds
+
+This project includes **GitHub Actions** for automated CI/CD:
+- ✅ **Automatic builds** on every push to main/develop
+- ✅ **Automated testing** and type checking
+- ✅ **Build artifacts** saved for deployment
+- ✅ **Multi-Node.js version** testing (18.x, 20.x)
+
 ## 📋 Prerequisites
 
 - Node.js 18+ 
