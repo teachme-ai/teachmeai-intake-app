@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     })
 
     const authClient = await auth.getClient()
-    const sheets = google.sheets({ version: 'v4', auth: authClient })
+    const sheets = google.sheets({ version: 'v4', auth: auth })
 
     // Read all data from the sheet
     const response = await sheets.spreadsheets.values.get({
@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
         if (!row || row.length === 0) return null
         
         // Handle different data structures in the sheet
-        let rawResponses = {}
-        let impactAnalysis = {}
+        let rawResponses: any = {}
+        let impactAnalysis: any = {}
         let currentRoles = 'None selected'
         
         // Actual structure: [timestamp, sessionId, rawResponses(JSON), impactAnalysis(JSON), learnerProfile(text), recommendations(text)]

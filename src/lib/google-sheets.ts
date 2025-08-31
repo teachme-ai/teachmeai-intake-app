@@ -14,7 +14,7 @@ const auth = new google.auth.GoogleAuth({
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 })
 
-const sheets = google.sheets({ version: 'v4', auth })
+const getSheets = () => google.sheets({ version: 'v4', auth })
 
 export async function saveToGoogleSheets(
   intakeData: IntakeResponse, 
@@ -63,6 +63,7 @@ export async function saveToGoogleSheets(
     console.log('📊 Google Sheets: Range: Sheet1!A:F')
     console.log('📊 Google Sheets: Values to append:', JSON.stringify(values, null, 2))
 
+    const sheets = getSheets()
     const result = await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: 'Sheet1!A2:F', // Start from row 2 to preserve headers
@@ -94,6 +95,7 @@ export async function createSpreadsheetIfNeeded(): Promise<string> {
     const drive = google.drive({ version: 'v3', auth })
     
     // Create new spreadsheet
+    const sheets = getSheets()
     const spreadsheet = await sheets.spreadsheets.create({
       requestBody: {
         properties: {
