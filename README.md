@@ -230,3 +230,4 @@ For support and questions:
 ## 🎉 Acknowledgments
 
 Built with Next.js, Tailwind CSS, and Google's AI services. Special thanks to the TeachMeAI community for insights and feedback.
+# TeachMeAI Intake App
