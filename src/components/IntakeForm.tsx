@@ -117,7 +117,7 @@ export default function IntakeForm() {
           Thank You!
         </h2>
         <p className="text-gray-600 mb-6">
-          Your responses have been recorded successfully. You'll receive a tailored roadmap shortly.
+          Your responses have been recorded successfully. You&apos;ll receive a tailored roadmap shortly.
         </p>
         <button
           onClick={() => {
@@ -376,7 +376,7 @@ function Step3({ responses, onInputChange }: { responses: Partial<IntakeResponse
         
         <div>
           <label className="form-label">
-            What's most stressful or frustrating about learning new tools right now?
+            What&apos;s most stressful or frustrating about learning new tools right now?
           </label>
           <textarea
             className="form-input h-24 resize-none"
