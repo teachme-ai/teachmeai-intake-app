@@ -1,5 +1,7 @@
 # TeachMeAI Intake App
 
+![Build Status](https://github.com/teachme-ai/teachmeai-intake-app/workflows/Build%20and%20Test/badge.svg)
+
 An interactive web application that collects learner intake data through guided questions, logs responses into Google Sheets, and uses AI to generate personalized IMPACT-framed learning pathways.
 
 ## 🎯 Features
