@@ -39,7 +39,6 @@ export default function AdminDashboard() {
   const fetchSubmissions = async () => {
     try {
       setLoading(true)
-      // In production, you'd use a proper admin token
       const response = await fetch('/api/admin/submissions', {
         headers: {
           'Authorization': 'Bearer admin-token-123'
@@ -61,9 +60,9 @@ export default function AdminDashboard() {
 
   const filteredSubmissions = data?.submissions.filter(submission => {
     const matchesSearch = 
-      submission.learnerType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.sessionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.learnerProfile.toLowerCase().includes(searchTerm.toLowerCase())
+      (submission.learnerType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (submission.sessionId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (submission.learnerProfile || '').toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesFilter = filterType === 'all' || submission.learnerType === filterType
     
@@ -73,17 +72,41 @@ export default function AdminDashboard() {
   const exportToCSV = () => {
     if (!data?.submissions) return
     
-    const headers = ['ID', 'Timestamp', 'Session ID', 'Current Roles', 'Learner Type', 'Skill Stage', 'Learner Profile']
+    const headers = [
+      'ID', 'Timestamp', 'Session ID', 'Current Roles', 'Learner Type', 'Skill Stage',
+      'Goal Setting', 'New Approaches', 'Reflection', 'AI Tools Confidence', 'Resilience',
+      'Career Vision', 'Success Description', 'Learning Challenge', 'Outcome Driven',
+      'Time Barrier', 'Current Frustrations', 'Visual', 'Audio', 'Reading/Writing', 'Kinesthetic',
+      'Concrete Benefits', 'Short Term Application', 'Learner Profile'
+    ]
+    
     const csvContent = [
       headers.join(','),
       ...data.submissions.map(sub => [
         sub.id,
         sub.timestamp,
         sub.sessionId,
-        sub.currentRoles || 'None selected',
+        Array.isArray(sub.rawData?.currentRoles) ? sub.rawData.currentRoles.join('; ') : (sub.currentRoles || 'None selected'),
         sub.learnerType,
         sub.skillStage,
-        sub.learnerProfile
+        sub.rawData?.goalSettingConfidence || 'N/A',
+        sub.rawData?.newApproachesFrequency || 'N/A',
+        sub.rawData?.reflectionFrequency || 'N/A',
+        sub.rawData?.aiToolsConfidence || 'N/A',
+        sub.rawData?.resilienceLevel || 'N/A',
+        sub.rawData?.clearCareerVision || 'N/A',
+        sub.rawData?.successDescription || 'N/A',
+        sub.rawData?.learningForChallenge || 'N/A',
+        sub.rawData?.outcomeDrivenLearning || 'N/A',
+        sub.rawData?.timeBarrier || 'N/A',
+        `"${(sub.rawData?.currentFrustrations || 'Not provided').replace(/"/g, '""')}"`,
+        sub.varkPreferences?.visual || 'N/A',
+        sub.varkPreferences?.audio || 'N/A',
+        sub.varkPreferences?.readingWriting || 'N/A',
+        sub.varkPreferences?.kinesthetic || 'N/A',
+        `"${(sub.rawData?.concreteBenefits || 'Not provided').replace(/"/g, '""')}"`,
+        `"${(sub.rawData?.shortTermApplication || 'Not provided').replace(/"/g, '""')}"`,
+        `"${(sub.learnerProfile || 'Not available').replace(/"/g, '""')}"`
       ].join(','))
     ].join('\n')
     
@@ -93,7 +116,7 @@ export default function AdminDashboard() {
     a.href = url
     a.download = `intake-submissions-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
-    window.URL.revokeObjectunkURL(url)
+    window.URL.revokeObjectURL(url)
   }
 
   if (loading) {
@@ -193,10 +216,13 @@ export default function AdminDashboard() {
                     Current Roles
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
-                    Learner Profile
+                    Self-Regulation
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
-                    Recommendations
+                    Motivation
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                    Learning Style
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
                     Actions
@@ -226,7 +252,23 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {submission.currentRoles || 'None selected'}
+                        {Array.isArray(submission.rawData?.currentRoles) 
+                          ? submission.rawData.currentRoles.join(', ') 
+                          : submission.currentRoles || 'None selected'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div>Goals: {submission.rawData?.goalSettingConfidence || 'N/A'}/5</div>
+                        <div>Resilience: {submission.rawData?.resilienceLevel || 'N/A'}/5</div>
+                        <div>AI Tools: {submission.rawData?.aiToolsConfidence || 'N/A'}/5</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div>Vision: {submission.rawData?.clearCareerVision || 'N/A'}/5</div>
+                        <div>Challenge: {submission.rawData?.learningForChallenge || 'N/A'}/5</div>
+                        <div>Outcome: {submission.rawData?.outcomeDrivenLearning || 'N/A'}/5</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -235,23 +277,8 @@ export default function AdminDashboard() {
                           {submission.learnerType}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        Skill Level: {submission.skillStage}/5
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {submission.recommendations?.slice(0, 2).map((rec, index) => (
-                          <div key={index} className="flex items-center gap-1 mb-1">
-                            <Target className="h-3 w-3 text-green-500" />
-                            <span className="truncate max-w-xs">{rec}</span>
-                          </div>
-                        ))}
-                        {submission.recommendations?.length > 2 && (
-                          <span className="text-xs text-gray-500">
-                            +{submission.recommendations.length - 2} more
-                          </span>
-                        )}
+                      <div className="text-xs text-gray-500 mt-1">
+                        Skill: {submission.skillStage}/5
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -260,7 +287,7 @@ export default function AdminDashboard() {
                         className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
                       >
                         <Eye className="h-4 w-4" />
-                        View Details
+                        View Report
                       </button>
                     </td>
                   </tr>
@@ -285,82 +312,292 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Submission Detail Modal */}
+      {/* Print-Ready Report Modal */}
       {selectedSubmission && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+          <div className="relative top-10 mx-auto p-6 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Submission Details
-                </h3>
-                <button
-                  onClick={() => setSelectedSubmission(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
+              <div className="flex items-center justify-between mb-6 print:mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  TeachMeAI IMPACT Analysis Report
+                </h2>
+                <div className="flex gap-2 print:hidden">
+                  <button
+                    onClick={() => window.print()}
+                    className="btn-secondary text-sm"
+                  >
+                    Print Report
+                  </button>
+                  <button
+                    onClick={() => setSelectedSubmission(null)}
+                    className="text-gray-400 hover:text-gray-600 text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
               
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Basic Info</h4>
+              <div className="space-y-8 max-h-[80vh] overflow-y-auto print:max-h-none print:overflow-visible">
+                {/* Header Info */}
+                <div className="border-b pb-4 print:pb-2">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Session ID:</span>
-                      <p className="font-mono">{selectedSubmission.sessionId}</p>
+                      <span className="font-medium text-gray-700">Session:</span>
+                      <span className="ml-2 font-mono">{selectedSubmission.sessionId.slice(-8)}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Timestamp:</span>
-                      <p>{new Date(selectedSubmission.timestamp).toLocaleString()}</p>
+                      <span className="font-medium text-gray-700">Date:</span>
+                      <span className="ml-2">{new Date(selectedSubmission.timestamp).toLocaleDateString()}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Learner Type:</span>
-                      <p className="capitalize">{selectedSubmission.learnerType}</p>
+                      <span className="font-medium text-gray-700">Learner Type:</span>
+                      <span className="ml-2 capitalize font-medium text-blue-600">{selectedSubmission.learnerType}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Skill Stage:</span>
-                      <p>{selectedSubmission.skillStage}/5</p>
+                      <span className="font-medium text-gray-700">Skill Level:</span>
+                      <span className="ml-2 font-medium">{selectedSubmission.skillStage}/5</span>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">VARK Preferences</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    {Object.entries(selectedSubmission.varkPreferences).map(([key, value]) => (
-                      <div key={key}>
-                        <span className="text-gray-500 capitalize">{key}:</span>
-                        <p>{value}/5</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* IMPACT Analysis Sections */}
+                {(() => {
+                  // Try to get analysis from either analysis field or parse from learnerProfile
+                  let analysisData = selectedSubmission.analysis
+                  if ((!analysisData || Object.keys(analysisData).length === 0) && selectedSubmission.learnerProfile?.startsWith('{')) {
+                    try {
+                      analysisData = JSON.parse(selectedSubmission.learnerProfile)
+                    } catch (e) {
+                      analysisData = {}
+                    }
+                  }
+                  
+                  if (!analysisData || Object.keys(analysisData).length === 0) return null
+                  
+                  return (
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-bold text-gray-900 border-b-2 border-blue-500 pb-2">
+                        IMPACT Framework Analysis
+                      </h3>
+                      
+                      {analysisData.Identify && (
+                        <div className="bg-blue-50 p-4 rounded-lg print:bg-white print:border print:border-blue-200">
+                          <h4 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                            <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2 print:bg-blue-800">I</span>
+                            Identify - Assessment
+                          </h4>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {String(analysisData.Identify).split('\n').map((line, i) => (
+                              <p key={i} className={line.startsWith('*') || line.startsWith('-') ? 'ml-4 mb-1' : 'mb-2'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">AI Analysis</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-gray-500">Learner Profile:</span>
-                      <p>{selectedSubmission.learnerProfile}</p>
+                      {analysisData.Motivate && (
+                        <div className="bg-green-50 p-4 rounded-lg print:bg-white print:border print:border-green-200">
+                          <h4 className="text-lg font-semibold text-green-800 mb-3 flex items-center">
+                            <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2 print:bg-green-800">M</span>
+                            Motivate - Learner Profile
+                          </h4>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {String(analysisData.Motivate).split('\n').map((line, i) => (
+                              <p key={i} className={line.startsWith('*') || line.startsWith('-') ? 'ml-4 mb-1' : 'mb-2'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {analysisData.Plan && (
+                        <div className="bg-purple-50 p-4 rounded-lg print:bg-white print:border print:border-purple-200">
+                          <h4 className="text-lg font-semibold text-purple-800 mb-3 flex items-center">
+                            <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2 print:bg-purple-800">P</span>
+                            Plan - Learning Opportunities
+                          </h4>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {String(analysisData.Plan).split('\n').map((line, i) => (
+                              <p key={i} className={line.startsWith('*') || line.startsWith('-') ? 'ml-4 mb-1' : 'mb-2'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {analysisData.Act && (
+                        <div className="bg-orange-50 p-4 rounded-lg print:bg-white print:border print:border-orange-200">
+                          <h4 className="text-lg font-semibold text-orange-800 mb-3 flex items-center">
+                            <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2 print:bg-orange-800">A</span>
+                            Act - Priority Actions
+                          </h4>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {String(analysisData.Act).split('\n').map((line, i) => (
+                              <p key={i} className={line.startsWith('*') || line.startsWith('-') ? 'ml-4 mb-1' : 'mb-2'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {analysisData.Check && (
+                        <div className="bg-yellow-50 p-4 rounded-lg print:bg-white print:border print:border-yellow-200">
+                          <h4 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
+                            <span className="bg-yellow-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2 print:bg-yellow-800">C</span>
+                            Check - Progress & Adjustment
+                          </h4>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {String(analysisData.Check).split('\n').map((line, i) => (
+                              <p key={i} className={line.startsWith('*') || line.startsWith('-') ? 'ml-4 mb-1' : 'mb-2'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {analysisData.Transform && (
+                        <div className="bg-red-50 p-4 rounded-lg print:bg-white print:border print:border-red-200">
+                          <h4 className="text-lg font-semibold text-red-800 mb-3 flex items-center">
+                            <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2 print:bg-red-800">T</span>
+                            Transform - Future Roadmap
+                          </h4>
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                            {String(analysisData.Transform).split('\n').map((line, i) => (
+                              <p key={i} className={line.startsWith('*') || line.startsWith('-') ? 'ml-4 mb-1' : 'mb-2'}>
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-gray-500">Recommendations:</span>
-                      <ul className="list-disc list-inside ml-2">
-                        {selectedSubmission.recommendations?.map((rec, index) => (
-                          <li key={index}>{rec}</li>
+                  )
+                })()}
+
+                {/* Recommendations Section */}
+                {(() => {
+                  let recommendations = selectedSubmission.recommendations
+                  if ((!recommendations || recommendations.length === 0) && selectedSubmission.learnerProfile?.startsWith('{')) {
+                    try {
+                      const parsed = JSON.parse(selectedSubmission.learnerProfile)
+                      recommendations = parsed.recommendations || []
+                    } catch (e) {
+                      recommendations = []
+                    }
+                  }
+                  
+                  if (!recommendations || recommendations.length === 0) return null
+                  
+                  return (
+                    <div className="bg-gray-50 p-4 rounded-lg print:bg-white print:border print:border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                        📋 Key Recommendations
+                      </h3>
+                      <ul className="space-y-2">
+                        {recommendations.map((rec, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-3 mt-0.5 flex-shrink-0 print:bg-blue-800">
+                              {index + 1}
+                            </span>
+                            <span className="text-gray-700">{rec}</span>
+                          </li>
                         ))}
                       </ul>
                     </div>
-                    <div>
-                      <span className="text-gray-500">Next Steps:</span>
-                      <ul className="list-disc list-inside ml-2">
-                        {selectedSubmission.nextSteps?.map((step, index) => (
-                          <li key={index}>{step}</li>
+                  )
+                })()}
+
+                {/* Next Steps Section */}
+                {(() => {
+                  let nextSteps = selectedSubmission.nextSteps
+                  if ((!nextSteps || nextSteps.length === 0) && selectedSubmission.learnerProfile?.startsWith('{')) {
+                    try {
+                      const parsed = JSON.parse(selectedSubmission.learnerProfile)
+                      nextSteps = parsed.nextSteps || []
+                    } catch (e) {
+                      nextSteps = []
+                    }
+                  }
+                  
+                  if (!nextSteps || nextSteps.length === 0) return null
+                  
+                  return (
+                    <div className="bg-green-50 p-4 rounded-lg print:bg-white print:border print:border-green-200">
+                      <h3 className="text-lg font-semibold text-green-800 mb-3">
+                        🎯 Immediate Next Steps
+                      </h3>
+                      <ul className="space-y-2">
+                        {nextSteps.map((step, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-3 mt-0.5 flex-shrink-0 print:bg-green-800">
+                              {index + 1}
+                            </span>
+                            <span className="text-gray-700">{step}</span>
+                          </li>
                         ))}
                       </ul>
+                    </div>
+                  )
+                })()}
+
+                {/* Learner Profile Summary */}
+                {selectedSubmission.learnerProfile && (
+                  <div className="bg-blue-50 p-4 rounded-lg print:bg-white print:border print:border-blue-200">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-3">
+                      👤 Learner Profile Summary
+                    </h3>
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {(() => {
+                        // Check if learnerProfile is a JSON string that needs parsing
+                        if (selectedSubmission.learnerProfile.startsWith('{')) {
+                          try {
+                            const parsed = JSON.parse(selectedSubmission.learnerProfile)
+                            return (
+                              <div className="space-y-4">
+                                {Object.entries(parsed).map(([key, value]) => {
+                                  if (key === 'learnerProfile' || key === 'recommendations' || key === 'nextSteps') {
+                                    return null // Skip these as they're displayed elsewhere
+                                  }
+                                  return (
+                                    <div key={key} className="border-l-4 border-blue-300 pl-4">
+                                      <h4 className="font-semibold text-blue-700 mb-2 capitalize">
+                                        {key === 'Identify' && '🎯 Identify - Assessment'}
+                                        {key === 'Motivate' && '💪 Motivate - Learner Profile'}
+                                        {key === 'Plan' && '📋 Plan - Learning Opportunities'}
+                                        {key === 'Act' && '⚡ Act - Priority Actions'}
+                                        {key === 'Check' && '✅ Check - Progress & Adjustment'}
+                                        {key === 'Transform' && '🚀 Transform - Future Roadmap'}
+                                      </h4>
+                                      <div className="text-gray-700 leading-relaxed">
+                                        {String(value).split('\n').map((line, i) => (
+                                          <p key={i} className={line.startsWith('*') ? 'ml-4' : 'mb-2'}>
+                                            {line}
+                                          </p>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )
+                          } catch (e) {
+                            return selectedSubmission.learnerProfile
+                          }
+                        }
+                        return selectedSubmission.learnerProfile
+                      })()} 
                     </div>
                   </div>
+                )}
+
+                {/* Footer */}
+                <div className="border-t pt-4 text-center text-sm text-gray-500 print:pt-2">
+                  <p>Generated by TeachMeAI IMPACT Assistant • {new Date(selectedSubmission.timestamp).toLocaleString()}</p>
                 </div>
               </div>
             </div>

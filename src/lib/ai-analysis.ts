@@ -1,74 +1,87 @@
-import OpenAI from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { IntakeResponse, IMPACTAnalysis } from '@/types'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function analyzeWithAI(intakeData: IntakeResponse): Promise<IMPACTAnalysis> {
   try {
     const prompt = `
-You are an expert learning mentor analyzing a learner's intake responses. 
-Generate a personalized IMPACT analysis based on the TeachMeAI Framework.
+You are TeachMeAI's IMPACT Assistant, designed for solo 1:1 consulting practices (TeachMeAI.in). Your role is to transform intake data into a structured, personalized IMPACT plan for self-learning and mentoring. Your mission is to foster clarity, confidence, and autonomy through short-cycle, outcome-driven engagements.
 
-Learner Responses:
+You support career professionals in identifying focus areas, skills, and capabilities for growth. You analyze their goals, challenges, and learning style, then generate a clear, customized learning path with practical steps and timelines. You deliver actionable career development support leading to meaningful progress.
+
+**Learner Intake Data:**
 ${JSON.stringify(intakeData, null, 2)}
 
-Please analyze this data and provide:
+**Frameworks to Reference:**
+- Core: IMPACT (Initiate → Map → Prioritize → Act & Adjust → Consolidate → Transition)
+- Self-Learning Foundations: SRL, MAL, Andragogy, psychological capital, motivation, metacognition
+- Personal Knowledge Management: Zettelkasten, PARA, Second Brain, AI tools, digital minimalism
+- Mentoring Models: traditional, self, micro, reverse, mutual, group, AI-augmented
+- Learner Typologies: Kolb, Honey & Mumford, VARK, Dreyfus, learning preferences
+- AI in Learning: GenAI, AI as co-pilot, risks/guardrails, tools
 
-1. IMPACT Framework Analysis (6 sections):
-   - Identify: What are the key learning needs and current state?
-   - Motivate: What will drive this learner's engagement?
-   - Plan: What learning pathway would be most effective?
-   - Act: What immediate actions should they take?
-   - Check: How should they measure progress?
-   - Transform: What long-term transformation can they expect?
+**Required Analysis using IMPACT Framework:**
 
-2. Learner Profile Summary: A concise analysis of their learning style, preferences, and readiness
+**A) Human Summary (≤500 words, warm & practical):**
 
-3. Specific Recommendations: 3-5 actionable next steps tailored to their profile
+1. **Initiate Assessment:** Learner snapshot (type, stage, confidence, motivation, time constraints); Top 3 focus areas
 
-4. Next Steps: Immediate actions they can take
+2. **Learner Profile:** Substantial analysis using Self-Learning Foundations:
+   - Self-Regulated Learning (SRL) – goal setting, monitoring, reflection, adaptation
+   - Master Adaptive Learner (MAL) model
+   - Andragogy (adult learning principles)
+   - Psychological Capital (hope, resilience, efficacy, optimism)
+   - Motivation theories (Intrinsic vs Extrinsic, Self-Determination Theory)
+   - Reflection & Metacognition habits
 
-Focus on:
-- Self-Learning Foundations (SRL, MAL, Andragogy, PsyCap, Motivation, Reflection)
-- Personal Knowledge Management (PKM) approaches
-- Mentoring models that would work best
-- Learner typology insights (Kolb/HM, VARK, Dreyfus)
-- AI in Learning & Mentoring opportunities
-- Designing personalized pathways
+3. **Map Opportunities:** 3 relevant AI/self-learning workflows based on domain/professional experience; Value, effort, first artifact
+
+4. **Prioritize Actions:** 3 realistic first steps (tools, practices, timeline); Guardrails from readiness indices
+
+5. **Act & Adjust:** 3 hands-on practice plans (7–14 days); Reflection prompts, mentoring cadence
+
+6. **Consolidate Learning:** Key takeaways, key habit, confidence shift, tangible artifact
+
+7. **Transition Forward:** 30/60/90-day roadmap highlights; Resources and suggested mentoring cadence
+
+**Heuristics & Guardrails:**
+- Low SRL (<3): micro-plans, checklists, tighter reflection loops
+- Low Confidence (<3): guided recipe + 1 quick win ≤7 days
+- High Time Friction (≥4): cap plan at ≤3 h/week; suggest 15-min sprints + catch-up
+- Dreyfus ≤2: rule-based steps; ≥4: open-ended briefs with rubrics
+- Kolb/HM: suggest learning sequence by type
+- VARK: only affects presentation format
+
+**Package Awareness:**
+- Single 70-min Call: 1 quick win + immediate artifact
+- Starter (~30 days): 1–2 workflows, 1 artifact, weekly cadence
+- Growth (~90 days): 3-phase roadmap, 2–3 artifacts, KPI review
+
+**Style & Delivery:**
+- Warm, encouraging, future-focused
+- Bullets, headings, clarity and brevity prioritized
+- Realistic solo mentor scope
+- Structure results around the six IMPACT phases
+- Always deliver structured outputs using IMPACT headings
 
 Return the response as a JSON object with this structure:
 {
-  "Identify": "detailed analysis",
-  "Motivate": "detailed analysis", 
-  "Plan": "detailed analysis",
-  "Act": "detailed analysis",
-  "Check": "detailed analysis",
-  "Transform": "detailed analysis",
-  "learnerProfile": "summary of learner characteristics",
-  "recommendations": ["array of specific recommendations"],
-  "nextSteps": ["array of immediate actions"]
+  "Identify": "Initiate Assessment analysis with learner snapshot and top 3 focus areas",
+  "Motivate": "Learner Profile analysis using Self-Learning Foundations frameworks", 
+  "Plan": "Map Opportunities analysis with 3 AI/self-learning workflows",
+  "Act": "Prioritize Actions analysis with 3 realistic first steps and guardrails",
+  "Check": "Act & Adjust analysis with 3 hands-on practice plans and reflection prompts",
+  "Transform": "Consolidate Learning + Transition Forward analysis with 30/60/90-day roadmap",
+  "learnerProfile": "concise learner type, stage, and key characteristics summary",
+  "recommendations": ["specific actionable recommendation 1", "recommendation 2", "recommendation 3"],
+  "nextSteps": ["immediate step 1 with timeline", "step 2 with timeline", "step 3 with timeline"]
 }
 `
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert learning mentor. Always respond with valid JSON in the exact format requested."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    })
-
-    const responseText = completion.choices[0]?.message?.content || ''
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" })
+    const result = await model.generateContent(prompt)
+    const responseText = result.response.text()
     
     // Extract JSON from the response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)

@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import { JWT } from 'google-auth-library'
 
 export async function GET(request: NextRequest) {
   try {
     // Basic admin authentication (you can enhance this later)
     const authHeader = request.headers.get('authorization')
+    const adminToken = process.env.ADMIN_TOKEN || 'admin-token-123'
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized - Missing Bearer token' }, { status: 401 })
+    }
+    
+    const token = authHeader.substring(7)
+    if (token !== adminToken) {
+      return NextResponse.json({ error: 'Unauthorized - Invalid token' }, { status: 401 })
     }
 
     // Initialize Google Sheets API
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID
+    if (!spreadsheetId) {
+      return NextResponse.json({ error: 'Google Sheet ID not configured' }, { status: 500 })
+    }
+
     const auth = new google.auth.GoogleAuth({
       keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
@@ -18,16 +29,11 @@ export async function GET(request: NextRequest) {
 
     const authClient = await auth.getClient()
     const sheets = google.sheets({ version: 'v4', auth: authClient })
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID
-
-    if (!spreadsheetId) {
-      throw new Error('Google Sheet ID not configured')
-    }
 
     // Read all data from the sheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Sheet1!A:G', // Updated range to include new column
+      range: 'Sheet1!A:F', // Actual range is A-F (6 columns)
     })
 
     const rows = response.data.values || []
@@ -36,36 +42,62 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ submissions: [] })
     }
 
-    // Parse the data into structured format
-    const submissions = rows.slice(1).map((row, index) => {
+    // Parse the data into structured format (skip header row)
+    const dataRows = rows.slice(1) // Skip first row (headers)
+    const submissions = dataRows.map((row, index) => {
       try {
-        const rawResponses = JSON.parse(row[2] || '{}')
-        const impactAnalysis = JSON.parse(row[3] || '{}')
+        // Skip empty rows
+        if (!row || row.length === 0) return null
+        
+        // Handle different data structures in the sheet
+        let rawResponses = {}
+        let impactAnalysis = {}
+        let currentRoles = 'None selected'
+        
+        // Actual structure: [timestamp, sessionId, rawResponses(JSON), impactAnalysis(JSON), learnerProfile(text), recommendations(text)]
+        if (row.length >= 4) {
+          try {
+            // Column C: Raw Responses (JSON)
+            if (row[2] && row[2].startsWith('{')) {
+              rawResponses = JSON.parse(row[2])
+              currentRoles = rawResponses.currentRoles?.join(', ') || 'None selected'
+            }
+            
+            // Column D: Impact Analysis (JSON)
+            if (row[3] && row[3].startsWith('{')) {
+              impactAnalysis = JSON.parse(row[3])
+            }
+          } catch (parseError) {
+            console.warn(`Parsing error for row ${index}:`, parseError)
+          }
+        }
         
         return {
           id: index + 1,
-          timestamp: row[0],
-          sessionId: row[1],
-          currentRoles: row[2] || 'None selected',
+          timestamp: row[0] || 'Unknown',
+          sessionId: row[1] || 'Unknown',
+          currentRoles,
           learnerType: rawResponses.learnerType || 'Unknown',
           skillStage: rawResponses.skillStage || 'Unknown',
           varkPreferences: rawResponses.varkPreferences || {},
           recommendations: impactAnalysis.recommendations || [],
           nextSteps: impactAnalysis.nextSteps || [],
-          learnerProfile: impactAnalysis.learnerProfile || 'Unknown',
+          learnerProfile: impactAnalysis.learnerProfile || row[4] || 'Unknown',
           rawData: rawResponses,
           analysis: impactAnalysis
         }
       } catch (error) {
-        console.error(`Error parsing row ${index + 1}:`, error)
+        console.error(`Error parsing row ${index}:`, error)
         return {
           id: index + 1,
-          timestamp: row[0],
-          sessionId: row[1],
-          error: 'Data parsing error'
+          timestamp: row[0] || 'Unknown',
+          sessionId: row[1] || 'Unknown',
+          currentRoles: 'Parse Error',
+          error: `Data parsing error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          rawRowData: row
         }
       }
-    })
+    }).filter(Boolean) // Remove null entries
 
     return NextResponse.json({ 
       submissions,
@@ -75,8 +107,23 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Admin API error:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to fetch submissions',
+          details: error.message,
+          timestamp: new Date().toISOString()
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch submissions' },
+      { 
+        error: 'Failed to fetch submissions - Unknown error',
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }

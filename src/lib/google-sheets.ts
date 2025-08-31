@@ -58,8 +58,9 @@ export async function saveToGoogleSheets(
 
     const result = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Sheet1!A:G', // Updated range to include new column
+      range: 'Sheet1!A2:F', // Start from row 2 to preserve headers
       valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
       requestBody: {
         values,
       },

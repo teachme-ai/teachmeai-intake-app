@@ -45,3 +45,35 @@
     @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
   }
 }
+
+@media print {
+  @page {
+    margin: 1in;
+    size: A4;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  .print\:bg-white {
+    background-color: white !important;
+  }
+  
+  .print\:border {
+    border: 1px solid !important;
+  }
+  
+  .print\:max-h-none {
+    max-height: none !important;
+  }
+  
+  .print\:overflow-visible {
+    overflow: visible !important;
+  }
+}
