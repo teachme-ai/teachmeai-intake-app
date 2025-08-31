@@ -40,19 +40,3 @@ jobs:
       run: npm test
       continue-on-error: true
 
-    - name: Check if build artifacts exist
-      id: check-artifacts
-      run: |
-        if [ -d ".next" ]; then
-          echo "artifacts-exist=true" >> $GITHUB_OUTPUT
-        else
-          echo "artifacts-exist=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      if: success() && steps.check-artifacts.outputs.artifacts-exist == 'true'
-      with:
-        name: build-${{ matrix.node-version }}
-        path: .next/
-        retention-days: 7
