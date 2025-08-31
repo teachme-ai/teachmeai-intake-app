@@ -34,8 +34,7 @@ export async function GET(request: NextRequest) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     })
 
-    const authClient = await auth.getClient()
-    const sheets = google.sheets({ version: 'v4', auth: auth })
+    const sheets = google.sheets({ version: 'v4', auth })
 
     // Read all data from the sheet
     const response = await sheets.spreadsheets.values.get({
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
             // Column C: Raw Responses (JSON)
             if (row[2] && row[2].startsWith('{')) {
               rawResponses = JSON.parse(row[2])
-              currentRoles = rawResponses.currentRoles?.join(', ') || 'None selected'
+              currentRoles = rawResponses?.currentRoles?.join(', ') || 'None selected'
             }
             
             // Column D: Impact Analysis (JSON)
@@ -84,12 +83,12 @@ export async function GET(request: NextRequest) {
           timestamp: row[0] || 'Unknown',
           sessionId: row[1] || 'Unknown',
           currentRoles,
-          learnerType: rawResponses.learnerType || 'Unknown',
-          skillStage: rawResponses.skillStage || 'Unknown',
-          varkPreferences: rawResponses.varkPreferences || {},
-          recommendations: impactAnalysis.recommendations || [],
-          nextSteps: impactAnalysis.nextSteps || [],
-          learnerProfile: impactAnalysis.learnerProfile || row[4] || 'Unknown',
+          learnerType: rawResponses?.learnerType || 'Unknown',
+          skillStage: rawResponses?.skillStage || 'Unknown',
+          varkPreferences: rawResponses?.varkPreferences || {},
+          recommendations: impactAnalysis?.recommendations || [],
+          nextSteps: impactAnalysis?.nextSteps || [],
+          learnerProfile: impactAnalysis?.learnerProfile || row[4] || 'Unknown',
           rawData: rawResponses,
           analysis: impactAnalysis
         }
