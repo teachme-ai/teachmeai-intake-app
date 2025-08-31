@@ -344,7 +344,7 @@ function Step2({ responses, onInputChange }: { responses: Partial<IntakeResponse
         />
         
         <QuestionSlider
-          label="I'd engage in learning because it's challenging and interesting."
+          label="I&apos;d engage in learning because it&apos;s challenging and interesting."
           value={responses.learningForChallenge || 3}
           onChange={(value) => onInputChange('learningForChallenge', value)}
         />
