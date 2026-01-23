@@ -1,10 +1,29 @@
-import { ai } from './genkit';
+import express from 'express';
+import cors from 'cors';
+import { supervisorFlow } from './agents/supervisor';
 
-// Import agents to ensure they are registered with the 'ai' instance
-import './agents/profiler';
-import './agents/strategist';
-import './agents/tactician';
-import './agents/supervisor';
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-// Start the server using the genkit instance method
-ai.startFlowsServer();
+// Manually expose the flow via Express to avoid Genkit startup issues
+app.post('/supervisorFlow', async (req, res) => {
+    try {
+        console.log('Received request for supervisorFlow');
+        // In Genkit v1.0, flows are functions that can be called directly
+        const result = await supervisorFlow(req.body.data);
+        res.json({ result });
+    } catch (error) {
+        console.error('Flow execution failed:', error);
+        res.status(500).json({
+            error: error instanceof Error ? error.message : 'Internal Server Error'
+        });
+    }
+});
+
+// Cloud Run provides the PORT environment variable
+const port = process.env.PORT || 3400;
+app.listen(port, () => {
+    console.log(`Agent Service listening on port ${port}`);
+    console.log(`Endpoint available at POST /supervisorFlow`);
+});
