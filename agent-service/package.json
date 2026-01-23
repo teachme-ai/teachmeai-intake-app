@@ -1,0 +1,32 @@
+{
+    "name": "teachmeai-agent-service",
+    "version": "1.0.0",
+    "description": "Agentic Framework for TeachMeAI using Firebase Genkit",
+    "main": "lib/index.js",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "start": "node lib/index.js",
+        "dev": "genkit start -- npx tsx --watch src/index.ts"
+    },
+    "dependencies": {
+        "@genkit-ai/ai": "latest",
+        "@genkit-ai/core": "latest",
+        "@genkit-ai/flow": "latest",
+        "@genkit-ai/googleai": "latest",
+        "@genkit-ai/vertexai": "latest",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "genkit": "^1.28.0",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.17",
+        "@types/express": "^4.17.21",
+        "@types/node": "^22.0.0",
+        "genkit-cli": "latest",
+        "tsx": "^4.7.1",
+        "typescript": "^5.4.3"
+    }
+}
