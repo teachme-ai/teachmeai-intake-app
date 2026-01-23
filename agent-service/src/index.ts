@@ -14,15 +14,20 @@ app.get('/', (req, res) => {
 // Expose the flow via Express
 app.post('/supervisorFlow', async (req, res) => {
     try {
-        console.log('Received request for supervisorFlow');
-        // In Genkit v1.0, flows are functions that can be called directly
+        console.log('🚀 [Backend] Received request for supervisorFlow');
+        if (!req.body || !req.body.data) {
+            console.error('❌ [Backend] Missing data in request body');
+            return res.status(400).send('Missing data in request');
+        }
+
+        console.log('🧠 [Backend] Starting AI Agents...');
         const result = await supervisorFlow(req.body.data);
+        console.log('✅ [Backend] AI Agents finished successfully');
         res.json({ result });
     } catch (error) {
-        console.error('Flow execution failed:', error);
-        res.status(500).json({
-            error: error instanceof Error ? error.message : 'Internal Server Error'
-        });
+        console.error('💥 [Backend] AI ERROR:', error);
+        const msg = error instanceof Error ? error.message : 'Unknown AI error';
+        res.status(500).send(`Agent Error: ${msg}`);
     }
 });
 
