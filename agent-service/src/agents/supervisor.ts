@@ -3,7 +3,7 @@ import { profilerFlow } from './profiler';
 import { strategistFlow } from './strategist';
 import { tacticianFlow } from './tactician';
 import { z } from 'zod';
-import { ai } from '../index';
+import { ai } from '../genkit';
 
 export const IMPACTAnalysisSchema = z.object({
     Identify: z.string(),

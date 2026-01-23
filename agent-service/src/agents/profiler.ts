@@ -1,6 +1,6 @@
 import { gemini15Pro } from '@genkit-ai/googleai';
 import { IntakeResponseSchema, LearnerProfileSchema } from '../types';
-import { ai } from '../index';
+import { ai } from '../genkit';
 
 export const profilerFlow = ai.defineFlow(
     {

@@ -1,7 +1,7 @@
 import { gemini15Pro } from '@genkit-ai/googleai';
 import { LearnerProfileSchema, StrategySchema } from '../types';
 import { z } from 'zod';
-import { ai } from '../index';
+import { ai } from '../genkit';
 
 export const StrategistInputSchema = z.object({
     profile: LearnerProfileSchema,

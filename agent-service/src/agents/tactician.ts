@@ -1,7 +1,7 @@
 import { gemini15Pro } from '@genkit-ai/googleai';
 import { StrategySchema, TacticsSchema } from '../types';
 import { z } from 'zod';
-import { ai } from '../index';
+import { ai } from '../genkit';
 
 const TacticianInput = z.object({
     strategy: StrategySchema,
