@@ -1,10 +1,10 @@
-import { startFlowsServer } from '@genkit-ai/flow';
+import { ai } from './genkit';
 
-// Import flows to register them
+// Import agents to ensure they are registered with the 'ai' instance
 import './agents/profiler';
 import './agents/strategist';
 import './agents/tactician';
 import './agents/supervisor';
 
-// Start the server
-startFlowsServer();
+// Start the server using the genkit instance method
+ai.startFlowsServer();
