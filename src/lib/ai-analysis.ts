@@ -1,6 +1,6 @@
 import { IntakeResponse, IMPACTAnalysis } from '@/types'
 
-const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'http://localhost:3400/supervisorFlow';
+const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'https://teachmeai-agent-service-584680412286.us-central1.run.app/supervisorFlow';
 
 export async function analyzeWithAI(intakeData: IntakeResponse): Promise<IMPACTAnalysis> {
   try {
