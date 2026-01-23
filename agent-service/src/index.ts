@@ -6,7 +6,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Manually expose the flow via Express to avoid Genkit startup issues
+// Add a root GET handler so the user can verify the service is alive in a browser
+app.get('/', (req, res) => {
+    res.send('✅ TeachMeAI Agent Service is LIVE and ready for analysis! Send POST requests to /supervisorFlow');
+});
+
+// Expose the flow via Express
 app.post('/supervisorFlow', async (req, res) => {
     try {
         console.log('Received request for supervisorFlow');

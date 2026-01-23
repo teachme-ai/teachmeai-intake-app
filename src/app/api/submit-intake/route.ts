@@ -6,14 +6,14 @@ import { saveToGoogleSheets } from '@/lib/google-sheets'
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 API Route: Starting intake submission...')
-    
+
     const intakeData: IntakeResponse = await request.json()
     console.log('📝 API Route: Received intake data:', JSON.stringify(intakeData, null, 2))
 
     // Validate required fields
     const requiredFields = ['goalSettingConfidence', 'learnerType']
-    const missingFields = requiredFields.filter(field => !intakeData[field as keyof IntakeResponse])
-    
+    const missingFields = requiredFields.filter(field => intakeData[field as keyof IntakeResponse] === undefined || intakeData[field as keyof IntakeResponse] === null)
+
     if (missingFields.length > 0) {
       console.error('❌ API Route: Missing required fields:', missingFields)
       return NextResponse.json(
