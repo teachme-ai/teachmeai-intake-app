@@ -16,7 +16,9 @@ export async function analyzeWithAI(intakeData: IntakeResponse): Promise<IMPACTA
     });
 
     if (!response.ok) {
-      throw new Error(`Agent Service failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Agent Service Error Response:', errorText);
+      throw new Error(`Agent Service failed: ${response.statusText} - ${errorText}`);
     }
 
     const result = await response.json();

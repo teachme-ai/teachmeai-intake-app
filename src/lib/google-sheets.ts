@@ -1,72 +1,65 @@
 import { google } from 'googleapis'
 import { IntakeResponse, IMPACTAnalysis, GoogleSheetsRow } from '@/types'
 
-// Initialize Google Sheets API
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    type: 'service_account',
-    project_id: process.env.GOOGLE_PROJECT_ID,
-    private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    client_id: process.env.GOOGLE_CLIENT_ID
-  },
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-})
+// Initialize Google Sheets API with robust auth
+const getAuth = () => {
+  // If we have individual env vars (e.g. on Vercel), use them
+  // Crucially check for BOTH key and email to avoid "missing client_email" crash
+  if (process.env.GOOGLE_PRIVATE_KEY && process.env.GOOGLE_CLIENT_EMAIL) {
+    console.log('🔐 Google Sheets: Using environment variables for auth');
+    return new google.auth.GoogleAuth({
+      credentials: {
+        type: 'service_account',
+        project_id: process.env.GOOGLE_PROJECT_ID,
+        private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_CLIENT_ID
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+  }
 
-const getSheets = () => google.sheets({ version: 'v4', auth })
+  // Fallback to GOOGLE_APPLICATION_CREDENTIALS (default behavior)
+  // This picks up the file path in .env.local (e.g. ./service-account-key.json)
+  console.log('🔎 Google Sheets: Falling back to service account file auth');
+  return new google.auth.GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+}
+
+const getSheets = () => google.sheets({ version: 'v4', auth: getAuth() })
 
 export async function saveToGoogleSheets(
-  intakeData: IntakeResponse, 
+  intakeData: IntakeResponse,
   aiAnalysis: IMPACTAnalysis
 ): Promise<void> {
   try {
     console.log('📊 Google Sheets: Starting save process...')
-    console.log('📊 Google Sheets: Environment variables check:')
-    console.log('📊 Google Sheets: GOOGLE_APPLICATION_CREDENTIALS:', process.env.GOOGLE_APPLICATION_CREDENTIALS)
-    console.log('📊 Google Sheets: GOOGLE_SHEET_ID:', process.env.GOOGLE_SHEET_ID)
-    
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
-    
+
     if (!spreadsheetId) {
-      console.warn('⚠️ Google Sheets: No Google Sheet ID provided, skipping sheet save')
+      console.warn('⚠️ Google Sheets: No GOOGLE_SHEET_ID provided, skipping save')
       return
     }
 
-    console.log('📊 Google Sheets: Using spreadsheet ID:', spreadsheetId)
-
-    const row: GoogleSheetsRow = {
-      timestamp: intakeData.timestamp,
-      sessionId: intakeData.sessionId,
-      currentRoles: intakeData.currentRoles?.join(', ') || 'None selected',
-      rawResponses: JSON.stringify(intakeData),
-      impactAnalysis: JSON.stringify(aiAnalysis),
-      learnerProfile: aiAnalysis.learnerProfile,
-      recommendations: aiAnalysis.recommendations.join('; '),
-    }
-
-    console.log('📊 Google Sheets: Prepared row data:', JSON.stringify(row, null, 2))
-
+    // Align with headers: Timestamp | Session ID | Raw Intake Data | IMPACT Analysis | Learner Profile | Recommendations
     const values = [
       [
-        row.timestamp,
-        row.sessionId,
-        row.currentRoles,
-        row.rawResponses,
-        row.impactAnalysis,
-        row.learnerProfile,
-        row.recommendations,
+        intakeData.timestamp || new Date().toISOString(),
+        intakeData.sessionId || 'N/A',
+        JSON.stringify(intakeData),
+        JSON.stringify(aiAnalysis),
+        aiAnalysis.learnerProfile || 'N/A',
+        aiAnalysis.recommendations?.join('; ') || 'None'
       ]
     ]
 
-    console.log('📊 Google Sheets: Attempting to append to sheet...')
-    console.log('📊 Google Sheets: Range: Sheet1!A:F')
-    console.log('📊 Google Sheets: Values to append:', JSON.stringify(values, null, 2))
-
+    console.log('📊 Google Sheets: Attempting to append to Sheet1...')
     const sheets = getSheets()
     const result = await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Sheet1!A2:F', // Start from row 2 to preserve headers
+      range: 'Sheet1!A2', // Append to Sheet1, starting from A2 (search for first empty row)
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
@@ -75,25 +68,18 @@ export async function saveToGoogleSheets(
     })
 
     console.log('✅ Google Sheets: Data saved successfully!')
-    console.log('✅ Google Sheets: Response from Google:', JSON.stringify(result.data, null, 2))
+    console.log('✅ Google Sheets: Update range:', result.data.updates?.updatedRange)
 
   } catch (error) {
-    console.error('❌ Google Sheets: Error saving to Google Sheets:', error)
-    console.error('❌ Google Sheets: Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace',
-      name: error instanceof Error ? error.name : 'Unknown error type'
-    })
-    // Don't throw error - we don't want to fail the entire intake process
-    // if Google Sheets is unavailable
+    console.error('❌ Google Sheets: Save failed:', error instanceof Error ? error.message : error)
   }
 }
 
 // Helper function to create the spreadsheet if it doesn't exist
 export async function createSpreadsheetIfNeeded(): Promise<string> {
   try {
-    const drive = google.drive({ version: 'v3', auth })
-    
+    const drive = google.drive({ version: 'v3', auth: getAuth() })
+
     // Create new spreadsheet
     const sheets = getSheets()
     const spreadsheet = await sheets.spreadsheets.create({
@@ -116,7 +102,7 @@ export async function createSpreadsheetIfNeeded(): Promise<string> {
     })
 
     const spreadsheetId = spreadsheet.data.spreadsheetId!
-    
+
     // Set up headers
     await sheets.spreadsheets.values.update({
       spreadsheetId,

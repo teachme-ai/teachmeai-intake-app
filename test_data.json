@@ -1,0 +1,28 @@
+{
+    "data": {
+        "currentRoles": [
+            "BFSI"
+        ],
+        "goalSettingConfidence": 3,
+        "newApproachesFrequency": 3,
+        "reflectionFrequency": 3,
+        "aiToolsConfidence": 3,
+        "resilienceLevel": 3,
+        "clearCareerVision": 3,
+        "successDescription": 3,
+        "learningForChallenge": 3,
+        "outcomeDrivenLearning": 3,
+        "timeBarrier": 3,
+        "currentFrustrations": "Testing high latency",
+        "learnerType": "reflector",
+        "varkPreferences": {
+            "visual": 3,
+            "audio": 3,
+            "readingWriting": 3,
+            "kinesthetic": 3
+        },
+        "skillStage": 3,
+        "concreteBenefits": "Faster learning",
+        "shortTermApplication": "Daily workflow"
+    }
+}
