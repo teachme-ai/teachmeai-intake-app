@@ -17,6 +17,9 @@ export default function IntakeForm() {
     learningForChallenge: 3,
     outcomeDrivenLearning: 3,
     timeBarrier: 3,
+    currentFrustrations: '',
+    concreteBenefits: '',
+    shortTermApplication: '',
     skillStage: 3,
     varkPreferences: {
       visual: 3,
