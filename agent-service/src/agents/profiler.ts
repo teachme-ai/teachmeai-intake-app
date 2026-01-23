@@ -1,4 +1,4 @@
-import { gemini15Flash } from '@genkit-ai/googleai';
+import { gemini20Flash } from '@genkit-ai/googleai';
 import { IntakeResponseSchema, LearnerProfileSchema } from '../types';
 import { ai } from '../genkit';
 
@@ -24,7 +24,7 @@ export const profilerFlow = ai.defineFlow(
     `;
 
         const { output } = await ai.generate({
-            model: gemini15Flash,
+            model: gemini20Flash,
             prompt: prompt,
             output: { schema: LearnerProfileSchema },
         });

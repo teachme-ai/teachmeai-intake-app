@@ -1,4 +1,4 @@
-import { gemini15Flash } from '@genkit-ai/googleai';
+import { gemini20Flash } from '@genkit-ai/googleai';
 import { StrategySchema, TacticsSchema } from '../types';
 import { z } from 'zod';
 import { ai } from '../genkit';
@@ -33,7 +33,7 @@ export const tacticianFlow = ai.defineFlow(
     `;
 
         const { output } = await ai.generate({
-            model: gemini15Flash,
+            model: gemini20Flash,
             prompt: prompt,
             output: { schema: TacticsSchema },
         });
