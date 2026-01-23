@@ -1,0 +1,10 @@
+.gcloudignore
+.git
+.gitignore
+node_modules
+google-cloud-sdk
+google-cloud-cli-darwin-x86_64.tar.gz
+lib
+*.log
+.env
+.env.*

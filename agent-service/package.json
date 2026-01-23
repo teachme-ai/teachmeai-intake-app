@@ -1,6 +1,9 @@
 {
     "name": "teachmeai-agent-service",
     "version": "1.0.0",
+    "engines": {
+        "node": ">=18"
+    },
     "description": "Agentic Framework for TeachMeAI using Firebase Genkit",
     "main": "lib/index.js",
     "scripts": {
