@@ -6,6 +6,8 @@ import { saveToGoogleSheets } from '@/lib/google-sheets'
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 API Route: Starting intake submission...')
+    console.log('🔗 USING AGENT SERVICE URL:', process.env.AGENT_SERVICE_URL || 'LOCAL_FALLBACK (http://localhost:3400/supervisorFlow)')
+
 
     const intakeData: IntakeResponse = await request.json()
     console.log('📝 API Route: Received intake data:', JSON.stringify(intakeData, null, 2))
