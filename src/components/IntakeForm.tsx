@@ -7,6 +7,17 @@ export default function IntakeForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const [responses, setResponses] = useState<Partial<IntakeResponse>>({
     currentRoles: [],
+    goalSettingConfidence: 3,
+    newApproachesFrequency: 3,
+    reflectionFrequency: 3,
+    aiToolsConfidence: 3,
+    resilienceLevel: 3,
+    clearCareerVision: 3,
+    successDescription: 3,
+    learningForChallenge: 3,
+    outcomeDrivenLearning: 3,
+    timeBarrier: 3,
+    skillStage: 3,
     varkPreferences: {
       visual: 3,
       audio: 3,
@@ -16,7 +27,7 @@ export default function IntakeForm() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({})
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
 
   const totalSteps = 6
 
@@ -49,7 +60,7 @@ export default function IntakeForm() {
         return true
       }
     }
-    
+
     // For other steps, no validation needed
     return true
   }
@@ -77,7 +88,7 @@ export default function IntakeForm() {
     }
 
     setIsSubmitting(true)
-    
+
     try {
       const completeResponses: IntakeResponse = {
         ...responses,
@@ -176,21 +187,21 @@ export default function IntakeForm() {
           onInputChange={handleInputChange}
         />
       )}
-      
+
       {currentStep === 2 && (
         <Step2
           responses={responses}
           onInputChange={handleInputChange}
         />
       )}
-      
+
       {currentStep === 3 && (
         <Step3
           responses={responses}
           onInputChange={handleInputChange}
         />
       )}
-      
+
       {currentStep === 4 && (
         <Step4
           responses={responses}
@@ -199,14 +210,14 @@ export default function IntakeForm() {
           validationErrors={validationErrors}
         />
       )}
-      
+
       {currentStep === 5 && (
         <Step5
           responses={responses}
           onInputChange={handleInputChange}
         />
       )}
-      
+
       {currentStep === 6 && (
         <Step6
           responses={responses}
@@ -223,7 +234,7 @@ export default function IntakeForm() {
         >
           Previous
         </button>
-        
+
         {currentStep < totalSteps ? (
           <button
             onClick={nextStep}
@@ -254,7 +265,7 @@ function Step1({ responses, onInputChange }: { responses: Partial<IntakeResponse
         <span className="text-2xl mr-3">🧠</span>
         <h2 className="text-2xl font-bold text-gray-900">Learner Profile & Self-Regulation</h2>
       </div>
-      
+
       <div className="space-y-6">
         {/* Role Selection Question */}
         <div>
@@ -264,7 +275,7 @@ function Step1({ responses, onInputChange }: { responses: Partial<IntakeResponse
           <div className="grid grid-cols-2 gap-3">
             {[
               'BFSI',
-              'Manufacturing', 
+              'Manufacturing',
               'Sales & Marketing',
               'IT Consultancy'
             ].map((role) => (
@@ -287,31 +298,31 @@ function Step1({ responses, onInputChange }: { responses: Partial<IntakeResponse
             ))}
           </div>
         </div>
-        
+
         <QuestionSlider
           label="How confident are you at setting your own learning goals and adjusting if stuck?"
           value={responses.goalSettingConfidence || 3}
           onChange={(value) => onInputChange('goalSettingConfidence', value)}
         />
-        
+
         <QuestionSlider
           label="When faced with a learning challenge, how often do you try new approaches?"
           value={responses.newApproachesFrequency || 3}
           onChange={(value) => onInputChange('newApproachesFrequency', value)}
         />
-        
+
         <QuestionSlider
           label="I reflect regularly on what I'm learning and how to improve."
           value={responses.reflectionFrequency || 3}
           onChange={(value) => onInputChange('reflectionFrequency', value)}
         />
-        
+
         <QuestionSlider
           label="I feel confident using new AI/software tools for work."
           value={responses.aiToolsConfidence || 3}
           onChange={(value) => onInputChange('aiToolsConfidence', value)}
         />
-        
+
         <QuestionSlider
           label="When progress stalls, I bounce back with renewed energy."
           value={responses.resilienceLevel || 3}
@@ -329,26 +340,26 @@ function Step2({ responses, onInputChange }: { responses: Partial<IntakeResponse
         <span className="text-2xl mr-3">🎯</span>
         <h2 className="text-2xl font-bold text-gray-900">Aspirations & Motivation</h2>
       </div>
-      
+
       <div className="space-y-6">
         <QuestionSlider
           label="I have a clear idea of where I want to go in my learning/career."
           value={responses.clearCareerVision || 3}
           onChange={(value) => onInputChange('clearCareerVision', value)}
         />
-        
+
         <QuestionSlider
           label="I can describe what success looks like for me 1 year from now."
           value={responses.successDescription || 3}
           onChange={(value) => onInputChange('successDescription', value)}
         />
-        
+
         <QuestionSlider
           label="I&apos;d engage in learning because it&apos;s challenging and interesting."
           value={responses.learningForChallenge || 3}
           onChange={(value) => onInputChange('learningForChallenge', value)}
         />
-        
+
         <QuestionSlider
           label="My learning is driven by outcomes (promotion, income, recognition)."
           value={responses.outcomeDrivenLearning || 3}
@@ -366,14 +377,14 @@ function Step3({ responses, onInputChange }: { responses: Partial<IntakeResponse
         <span className="text-2xl mr-3">⏰</span>
         <h2 className="text-2xl font-bold text-gray-900">Pain Points & Challenges</h2>
       </div>
-      
+
       <div className="space-y-6">
         <QuestionSlider
           label="Finding consistent time to learn is a barrier for me."
           value={responses.timeBarrier || 3}
           onChange={(value) => onInputChange('timeBarrier', value)}
         />
-        
+
         <div>
           <label className="form-label">
             What&apos;s most stressful or frustrating about learning new tools right now?
@@ -390,16 +401,16 @@ function Step3({ responses, onInputChange }: { responses: Partial<IntakeResponse
   )
 }
 
-function Step4({ 
-  responses, 
-  onInputChange, 
+function Step4({
+  responses,
+  onInputChange,
   onVarkChange,
-  validationErrors 
-}: { 
-  responses: Partial<IntakeResponse>, 
+  validationErrors
+}: {
+  responses: Partial<IntakeResponse>,
   onInputChange: (field: keyof IntakeResponse, value: any) => void,
   onVarkChange: (type: keyof IntakeResponse['varkPreferences'], value: number) => void,
-  validationErrors: {[key: string]: string}
+  validationErrors: { [key: string]: string }
 }) {
   return (
     <div>
@@ -407,7 +418,7 @@ function Step4({
         <span className="text-2xl mr-3">👤</span>
         <h2 className="text-2xl font-bold text-gray-900">Learner Type & Preferences</h2>
       </div>
-      
+
       <div className="space-y-6">
         <div>
           <label className="form-label">
@@ -440,7 +451,7 @@ function Step4({
             </p>
           )}
         </div>
-        
+
         <div>
           <label className="form-label">VARK Learning Preferences (rate 1-5 each)</label>
           <div className="space-y-4">
@@ -466,7 +477,7 @@ function Step4({
             />
           </div>
         </div>
-        
+
         <QuestionSlider
           label="Skill Stage (Dreyfus): Novice → Expert"
           value={responses.skillStage || 3}
@@ -484,7 +495,7 @@ function Step5({ responses, onInputChange }: { responses: Partial<IntakeResponse
         <span className="text-2xl mr-3">🏆</span>
         <h2 className="text-2xl font-bold text-gray-900">Gains & Outcomes</h2>
       </div>
-      
+
       <div className="space-y-6">
         <div>
           <label className="form-label">
@@ -497,7 +508,7 @@ function Step5({ responses, onInputChange }: { responses: Partial<IntakeResponse
             onChange={(e) => onInputChange('concreteBenefits', e.target.value)}
           />
         </div>
-        
+
         <div>
           <label className="form-label">
             Where do you want to apply these skills in the short term?
@@ -521,12 +532,12 @@ function Step6({ responses, onInputChange }: { responses: Partial<IntakeResponse
         <span className="text-2xl mr-3">🧠</span>
         <h2 className="text-2xl font-bold text-gray-900">Review & Submit</h2>
       </div>
-      
+
       <div className="space-y-4">
         <p className="text-gray-600 mb-6">
           Please review your responses before submitting. You can go back to any previous step to make changes.
         </p>
-        
+
         <div className="bg-gray-50 rounded-lg p-4">
           <h3 className="font-medium text-gray-900 mb-3">Summary of Your Responses:</h3>
           <div className="text-sm text-gray-600 space-y-1">
