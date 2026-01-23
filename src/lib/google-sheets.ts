@@ -3,25 +3,39 @@ import { IntakeResponse, IMPACTAnalysis, GoogleSheetsRow } from '@/types'
 
 // Initialize Google Sheets API with robust auth
 const getAuth = () => {
-  // If we have individual env vars (e.g. on Vercel), use them
-  // Crucially check for BOTH key and email to avoid "missing client_email" crash
-  if (process.env.GOOGLE_PRIVATE_KEY && process.env.GOOGLE_CLIENT_EMAIL) {
+  const {
+    GOOGLE_PROJECT_ID,
+    GOOGLE_PRIVATE_KEY_ID,
+    GOOGLE_PRIVATE_KEY,
+    GOOGLE_CLIENT_EMAIL,
+    GOOGLE_CLIENT_ID
+  } = process.env;
+
+  // Option 1: Detailed individual environment variables (best for Vercel)
+  // We check for both key and email to avoid partial auth crashes
+  if (GOOGLE_PRIVATE_KEY && GOOGLE_CLIENT_EMAIL) {
     console.log('🔐 Google Sheets: Using environment variables for auth');
+
+    // Clean the private key: handle escaped newlines and accidental quotes
+    const formattedKey = GOOGLE_PRIVATE_KEY
+      .replace(/\\n/g, '\n') // Convert literal \n to actual newlines
+      .replace(/^"(.*)"$/, '$1') // Remove surrounding quotes if they exist
+      .trim();
+
     return new google.auth.GoogleAuth({
       credentials: {
         type: 'service_account',
-        project_id: process.env.GOOGLE_PROJECT_ID,
-        private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        client_id: process.env.GOOGLE_CLIENT_ID
+        project_id: GOOGLE_PROJECT_ID,
+        private_key_id: GOOGLE_PRIVATE_KEY_ID,
+        private_key: formattedKey,
+        client_email: GOOGLE_CLIENT_EMAIL,
+        client_id: GOOGLE_CLIENT_ID
       },
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
   }
 
-  // Fallback to GOOGLE_APPLICATION_CREDENTIALS (default behavior)
-  // This picks up the file path in .env.local (e.g. ./service-account-key.json)
+  // Option 2: Fallback to GOOGLE_APPLICATION_CREDENTIALS path (common for local dev)
   console.log('🔎 Google Sheets: Falling back to service account file auth');
   return new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
