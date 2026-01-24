@@ -4,6 +4,7 @@ import { IntakeResponse, IMPACTAnalysis, GoogleSheetsRow } from '@/types'
 // Initialize Google Sheets API with robust auth
 const getAuth = () => {
   const {
+    GOOGLE_SERVICE_ACCOUNT_BASE64,
     GOOGLE_PROJECT_ID,
     GOOGLE_PRIVATE_KEY_ID,
     GOOGLE_PRIVATE_KEY,
@@ -11,28 +12,71 @@ const getAuth = () => {
     GOOGLE_CLIENT_ID
   } = process.env;
 
+  // Option 0: Base64-encoded service account JSON (most reliable for Vercel)
+  if (GOOGLE_SERVICE_ACCOUNT_BASE64) {
+    try {
+      console.log('🔐 Google Sheets: Using base64-encoded service account');
+      const decoded = Buffer.from(GOOGLE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8');
+      const credentials = JSON.parse(decoded);
+
+      return new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
+    } catch (error) {
+      console.error('❌ Google Sheets: Failed to decode base64 credentials:', error);
+      // Fall through to other options
+    }
+  }
+
   // Option 1: Detailed individual environment variables (best for Vercel)
   // We check for both key and email to avoid partial auth crashes
   if (GOOGLE_PRIVATE_KEY && GOOGLE_CLIENT_EMAIL) {
     console.log('🔐 Google Sheets: Using environment variables for auth');
 
-    // Clean the private key: handle escaped newlines and accidental quotes
-    const formattedKey = GOOGLE_PRIVATE_KEY
-      .replace(/\\n/g, '\n') // Convert literal \n to actual newlines
-      .replace(/^"(.*)"$/, '$1') // Remove surrounding quotes if they exist
-      .trim();
+    try {
+      // Clean the private key: handle escaped newlines and accidental quotes
+      let formattedKey = GOOGLE_PRIVATE_KEY.trim();
 
-    return new google.auth.GoogleAuth({
-      credentials: {
-        type: 'service_account',
-        project_id: GOOGLE_PROJECT_ID,
-        private_key_id: GOOGLE_PRIVATE_KEY_ID,
-        private_key: formattedKey,
-        client_email: GOOGLE_CLIENT_EMAIL,
-        client_id: GOOGLE_CLIENT_ID
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
+      // Remove surrounding quotes if they exist
+      formattedKey = formattedKey.replace(/^["'](.*)["']$/, '$1');
+
+      // Handle different newline formats
+      // Check if it contains literal \n strings (escaped)
+      if (formattedKey.includes('\\n')) {
+        formattedKey = formattedKey.replace(/\\n/g, '\n');
+      }
+
+      // Validate the key format
+      if (!formattedKey.includes('BEGIN PRIVATE KEY') || !formattedKey.includes('END PRIVATE KEY')) {
+        console.error('❌ Google Sheets: Private key does not contain BEGIN/END markers');
+        throw new Error('Invalid private key format: missing BEGIN/END PRIVATE KEY markers');
+      }
+
+      // Additional validation: ensure proper PEM format
+      const lines = formattedKey.split('\n');
+      if (lines.length < 3) {
+        console.error('❌ Google Sheets: Private key has too few lines');
+        throw new Error('Invalid private key format: insufficient lines');
+      }
+
+      console.log('✅ Google Sheets: Private key formatted successfully');
+
+      return new google.auth.GoogleAuth({
+        credentials: {
+          type: 'service_account',
+          project_id: GOOGLE_PROJECT_ID,
+          private_key_id: GOOGLE_PRIVATE_KEY_ID,
+          private_key: formattedKey,
+          client_email: GOOGLE_CLIENT_EMAIL,
+          client_id: GOOGLE_CLIENT_ID
+        },
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
+    } catch (error) {
+      console.error('❌ Google Sheets: Error formatting private key:', error);
+      throw error;
+    }
   }
 
   // Option 2: Fallback to GOOGLE_APPLICATION_CREDENTIALS path (common for local dev)
@@ -85,7 +129,19 @@ export async function saveToGoogleSheets(
     console.log('✅ Google Sheets: Update range:', result.data.updates?.updatedRange)
 
   } catch (error) {
-    console.error('❌ Google Sheets: Save failed:', error instanceof Error ? error.message : error)
+    console.error('❌ Google Sheets: Save failed:', error instanceof Error ? error.message : error);
+
+    // Log additional error details for debugging
+    if (error instanceof Error) {
+      console.error('❌ Google Sheets: Error stack:', error.stack);
+      console.error('❌ Google Sheets: Error name:', error.name);
+    }
+
+    // Log the full error object for debugging
+    console.error('❌ Google Sheets: Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+
+    // Re-throw the error so it can be caught by the API route
+    throw error;
   }
 }
 
