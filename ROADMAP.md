@@ -23,6 +23,16 @@ This roadmap outlines the planned features and improvements for future versions 
 **Focus**: Enhanced Data Management & Admin Features
 
 ### Features
+
+- [ ] **AI ChatUI Quiz (Priority #1)**
+  - Replace static form with conversational AI interface
+  - Natural language data collection via Gemini 2.5 Flash
+  - Real-time streaming responses with typing indicators
+  - Email delivery with JWT token to intake app
+  - Pre-fill intake form based on ChatUI conversation
+  - Target: 70%+ completion rate (vs. 60% current)
+  - See: `CHATUI_QUIZ_ARCHITECTURE.md` for details
+
 - [ ] **Admin Dashboard**
   - View all submissions in a table format
   - Search and filter submissions
@@ -34,15 +44,17 @@ This roadmap outlines the planned features and improvements for future versions 
   - Migration tool from Google Sheets
   - Improved query performance
 
-- [ ] **Email Notifications**
-  - Send confirmation emails to learners
-  - Notify admins of new submissions
-  - Customizable email templates
+- [ ] **Email Notifications (Enhanced)**
+  - Automated email sequences (Day 0, 3, 7)
+  - Personalized templates based on conversation data
+  - Track open rates and click-through
+  - A/B testing capabilities
 
 - [ ] **Enhanced Security**
   - Rate limiting on API endpoints
-  - CAPTCHA integration
+  - CAPTCHA integration (post-ChatUI)
   - API key authentication for admin endpoints
+  - JWT token validation and expiration
 
 ### Technical Improvements
 - [ ] Unit and integration tests
