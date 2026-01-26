@@ -7,6 +7,7 @@ export const StrategistInputSchema = z.object({
     profile: LearnerProfileSchema,
     professionalRoles: z.array(z.string()),
     careerVision: z.string().optional(),
+    primaryGoal: z.string().optional(),
 });
 
 export const strategistFlow = ai.defineFlow(
@@ -25,6 +26,7 @@ export const strategistFlow = ai.defineFlow(
     
     Professional Context:
     Roles: ${input.professionalRoles.join(', ')}
+    ${input.primaryGoal ? `Primary Learning Goal: ${input.primaryGoal}` : ''}
     
     Tasks:
     1. Identify: Re-state the top focus areas in the context of their career.

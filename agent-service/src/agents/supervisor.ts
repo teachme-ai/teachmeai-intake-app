@@ -31,12 +31,14 @@ export const supervisorFlow = ai.defineFlow(
         const strategy = await strategistFlow({
             profile,
             professionalRoles: intake.currentRoles,
-            careerVision: "Implicit based on intake"
+            careerVision: "Implicit based on intake",
+            primaryGoal: intake.primaryGoal
         });
 
         // Phase 3: Tactics
         const tactics = await tacticianFlow({
             strategy,
+            name: intake.name,
             constraints: {
                 timeBarrier: intake.timeBarrier,
                 skillStage: intake.skillStage

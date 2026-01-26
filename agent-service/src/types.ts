@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 export const IntakeResponseSchema = z.object({
+    name: z.string().optional(),
+    email: z.string().optional(),
+    primaryGoal: z.string().optional(),
     currentRoles: z.array(z.string()),
     goalSettingConfidence: z.number(),
     newApproachesFrequency: z.number(),
@@ -68,3 +71,29 @@ export type IntakeResponse = z.infer<typeof IntakeResponseSchema>;
 export type LearnerProfile = z.infer<typeof LearnerProfileSchema>;
 export type Strategy = z.infer<typeof StrategySchema>;
 export type Tactics = z.infer<typeof TacticsSchema>;
+
+// Quiz Types
+export const QuizSessionSchema = z.object({
+    messages: z.array(z.object({
+        role: z.enum(['user', 'model', 'system']),
+        content: z.string()
+    })),
+    extractedData: z.object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        learningGoal: z.string().optional()
+    }).optional()
+});
+
+export const QuizResponseSchema = z.object({
+    message: z.string().describe("The next response from the AI guide"),
+    extractedData: z.object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        learningGoal: z.string().optional()
+    }),
+    isComplete: z.boolean().describe("True if all required data is collected")
+});
+
+export type QuizSession = z.infer<typeof QuizSessionSchema>;
+export type QuizResponse = z.infer<typeof QuizResponseSchema>;

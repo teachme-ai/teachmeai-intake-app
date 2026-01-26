@@ -5,6 +5,7 @@ import { ai } from '../genkit';
 
 const TacticianInput = z.object({
     strategy: StrategySchema,
+    name: z.string().optional(),
     constraints: z.object({
         timeBarrier: z.number(),
         skillStage: z.number()
@@ -20,7 +21,7 @@ export const tacticianFlow = ai.defineFlow(
     async (input) => {
         const prompt = `
     You are an Agile Coach and Mentor (The Tactician).
-    Your goal is to turn a high-level strategy into an executable plan (IMPACT Phases: Act, Check, Transform).
+    Your goal is to turn a high-level strategy into an executable plan (IMPACT Phases: Act, Check, Transform) ${input.name ? `for ${input.name}` : ''}.
     
     Strategy: ${JSON.stringify(input.strategy, null, 2)}
     

@@ -1,9 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { IntakeResponse } from '@/types'
+import { ChatQuizPayload } from '@/lib/jwt'
 
-export default function IntakeForm() {
+interface IntakeFormProps {
+  initialData?: ChatQuizPayload
+}
+
+export default function IntakeForm({ initialData }: IntakeFormProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [responses, setResponses] = useState<Partial<IntakeResponse>>({
     currentRoles: [],
@@ -28,6 +33,20 @@ export default function IntakeForm() {
       kinesthetic: 3
     }
   })
+
+  // Pre-fill from ChatUI data
+  useEffect(() => {
+    if (initialData) {
+      setResponses(prev => ({
+        ...prev,
+        name: initialData.name,
+        email: initialData.email,
+        primaryGoal: initialData.goal,
+        // If we have a goal, maybe we can pre-set some frustrations or other fields
+        currentFrustrations: prev.currentFrustrations || `Objective: ${initialData.goal}`
+      }))
+    }
+  }, [initialData])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})

@@ -1,24 +1,29 @@
 export interface IntakeResponse {
+  // Personal Info (from ChatUI or for lead capture)
+  name?: string;
+  email?: string;
+  primaryGoal?: string;
+
   // Professional Role
   currentRoles: string[]; // Selected roles from BFSI, Manufacturing, Sales & Marketing, IT Consultancy
-  
+
   // Learner Profile & Self-Regulation
   goalSettingConfidence: number; // 1-5
   newApproachesFrequency: number; // 1-5
   reflectionFrequency: number; // 1-5
   aiToolsConfidence: number; // 1-5
   resilienceLevel: number; // 1-5
-  
+
   // Aspirations & Motivation
   clearCareerVision: number; // 1-5
   successDescription: number; // 1-5
   learningForChallenge: number; // 1-5
   outcomeDrivenLearning: number; // 1-5
-  
+
   // Pain Points
   timeBarrier: number; // 1-5
   currentFrustrations: string; // open text
-  
+
   // Learner Type & Preferences
   learnerType: 'theorist' | 'activist' | 'reflector' | 'pragmatist';
   varkPreferences: {
@@ -28,11 +33,11 @@ export interface IntakeResponse {
     kinesthetic: number; // 1-5
   };
   skillStage: number; // 1-5 (Dreyfus model)
-  
+
   // Gains & Outcomes
   concreteBenefits: string; // open text
   shortTermApplication: string; // open text
-  
+
   // Metadata
   timestamp: string;
   sessionId: string;
