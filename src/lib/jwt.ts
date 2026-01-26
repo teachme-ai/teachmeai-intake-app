@@ -1,17 +1,9 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { ChatQuizPayload } from '@/types';
 
 const secret = new TextEncoder().encode(
     process.env.JWT_SECRET || 'fallback-secret-for-dev-only'
 );
-
-export interface ChatQuizPayload {
-    name: string;
-    email: string;
-    goal: string;
-    source: string;
-    iat?: number;
-    exp?: number;
-}
 
 /**
  * Signs a payload to create a JWT token

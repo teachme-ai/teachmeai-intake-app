@@ -64,3 +64,12 @@ export interface GoogleSheetsRow {
   learnerProfile: string;
   recommendations: string;
 }
+
+export interface ChatQuizPayload {
+  name: string;
+  email: string;
+  goal: string;
+  source: string;
+  iat?: number;
+  exp?: number;
+}

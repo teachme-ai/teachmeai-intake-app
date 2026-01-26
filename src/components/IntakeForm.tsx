@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IntakeResponse } from '@/types'
-import { ChatQuizPayload } from '@/lib/jwt'
+import { IntakeResponse, ChatQuizPayload } from '@/types'
 
 interface IntakeFormProps {
   initialData?: ChatQuizPayload
