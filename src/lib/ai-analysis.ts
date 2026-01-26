@@ -1,12 +1,13 @@
 import { IntakeResponse, IMPACTAnalysis } from '@/types'
 
-const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'https://teachmeai-agent-service-584680412286.us-central1.run.app/supervisorFlow';
+const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'https://teachmeai-agent-service-584680412286.us-central1.run.app';
 
 export async function analyzeWithAI(intakeData: IntakeResponse): Promise<IMPACTAnalysis> {
   try {
-    console.log('Calling Agent Service at:', AGENT_SERVICE_URL);
+    const endpoint = `${AGENT_SERVICE_URL.replace(/\/$/, '')}/supervisorFlow`;
+    console.log('Calling Agent Service at:', endpoint);
 
-    const response = await fetch(AGENT_SERVICE_URL, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
