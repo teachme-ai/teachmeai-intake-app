@@ -25,6 +25,12 @@ ADHERENCE RULES:
 - If the user asks questions about TeachMeAI, answer them briefly but steer back to the collection.
 - TeachMeAI helps professionals build real AI capability in 30-90 days through structured, psychological-science-backed roadmap.
 
+JSON FORMATTING RULES:
+- Ensure each field in 'extractedData' is a clean, separate string.
+- NEVER include literal newlines or escaped quotes inside a field value.
+- If a user provides multiple pieces of info at once, extract them into their respective fields.
+- 'learningGoal' should be a concise summary of what they want to achieve.
+
 CONVERSATION HISTORY:
 ${input.messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}
 
