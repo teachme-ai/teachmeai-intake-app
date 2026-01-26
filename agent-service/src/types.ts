@@ -81,7 +81,8 @@ export const QuizSessionSchema = z.object({
     extractedData: z.object({
         name: z.string().optional(),
         email: z.string().optional(),
-        learningGoal: z.string().optional()
+        learningGoal: z.string().optional(),
+        role: z.string().optional()
     }).optional()
 });
 
@@ -90,7 +91,8 @@ export const QuizResponseSchema = z.object({
     extractedData: z.object({
         name: z.string().optional(),
         email: z.string().optional(),
-        learningGoal: z.string().optional()
+        learningGoal: z.string().optional(),
+        role: z.string().optional()
     }),
     isComplete: z.boolean().describe("True if all required data is collected")
 });
