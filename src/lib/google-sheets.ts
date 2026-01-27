@@ -101,17 +101,32 @@ async function ensureAnalysisSheet(spreadsheetId: string, sheets: any) {
       // For now, let's assume Sheet1 is the main destination or "Analysis"
     }
 
-    // Always update headers to match new spec
+    // Always update headers to match new spec (Top 3)
     const headers = [
       'Lead ID', 'Timestamp', 'Name', 'Role', 'Goal', 'Email',
       'Profile Summary', 'Strategy - Identify', 'Strategy - Plan',
-      'Research - Top Opp 1', 'Research - Top Priority 1', 'Research - Quick Win 1',
-      'Tactics - Next Step 1', 'Tactics - Full Plan', 'Raw Analysis JSON'
+
+      // Research - Top 3 Opportunities
+      'Research - Opp 1', 'Research - Impact 1',
+      'Research - Opp 2', 'Research - Impact 2',
+      'Research - Opp 3', 'Research - Impact 3',
+
+      // Research - Top 3 Priorities
+      'Research - Priority 1', 'Research - Quick Win 1',
+      'Research - Priority 2', 'Research - Quick Win 2',
+      'Research - Priority 3', 'Research - Quick Win 3',
+
+      // Tactics - Top 3 Next Steps
+      'Tactics - Next Step 1',
+      'Tactics - Next Step 2',
+      'Tactics - Next Step 3',
+
+      'Tactics - Full Plan', 'Raw Analysis JSON'
     ];
 
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: 'Sheet1!A1:O1',
+      range: 'Sheet1!A1:Z1', // Extended range
       valueInputOption: 'RAW',
       requestBody: { values: [headers] }
     });
@@ -139,12 +154,13 @@ export async function saveToGoogleSheets(
     // Flatten nested data based on FINAL_REPORT_SPEC.md
     // Safely access deep properties with optional chaining
     const research = (aiAnalysis as any).research || {};
-    const topOpp = research.aiOpportunityMap?.[0]?.opportunity || '';
-    const topPriority = research.topPriorities?.[0] || {};
+    const opps = research.aiOpportunityMap || [];
+    const priorities = research.topPriorities || [];
+    const nextSteps = aiAnalysis.nextSteps || [];
 
     const values = [
       [
-        intakeData.sessionId || 'N/A',            // Lead ID (using sessionId as proxy or pass explicit from calling scope if avail)
+        intakeData.sessionId || 'N/A',
         intakeData.timestamp || new Date().toISOString(),
         intakeData.name || 'N/A',
         intakeData.currentRoles?.[0] || 'N/A',
@@ -152,18 +168,26 @@ export async function saveToGoogleSheets(
         intakeData.email || 'N/A',
 
         // AI Analysis
-        JSON.parse(aiAnalysis.learnerProfile || '{}').psyCap || aiAnalysis.learnerProfile, // Simple profile
+        JSON.parse(aiAnalysis.learnerProfile || '{}').psyCap || aiAnalysis.learnerProfile,
         aiAnalysis.Identify,
         aiAnalysis.Plan,
 
-        // Deep Research (Flattened)
-        topOpp,
-        topPriority.name || '',
-        topPriority.quickWin || '',
+        // Deep Research - Top 3 Opportunities
+        opps[0]?.opportunity || '', opps[0]?.impact || '',
+        opps[1]?.opportunity || '', opps[1]?.impact || '',
+        opps[2]?.opportunity || '', opps[2]?.impact || '',
 
-        // Tactics
-        aiAnalysis.nextSteps?.[0] || '',
-        aiAnalysis.Act,
+        // Deep Research - Top 3 Priorities
+        priorities[0]?.name || '', priorities[0]?.quickWin || '',
+        priorities[1]?.name || '', priorities[1]?.quickWin || '',
+        priorities[2]?.name || '', priorities[2]?.quickWin || '',
+
+        // Tactics - Top 3 Next Steps
+        nextSteps[0] || '',
+        nextSteps[1] || '',
+        nextSteps[2] || '',
+
+        aiAnalysis.Act, // Full Plan
 
         // Raw Backup
         JSON.stringify(aiAnalysis)
