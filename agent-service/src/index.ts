@@ -16,11 +16,13 @@ app.get('/', (req, res) => {
 app.post('/quizGuide', async (req, res) => {
     try {
         console.log('🚀 [Backend] Received request for quizGuide');
+        console.log('📦 [Backend] Request Body:', JSON.stringify(req.body, null, 2));
         const result = await quizGuideFlow(req.body);
         res.json({ result });
     } catch (error) {
         console.error('💥 [Backend] Quiz Error:', error);
-        res.status(500).send('Error in Quiz Guide');
+        const msg = error instanceof Error ? error.message : 'Unknown Quiz Error';
+        res.status(500).send(`Error in Quiz Guide: ${msg}`);
     }
 });
 
