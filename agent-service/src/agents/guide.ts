@@ -55,10 +55,10 @@ Respond with the updated extractedData and completion status.
             const isVal = (val: any) => typeof val === 'string' && val.trim().length > 1 && !val.toLowerCase().includes('not provided');
 
             const mergedData = {
-                name: (isVal(next.name) ? next.name.trim() : (prev.name || "")),
-                email: (isVal(next.email) ? next.email.trim().toLowerCase() : (prev.email || "")),
-                role: (isVal(next.role) ? next.role.trim() : (prev.role || "")),
-                learningGoal: (isVal(next.learningGoal) ? next.learningGoal.trim() : (prev.learningGoal || ""))
+                name: (isVal(next.name) ? (next.name as string).trim() : (prev.name || "")),
+                email: (isVal(next.email) ? (next.email as string).trim().toLowerCase() : (prev.email || "")),
+                role: (isVal(next.role) ? (next.role as string).trim() : (prev.role || "")),
+                learningGoal: (isVal(next.learningGoal) ? (next.learningGoal as string).trim() : (prev.learningGoal || ""))
             };
 
             // Programmatic Validation
