@@ -1,4 +1,5 @@
 import { gemini20Flash } from '@genkit-ai/googleai';
+import { getTacticianPrompt } from '../prompts/tactician.system';
 import { StrategySchema, TacticsSchema } from '../types';
 import { z } from 'zod';
 import { ai } from '../genkit';
@@ -19,19 +20,11 @@ export const tacticianFlow = ai.defineFlow(
         outputSchema: TacticsSchema,
     },
     async (input) => {
-        const prompt = `
-    You are an Agile Coach and Mentor (The Tactician).
-    Your goal is to turn a high-level strategy into an executable plan (IMPACT Phases: Act, Check, Transform) ${input.name ? `for ${input.name}` : ''}.
-    
-    Strategy: ${JSON.stringify(input.strategy, null, 2)}
-    
-    Constraints:
-    - Time Barrier Level: ${input.constraints.timeBarrier}/5
-    - Skill Stage: ${input.constraints.skillStage}/5
-    
-    Create a concrete execution plan. If time barrier is high, suggest micro-learning. 
-    If skill stage is low, suggest structured, rule-based practice.
-    `;
+        const prompt = getTacticianPrompt({
+            strategy: input.strategy,
+            name: input.name,
+            constraints: input.constraints
+        });
 
         const { output } = await ai.generate({
             model: gemini20Flash,
