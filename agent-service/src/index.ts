@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { supervisorFlow } from './agents/supervisor';
 import { quizGuideFlow } from './agents/guide';
@@ -8,12 +8,12 @@ app.use(cors());
 app.use(express.json());
 
 // Add a root GET handler so the user can verify the service is alive in a browser
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
     res.send('✅ TeachMeAI Agent Service is LIVE and ready for analysis! Send POST requests to /supervisorFlow or /quizGuide');
 });
 
 // Expose the quiz guide flow
-app.post('/quizGuide', async (req, res) => {
+app.post('/quizGuide', async (req: Request, res: Response) => {
     try {
         console.log('🚀 [Backend] Received request for quizGuide');
         console.log('📦 [Backend] Request Body:', JSON.stringify(req.body, null, 2));
@@ -27,7 +27,7 @@ app.post('/quizGuide', async (req, res) => {
 });
 
 // Expose the flow via Express
-app.post('/supervisorFlow', async (req, res) => {
+app.post('/supervisorFlow', async (req: Request, res: Response) => {
     try {
         console.log('🚀 [Backend] Received request for supervisorFlow');
         if (!req.body || !req.body.data) {
