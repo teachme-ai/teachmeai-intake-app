@@ -10,50 +10,54 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
-        const history = input.messages.slice(-10).map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+        console.log('🤖 [Agent Service] Processing Guide Flow...');
+
+        // Map messages correctly for Genkit/Gemini
+        // Ensure role is exactly 'user' or 'model'
+        const messages: any[] = (input.messages || [])
+            .filter(m => m && m.content && (m.role === 'user' || m.role === 'model' || m.role === 'assistant'))
+            .map(m => ({
+                role: (m.role === 'user' ? 'user' : 'model'),
+                content: [{ text: m.content }]
+            }));
 
         const systemPrompt = GUIDE_SYSTEM_PROMPT
-            .replace('{{CURRENT_DATA}}', JSON.stringify(input.extractedData || {}, null, 2))
-            .replace('{{HISTORY}}', history);
+            .replace('{{CURRENT_DATA}}', JSON.stringify(input.extractedData || {}, null, 2));
 
-        const { output } = await ai.generate({
-            model: gemini20Flash.withConfig({
-                temperature: 0.1,
-                maxOutputTokens: 500
-            }),
-            system: systemPrompt,
-            output: { schema: QuizResponseSchema },
-        });
+        try {
+            const { output } = await ai.generate({
+                model: gemini20Flash,
+                system: systemPrompt,
+                messages: messages,
+                output: { schema: QuizResponseSchema },
+            });
 
-        if (!output) {
-            throw new Error("Quiz Guide failed to generate response");
+            if (!output) {
+                throw new Error("Quiz Guide failed to generate response");
+            }
+
+            // Clean data
+            const clean = (s: any) => typeof s === 'string' ? s.trim().substring(0, 500) : "";
+            const d = output.extractedData || {};
+
+            return {
+                message: output.message || "I missed that. Could you repeat?",
+                extractedData: {
+                    name: clean(d.name),
+                    email: clean(d.email).toLowerCase(),
+                    learningGoal: clean(d.learningGoal),
+                    role: clean(d.role)
+                },
+                isComplete: !!output.isComplete
+            };
+        } catch (error) {
+            console.error('💥 [Agent Service] AI Generate Error:', error);
+            // Fallback object to prevent schema crash if AI flakes
+            return {
+                message: "I'm processing that right now! Could you please repeat your last point so I can make sure I've got it saved correctly?",
+                extractedData: input.extractedData || {},
+                isComplete: false
+            };
         }
-
-        // Final Safeguard: Ensure isComplete is boolean
-        const result = {
-            message: output.message,
-            extractedData: output.extractedData || {},
-            isComplete: !!output.isComplete
-        };
-
-        // Sanitize and Truncate to prevent long hallucinations from breaking the pipe
-        const d = result.extractedData;
-        const limit = (s: string | undefined) => s ? s.trim().substring(0, 150) : "";
-
-        d.name = limit(d.name);
-        d.email = limit(d.email).toLowerCase();
-        d.role = limit(d.role);
-        d.learningGoal = limit(d.learningGoal);
-
-        // Verification Logic
-        const hasAll = !!(d.name && d.email && d.role && d.learningGoal);
-        const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email);
-
-        if (result.isComplete && (!hasAll || !validEmail)) {
-            console.warn('⚠️ [Agent Service] Rejecting hallucinated completion.');
-            result.isComplete = false;
-        }
-
-        return result;
     }
 );
