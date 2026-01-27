@@ -55,6 +55,11 @@ CURRENT EXTRACTED DATA:
 ${JSON.stringify(input.extractedData || {}, null, 2)}
 
 Respond with the next message, the updated extracted data, and the completion status.
+
+EXTRACTION REMINDER:
+- Check the conversation history for any new info the user just provided.
+- Update 'extractedData' with ANY piece of info you find in the history.
+- If the user provides multiple pieces (e.g., "Role: Teacher, Goal: Learn AI"), capture BOTH.
 `;
 
         const { output } = await ai.generate({
@@ -70,8 +75,15 @@ Respond with the next message, the updated extracted data, and the completion st
             throw new Error("Quiz Guide failed to generate response");
         }
 
-        // Programmatic Guardrail: Don't trust the LLM to know if it's actually finished.
-        // We MUST verify that all 4 required fields are present and valid.
+        // Sanitize extracted data
+        if (output.extractedData) {
+            const ed = output.extractedData;
+            if (ed.name) ed.name = ed.name.trim();
+            if (ed.email) ed.email = ed.email.trim().toLowerCase();
+            if (ed.role) ed.role = ed.role.trim();
+            if (ed.learningGoal) ed.learningGoal = ed.learningGoal.trim();
+        }
+
         const d = output.extractedData;
         const requiredFieldsFetched = !!(d.name && d.email && d.role && d.learningGoal);
 
