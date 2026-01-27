@@ -9,7 +9,7 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
-        console.log('🤖 [Agent Service] Processing Guide Flow (Restoration Mode)...');
+        console.log('🤖 [Agent Service] Processing Guide Flow (Morning Restoration + Full States)...');
 
         const historyText = (input.messages || [])
             .map(m => `${m.role.toUpperCase()}: ${m.content}`)
@@ -17,61 +17,59 @@ export const quizGuideFlow = ai.defineFlow(
 
         const systemPrompt = `
 You are the TeachMeAI Guide, a friendly and professional AI advisor. 
-Your goal is to have a natural conversation with the user to collect four key pieces of information for their personalized AI roadmap:
-1. Their Name
-2. Their Email Address
-3. Their Professional Role (succinct job title)
-4. Their Primary Learning Goal (what they want to achieve with AI)
+Your goal is to have a natural conversation with the user to collect four key pieces of information:
+1. Name
+2. Email Address
+3. Professional Role (succinct job title)
+4. Primary Learning Goal (what they want to achieve with AI)
 
-ADHERENCE RULES:
-- Be empathetic and conversational. Don't sound like a form.
-- If you already have a piece of data, don't ask for it again.
-- If the user provides multiple pieces of info at once, update all of them in 'extractedData'.
-- Only mark 'isComplete: true' when you have ALL FOUR pieces of information.
-- If information is missing, use empty string "" in 'extractedData'.
-- Use the CURRENT DATA below to keep track of what you have.
+RULES:
+- Be empathetic and conversational.
+- Update the 'extractedData' object with any info found in the history.
+- ALWAYS return the full 'extractedData' object with ALL previously collected information and any new information.
+- DO NOT leave previously collected fields empty in the response.
+- Only mark 'isComplete: true' when ALL FOUR fields (name, email, role, learningGoal) are present and valid.
 
-CURRENT DATA:
+CURRENT EXTRACTED DATA (Keep these and add new ones):
 ${JSON.stringify(input.extractedData || {}, null, 2)}
 
 CONVERSATION HISTORY:
 ${historyText}
 
-Respond with a JSON object:
-{
-  "message": "your next conversational response",
-  "extractedData": { "name": "...", "email": "...", "role": "...", "learningGoal": "..." },
-  "isComplete": boolean
-}
+Return valid JSON with 'message', 'extractedData', and 'isComplete'.
 `;
 
         try {
             const { output } = await ai.generate({
                 model: gemini20Flash,
-                prompt: systemPrompt, // Passing the whole context as one prompt is what worked this morning
+                system: systemPrompt,
+                prompt: "Continue the conversation and update the extracted data.",
                 output: { schema: QuizResponseSchema },
             });
 
-            if (!output) throw new Error("AI returned no response");
+            if (!output) throw new Error("AI returned no output");
 
-            // Safeguard: Ensure isComplete isn't hallucinated early
-            const d = output.extractedData;
-            const hasAll = !!(d.name && d.email && d.role && d.learningGoal);
-            const isComplete = hasAll && !!output.isComplete;
+            // Merge with input data to ensure we never lose states if AI forgets a field
+            const prev = input.extractedData || {};
+            const next = output.extractedData || {};
+
+            const mergedData = {
+                name: (next.name || prev.name || "").substring(0, 100),
+                email: (next.email || prev.email || "").toLowerCase().trim().substring(0, 100),
+                role: (next.role || prev.role || "").substring(0, 100),
+                learningGoal: (next.learningGoal || prev.learningGoal || "").substring(0, 300)
+            };
+
+            const hasAll = !!(mergedData.name && mergedData.email && mergedData.role && mergedData.learningGoal);
+            const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mergedData.email);
 
             return {
                 message: output.message,
-                extractedData: {
-                    name: (d.name || "").substring(0, 100),
-                    email: (d.email || "").toLowerCase().substring(0, 100),
-                    role: (d.role || "").substring(0, 100),
-                    learningGoal: (d.learningGoal || "").substring(0, 200)
-                },
-                isComplete
+                extractedData: mergedData,
+                isComplete: hasAll && validEmail && !!output.isComplete
             };
         } catch (error: any) {
             console.error('💥 [Agent Service] AI Flow Error:', error);
-            // Fallback that keeps the convo moving
             return {
                 message: "I'm processing that! Could you please repeat your last point so I can save it correctly?",
                 extractedData: input.extractedData || {},
