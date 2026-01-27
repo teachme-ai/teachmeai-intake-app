@@ -9,6 +9,8 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
+        const history = input.messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+
         const systemPrompt = `
 You are the TeachMeAI Guide, a friendly and professional AI advisor. 
 Your goal is to conduct a structured, empathetic conversation to collect four key pieces of information for the user's personalized AI roadmap.
@@ -35,7 +37,7 @@ QUESTION PRIORITY:
 
 CURRENT PRIORITY:
 Identify the FIRST missing field in the list above. Focus your entire response on collecting JUST that field. 
-If all are present, and only then, acknowledge them and mark isComplete: true.
+If all are present, and only then, mark isComplete: true.
 
 ADHERENCE RULES:
 - CRITICAL: You MUST collect NAME, EMAIL, ROLE, and LEARNING GOAL.
@@ -46,10 +48,9 @@ ADHERENCE RULES:
 JSON FORMATTING RULES:
 - Ensure each field in 'extractedData' is a clean, separate string.
 - NEVER include literal newlines or escaped quotes inside a field value.
-- If a user provides multiple pieces of info at once, extract them but only confirm the next step.
 
 CONVERSATION HISTORY:
-${input.messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}
+${history}
 
 CURRENT EXTRACTED DATA:
 ${JSON.stringify(input.extractedData || {}, null, 2)}
@@ -57,17 +58,16 @@ ${JSON.stringify(input.extractedData || {}, null, 2)}
 Respond with the next message, the updated extracted data, and the completion status.
 
 EXTRACTION REMINDER:
-- Check the conversation history for any new info the user just provided.
-- Update 'extractedData' with ANY piece of info you find in the history.
-- If the user provides multiple pieces (e.g., "Role: Teacher, Goal: Learn AI"), capture BOTH.
+- Update 'extractedData' with any new info you find in the history.
 `;
 
         const { output } = await ai.generate({
-            model: gemini20Flash,
+            model: gemini20Flash.withConfig({
+                temperature: 0.1,
+                maxOutputTokens: 1000
+            }),
             system: systemPrompt,
-            // We pass the messages as history if needed, but for now we rely on the system prompt construction
-            // for absolute control over the extraction logic.
-            prompt: "Continue the conversation based on the rules provided.",
+            prompt: "Continue the conversation. Ensure isComplete is explicitly boolean.",
             output: { schema: QuizResponseSchema },
         });
 
@@ -75,29 +75,31 @@ EXTRACTION REMINDER:
             throw new Error("Quiz Guide failed to generate response");
         }
 
-        // Sanitize extracted data
+        // Schema Guard: Force isComplete to exist
+        if (typeof (output as any).isComplete === 'undefined') {
+            (output as any).isComplete = false;
+        }
+
+        // Sanitize and TRUNCATE extracted data to prevent hallucinations from breaking the payload
         if (output.extractedData) {
             const ed = output.extractedData;
-            if (ed.name) ed.name = ed.name.trim();
-            if (ed.email) ed.email = ed.email.trim().toLowerCase();
-            if (ed.role) ed.role = ed.role.trim();
-            if (ed.learningGoal) ed.learningGoal = ed.learningGoal.trim();
+            const limit = (str: string | undefined) => str ? str.trim().substring(0, 200) : str;
+
+            if (ed.name) ed.name = limit(ed.name);
+            if (ed.email) ed.email = ed.email?.trim().toLowerCase().substring(0, 100);
+            if (ed.role) ed.role = limit(ed.role);
+            if (ed.learningGoal) ed.learningGoal = limit(ed.learningGoal);
         }
 
         const d = output.extractedData;
         const requiredFieldsFetched = !!(d.name && d.email && d.role && d.learningGoal);
-
-        // Final sanity check on email format if present
         const hasValidEmail = d.email ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email) : false;
 
         if (output.isComplete && (!requiredFieldsFetched || !hasValidEmail)) {
-            console.warn('⚠️ [Agent Service] AI marked complete but fields are missing or invalid. Overriding isComplete to false.');
+            console.warn('⚠️ [Agent Service] Overriding hallucinated completion.');
             output.isComplete = false;
-
-            // If the AI thought it was done but it's not, we might need to nudge it 
-            // but for now, just returning isComplete: false will trigger another turn.
             if (!hasValidEmail && d.email) {
-                output.message = "That email address doesn't look quite right. Could you double-check it? I want to make sure your report reaches you!";
+                output.message = "That email address doesn't look quite right. Could you double-check it?";
             }
         }
 
