@@ -86,7 +86,7 @@ const getAuth = () => {
   });
 }
 
-const getSheets = () => google.sheets({ version: 'v4', auth: getAuth() })
+export const getSheets = () => google.sheets({ version: 'v4', auth: getAuth() })
 
 export async function saveToGoogleSheets(
   intakeData: IntakeResponse,
@@ -145,85 +145,76 @@ export async function saveToGoogleSheets(
   }
 }
 
-// Helper function to create the spreadsheet if it doesn't exist
-export async function createSpreadsheetIfNeeded(): Promise<string> {
+// Helper to ensure Leads sheet exists
+async function ensureLeadsSheet(spreadsheetId: string, sheets: any) {
   try {
-    const drive = google.drive({ version: 'v3', auth: getAuth() })
+    const response = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetExists = response.data.sheets?.some(
+      (s: any) => s.properties?.title === 'Leads'
+    );
 
-    // Create new spreadsheet
-    const sheets = getSheets()
-    const spreadsheet = await sheets.spreadsheets.create({
-      requestBody: {
-        properties: {
-          title: 'TeachMeAI Intake Responses',
-        },
-        sheets: [
-          {
-            properties: {
-              title: 'Intake Data',
-              gridProperties: {
-                rowCount: 1000,
-                columnCount: 6,
-              },
-            },
-          },
-        ],
-      },
-    })
+    if (!sheetExists) {
+      console.log('📝 Google Sheets: Creating Leads sheet...');
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              addSheet: {
+                properties: {
+                  title: 'Leads',
+                  gridProperties: { rowCount: 1000, columnCount: 10 }
+                }
+              }
+            }
+          ]
+        }
+      });
 
-    const spreadsheetId = spreadsheet.data.spreadsheetId!
-
-    // Set up headers
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: 'Intake Data!A1:F1',
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: [
-          [
-            'Timestamp',
-            'Session ID',
-            'Raw Responses',
-            'AI Analysis',
-            'Learner Profile',
-            'Recommendations',
-          ],
-        ],
-      },
-    })
-
-    // Format headers
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [
-          {
-            repeatCell: {
-              range: {
-                sheetId: 0,
-                startRowIndex: 0,
-                endRowIndex: 1,
-                startColumnIndex: 0,
-                endColumnIndex: 6,
-              },
-              cell: {
-                userEnteredFormat: {
-                  backgroundColor: { red: 0.2, green: 0.6, blue: 0.9 },
-                  textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 } },
-                },
-              },
-              fields: 'userEnteredFormat(backgroundColor,textFormat)',
-            },
-          },
-        ],
-      },
-    })
-
-    console.log('New spreadsheet created with ID:', spreadsheetId)
-    return spreadsheetId
-
+      // Add Headers
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: 'Leads!A1:I1',
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[
+            'Lead ID', 'Timestamp', 'Persona', 'Name', 'Email',
+            'Quiz Version', 'Landing Page', 'Attribution', 'Raw Answers'
+          ]]
+        }
+      });
+    }
   } catch (error) {
-    console.error('Error creating spreadsheet:', error)
-    throw new Error('Failed to create Google Sheets spreadsheet')
+    console.error('❌ Google Sheets: Error ensuring Leads sheet:', error);
   }
+}
+
+export async function saveLeadToSheet(leadData: any, leadId: string): Promise<void> {
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+  if (!spreadsheetId) throw new Error('No GOOGLE_SHEET_ID provided');
+
+  const sheets = getSheets();
+
+  // Ensure the sheet exists before writing
+  await ensureLeadsSheet(spreadsheetId, sheets);
+
+  const values = [[
+    leadId,
+    new Date().toISOString(),
+    leadData.persona_id,
+    leadData.contact_info.name,
+    leadData.contact_info.email,
+    leadData.quiz_version || 'N/A',
+    leadData.landing_page_id,
+    JSON.stringify(leadData.attribution || {}),
+    JSON.stringify(leadData.answers_raw)
+  ]];
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: 'Leads!A2',
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values }
+  });
 }
