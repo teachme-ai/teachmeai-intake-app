@@ -9,7 +9,7 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
-        console.log('🤖 [Agent Service] Processing Guide Flow (Morning Restoration + Full States)...');
+        console.log('🤖 [Agent Service] Processing Guide Flow (Strict State Restoration)...');
 
         const historyText = (input.messages || [])
             .map(m => `${m.role.toUpperCase()}: ${m.content}`)
@@ -26,47 +26,58 @@ Your goal is to have a natural conversation with the user to collect four key pi
 RULES:
 - Be empathetic and conversational.
 - Update the 'extractedData' object with any info found in the history.
-- ALWAYS return the full 'extractedData' object with ALL previously collected information and any new information.
-- DO NOT leave previously collected fields empty in the response.
-- Only mark 'isComplete: true' when ALL FOUR fields (name, email, role, learningGoal) are present and valid.
+- If info is present in the CURRENT EXTRACTED DATA, do NOT ask for it again.
+- If all info is present, thank the user and set 'isComplete: true'.
 
-CURRENT EXTRACTED DATA (Keep these and add new ones):
+CURRENT EXTRACTED DATA:
 ${JSON.stringify(input.extractedData || {}, null, 2)}
 
 CONVERSATION HISTORY:
 ${historyText}
 
-Return valid JSON with 'message', 'extractedData', and 'isComplete'.
+Respond with the updated extractedData and completion status.
 `;
 
         try {
             const { output } = await ai.generate({
                 model: gemini20Flash,
                 system: systemPrompt,
-                prompt: "Continue the conversation and update the extracted data.",
+                prompt: "Continue the conversation. Extract all available data and set isComplete if all 4 fields are present.",
                 output: { schema: QuizResponseSchema },
             });
 
             if (!output) throw new Error("AI returned no output");
 
-            // Merge with input data to ensure we never lose states if AI forgets a field
+            // STICKY DATA LOGIC: We never "forget" a field once it has been captured.
             const prev = input.extractedData || {};
             const next = output.extractedData || {};
 
+            const isVal = (val: any) => typeof val === 'string' && val.trim().length > 1 && !val.toLowerCase().includes('not provided');
+
             const mergedData = {
-                name: (next.name || prev.name || "").substring(0, 100),
-                email: (next.email || prev.email || "").toLowerCase().trim().substring(0, 100),
-                role: (next.role || prev.role || "").substring(0, 100),
-                learningGoal: (next.learningGoal || prev.learningGoal || "").substring(0, 300)
+                name: (isVal(next.name) ? next.name.trim() : (prev.name || "")),
+                email: (isVal(next.email) ? next.email.trim().toLowerCase() : (prev.email || "")),
+                role: (isVal(next.role) ? next.role.trim() : (prev.role || "")),
+                learningGoal: (isVal(next.learningGoal) ? next.learningGoal.trim() : (prev.learningGoal || ""))
             };
 
+            // Programmatic Validation
             const hasAll = !!(mergedData.name && mergedData.email && mergedData.role && mergedData.learningGoal);
             const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mergedData.email);
 
+            // FORCE isComplete: If all valid data is present, we are DONE.
+            const isComplete = hasAll && validEmail;
+
+            // If we are auto-completing, ensure the message is a final confirmation
+            let message = output.message;
+            if (isComplete && !output.isComplete) {
+                message = `Great! I have all your details. I've got your name as ${mergedData.name}, and I'll send the AI analysis for your role as a ${mergedData.role} to ${mergedData.email}. We're all set!`;
+            }
+
             return {
-                message: output.message,
+                message,
                 extractedData: mergedData,
-                isComplete: hasAll && validEmail && !!output.isComplete
+                isComplete
             };
         } catch (error: any) {
             console.error('💥 [Agent Service] AI Flow Error:', error);
