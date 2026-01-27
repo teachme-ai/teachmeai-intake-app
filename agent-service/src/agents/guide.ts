@@ -12,36 +12,47 @@ export const quizGuideFlow = ai.defineFlow(
     async (input) => {
         console.log('🤖 [Agent Service] Processing Guide Flow...');
 
-        // Map messages correctly for Genkit/Gemini
-        // Ensure role is exactly 'user' or 'model'
-        const messages: any[] = (input.messages || [])
-            .filter(m => m && m.content && (m.role === 'user' || m.role === 'model'))
-            .map(m => ({
-                role: m.role as 'user' | 'model',
-                content: [{ text: m.content }]
-            }));
+        // Filter and map messages
+        const allMessages = (input.messages || [])
+            .filter(m => m && m.content && (m.role === 'user' || m.role === 'model'));
+
+        // GEMINI STABILITY FIX: History must start with a 'user' message.
+        // If the first message is 'model' (UI greeting), we skip it.
+        let startIndex = 0;
+        while (startIndex < allMessages.length && allMessages[startIndex].role !== 'user') {
+            startIndex++;
+        }
+
+        const validHistory = allMessages.slice(startIndex).map(m => ({
+            role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
+            content: [{ text: m.content }]
+        }));
+
+        // Genkit best practice: Separate history and the current prompt
+        const promptMessage = validHistory.pop();
+        const history = validHistory;
 
         const systemPrompt = GUIDE_SYSTEM_PROMPT
             .replace('{{CURRENT_DATA}}', JSON.stringify(input.extractedData || {}, null, 2));
 
         try {
+            console.log(`💬 [Agent Service] Sending to AI: ${promptMessage?.content[0]?.text || 'No prompt'}`);
+
             const { output } = await ai.generate({
                 model: gemini20Flash,
                 system: systemPrompt,
-                messages: messages,
+                history: history,
+                prompt: promptMessage?.content[0]?.text || "Hello",
                 output: { schema: QuizResponseSchema },
             });
 
-            if (!output) {
-                throw new Error("Quiz Guide failed to generate response");
-            }
+            if (!output) throw new Error("AI returned empty output");
 
-            // Clean data
             const clean = (s: any) => typeof s === 'string' ? s.trim().substring(0, 500) : "";
             const d = output.extractedData || {};
 
             return {
-                message: output.message || "I missed that. Could you repeat?",
+                message: output.message || "Next step?",
                 extractedData: {
                     name: clean(d.name),
                     email: clean(d.email).toLowerCase(),
@@ -50,11 +61,10 @@ export const quizGuideFlow = ai.defineFlow(
                 },
                 isComplete: !!output.isComplete
             };
-        } catch (error) {
-            console.error('💥 [Agent Service] AI Generate Error:', error);
-            // Fallback object to prevent schema crash if AI flakes
+        } catch (error: any) {
+            console.error('💥 [Agent Service] AI CRASH:', error.message || error);
             return {
-                message: "I'm processing that right now! Could you please repeat your last point so I can make sure I've got it saved correctly?",
+                message: "I'm processing that right now! Please tell me your name to begin.",
                 extractedData: input.extractedData || {},
                 isComplete: false
             };
