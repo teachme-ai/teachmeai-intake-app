@@ -68,8 +68,11 @@ export interface GoogleSheetsRow {
 export interface ChatQuizPayload {
   name: string;
   email: string;
+  role: string;
   goal: string;
-  source: string;
+  challenge?: string;
+  source?: string;
+  timestamp?: number;
   iat?: number;
   exp?: number;
 }
