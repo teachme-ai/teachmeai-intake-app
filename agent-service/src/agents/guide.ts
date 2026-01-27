@@ -9,59 +9,64 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
-        // EXACT LOGIC FROM THE WORKING MORNING VERSION
-        const systemPrompt = `
-You are the TeachMeAI Guide, a friendly and professional AI advisor. 
-Your goal is to have a natural conversation with the user to collect four key pieces of information:
-1. Name
-2. Email Address
-3. Professional Role
-4. Primary Learning Goal
+        console.log('🤖 [Agent Service] Processing Guide Flow (Form-First Logic)...');
 
-ADHERENCE RULES:
-- Be empathetic and conversational. Don't sound like a form.
-- If you already have a piece of data, don't ask for it again.
-- Only mark 'isComplete: true' when you have a VALID name, email, role, and a clear goal.
+        // QUICK BYPASS: If we already have the 4 nodes, don't even talk to the AI.
+        // This makes the Form 100% reliable and prevents any hallucination loops.
+        const d = input.extractedData || {};
+        const hasName = typeof d.name === 'string' && d.name.trim().length > 1;
+        const hasEmail = typeof d.email === 'string' && d.email.includes('@');
+        const hasRole = typeof d.role === 'string' && d.role.trim().length > 1;
+        const hasGoal = (typeof d.learningGoal === 'string' && d.learningGoal.trim().length > 1) ||
+            (typeof (d as any).goal === 'string' && (d as any).goal.trim().length > 1);
 
-CONVERSATION HISTORY:
-${(input.messages || []).map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n')}
-
-CURRENT EXTRACTED DATA:
-${JSON.stringify(input.extractedData || {}, null, 2)}
-
-Respond with the next message, the updated extracted data, and the completion status.
-`;
-
-        const { output } = await ai.generate({
-            model: gemini20Flash,
-            system: systemPrompt,
-            prompt: "Continue the conversation based on the rules provided.",
-            output: { schema: QuizResponseSchema },
-        });
-
-        if (!output) {
-            throw new Error("Quiz Guide failed to generate response");
+        if (hasName && hasEmail && hasRole && hasGoal) {
+            console.log('✅ [Agent Service] Data is full. Bypassing AI to ensure stability.');
+            return {
+                message: "Excellent! I have all your details. We're ready to start your AI analysis.",
+                extractedData: {
+                    name: String(d.name).trim(),
+                    email: String(d.email).trim().toLowerCase(),
+                    role: String(d.role).trim(),
+                    learningGoal: String(d.learningGoal || (d as any).goal).trim()
+                },
+                isComplete: true
+            };
         }
 
-        // STATE PERSISTENCE: Merge collected fields to ensure we never lose data turns.
-        const prev = input.extractedData || {};
-        const next = output.extractedData || {};
+        // FALLBACK FOR CHAT: Only run AI if data is incomplete
+        const historyText = (input.messages || [])
+            .map(m => `${m.role.toUpperCase()}: ${m.content.substring(0, 200)}`)
+            .slice(-4)
+            .join('\n');
 
-        const merged = {
-            name: (next.name || prev.name || "").trim(),
-            email: (next.email || prev.email || "").trim().toLowerCase(),
-            role: (next.role || prev.role || "").trim(),
-            learningGoal: (next.learningGoal || prev.learningGoal || "").trim()
-        };
+        const systemPrompt = `
+You are the TeachMeAI Guide. Collect: Name, Email, Role, Goal.
+Current Data: ${JSON.stringify(d)}
+Recent History: ${historyText}
+Rule: Be extremely brief (max 15 words). Extract data into the JSON.
+`;
 
-        // Final verification for completion
-        const hasAll = !!(merged.name && merged.email && merged.role && merged.learningGoal);
-        const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(merged.email);
+        try {
+            const { output } = await ai.generate({
+                model: gemini20Flash,
+                system: systemPrompt,
+                output: { schema: QuizResponseSchema },
+            });
 
-        return {
-            message: output.message,
-            extractedData: merged,
-            isComplete: hasAll && validEmail && !!output.isComplete
-        };
+            if (!output) throw new Error("No output");
+
+            return {
+                message: output.message.substring(0, 200),
+                extractedData: output.extractedData,
+                isComplete: !!output.isComplete
+            };
+        } catch (error) {
+            return {
+                message: "Could you please tell me your professional role again?",
+                extractedData: d,
+                isComplete: false
+            };
+        }
     }
 );
