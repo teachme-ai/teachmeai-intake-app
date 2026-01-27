@@ -52,13 +52,20 @@ JSON FORMATTING RULES:
 CONVERSATION HISTORY:
 ${history}
 
-CURRENT EXTRACTED DATA:
-${JSON.stringify(input.extractedData || {}, null, 2)}
+CURRENT EXTRACTED DATA (Template):
+{
+  "name": "${input.extractedData?.name || ""}",
+  "role": "${input.extractedData?.role || ""}",
+  "learningGoal": "${input.extractedData?.learningGoal || ""}",
+  "email": "${input.extractedData?.email || ""}"
+}
 
 Respond with the next message, the updated extracted data, and the completion status.
 
 EXTRACTION REMINDER:
-- Update 'extractedData' with any new info you find in the history.
+- If you see new information in the history, update the corresponding key in extractedData.
+- Even if only partial information is available, extract it immediately.
+- DO NOT mark isComplete: true if any of those 4 keys are still "" (empty).
 `;
 
         const { output } = await ai.generate({
