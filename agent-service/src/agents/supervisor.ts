@@ -1,4 +1,5 @@
-import { IntakeResponseSchema } from '../types';
+import { IntakeResponseSchema, DeepResearchOutputSchema } from '../types';
+import { deepResearchFlow } from './deep-research';
 import { profilerFlow } from './profiler';
 import { strategistFlow } from './strategist';
 import { tacticianFlow } from './tactician';
@@ -15,6 +16,7 @@ export const IMPACTAnalysisSchema = z.object({
     nextSteps: z.array(z.string()),
     learnerProfile: z.string(),
     recommendations: z.array(z.string()),
+    research: DeepResearchOutputSchema
 });
 
 export const supervisorFlow = ai.defineFlow(
@@ -27,15 +29,24 @@ export const supervisorFlow = ai.defineFlow(
         // Phase 1: Profiling
         const profile = await profilerFlow(intake);
 
-        // Phase 2: Strategy
+        // Phase 2: Deep Research
+        // We infer role/goal from intake
+        const research = await deepResearchFlow({
+            role: intake.currentRoles[0] || "Professional",
+            goal: intake.primaryGoal || "Upskilling",
+            // industry: intake.industry // Not available in current schema yet
+        });
+
+        // Phase 3: Strategy
         const strategy = await strategistFlow({
             profile,
             professionalRoles: intake.currentRoles,
             careerVision: "Implicit based on intake",
-            primaryGoal: intake.primaryGoal
+            primaryGoal: intake.primaryGoal,
+            deepResearchResult: research
         });
 
-        // Phase 3: Tactics
+        // Phase 4: Tactics
         const tactics = await tacticianFlow({
             strategy,
             name: intake.name,
@@ -45,7 +56,7 @@ export const supervisorFlow = ai.defineFlow(
             }
         });
 
-        // Phase 4: Assembly
+        // Phase 5: Assembly
         return {
             Identify: strategy.identify,
             Motivate: strategy.motivate,
@@ -55,7 +66,8 @@ export const supervisorFlow = ai.defineFlow(
             Transform: tactics.transform,
             nextSteps: tactics.nextSteps,
             learnerProfile: JSON.stringify(profile.psychologicalProfile),
-            recommendations: tactics.recommendations
+            recommendations: tactics.recommendations,
+            research: research
         };
     }
 );

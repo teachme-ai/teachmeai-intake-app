@@ -99,3 +99,24 @@ export const QuizResponseSchema = z.object({
 
 export type QuizSession = z.infer<typeof QuizSessionSchema>;
 export type QuizResponse = z.infer<typeof QuizResponseSchema>;
+
+export const DeepResearchInputSchema = z.object({
+    role: z.string(),
+    goal: z.string(),
+    industry: z.string().optional(),
+});
+
+export const DeepResearchOutputSchema = z.object({
+    aiOpportunityMap: z.array(z.object({
+        opportunity: z.string(),
+        impact: z.string()
+    })).max(6),
+    topPriorities: z.array(z.object({
+        name: z.string(),
+        quickWin: z.string(),
+        portfolioArtifact: z.string()
+    })).max(4),
+    assumptions: z.array(z.string())
+});
+
+export type DeepResearchOutput = z.infer<typeof DeepResearchOutputSchema>;

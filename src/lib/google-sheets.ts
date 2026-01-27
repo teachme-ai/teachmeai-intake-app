@@ -88,6 +88,39 @@ const getAuth = () => {
 
 export const getSheets = () => google.sheets({ version: 'v4', auth: getAuth() })
 
+// Helper to ensure Analysis sheet exists with correct headers
+async function ensureAnalysisSheet(spreadsheetId: string, sheets: any) {
+  try {
+    const response = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetExists = response.data.sheets?.some(
+      (s: any) => s.properties?.title === 'Sheet1'
+    );
+
+    if (!sheetExists) {
+      // If Sheet1 doesn't exist, we might be in a new sheet. 
+      // For now, let's assume Sheet1 is the main destination or "Analysis"
+    }
+
+    // Always update headers to match new spec
+    const headers = [
+      'Lead ID', 'Timestamp', 'Name', 'Role', 'Goal', 'Email',
+      'Profile Summary', 'Strategy - Identify', 'Strategy - Plan',
+      'Research - Top Opp 1', 'Research - Top Priority 1', 'Research - Quick Win 1',
+      'Tactics - Next Step 1', 'Tactics - Full Plan', 'Raw Analysis JSON'
+    ];
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: 'Sheet1!A1:O1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [headers] }
+    });
+
+  } catch (error) {
+    console.error('❌ Google Sheets: Error ensuring Analysis headers:', error);
+  }
+}
+
 export async function saveToGoogleSheets(
   intakeData: IntakeResponse,
   aiAnalysis: IMPACTAnalysis
@@ -95,52 +128,61 @@ export async function saveToGoogleSheets(
   try {
     console.log('📊 Google Sheets: Starting save process...')
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
-
     if (!spreadsheetId) {
       console.warn('⚠️ Google Sheets: No GOOGLE_SHEET_ID provided, skipping save')
       return
     }
 
-    // Align with headers: Timestamp | Session ID | Raw Intake Data | IMPACT Analysis | Learner Profile | Recommendations
+    const sheets = getSheets();
+    await ensureAnalysisSheet(spreadsheetId, sheets);
+
+    // Flatten nested data based on FINAL_REPORT_SPEC.md
+    // Safely access deep properties with optional chaining
+    const research = (aiAnalysis as any).research || {};
+    const topOpp = research.aiOpportunityMap?.[0]?.opportunity || '';
+    const topPriority = research.topPriorities?.[0] || {};
+
     const values = [
       [
+        intakeData.sessionId || 'N/A',            // Lead ID (using sessionId as proxy or pass explicit from calling scope if avail)
         intakeData.timestamp || new Date().toISOString(),
-        intakeData.sessionId || 'N/A',
-        JSON.stringify(intakeData),
-        JSON.stringify(aiAnalysis),
-        aiAnalysis.learnerProfile || 'N/A',
-        aiAnalysis.recommendations?.join('; ') || 'None'
+        intakeData.name || 'N/A',
+        intakeData.currentRoles?.[0] || 'N/A',
+        intakeData.primaryGoal || 'N/A',
+        intakeData.email || 'N/A',
+
+        // AI Analysis
+        JSON.parse(aiAnalysis.learnerProfile || '{}').psyCap || aiAnalysis.learnerProfile, // Simple profile
+        aiAnalysis.Identify,
+        aiAnalysis.Plan,
+
+        // Deep Research (Flattened)
+        topOpp,
+        topPriority.name || '',
+        topPriority.quickWin || '',
+
+        // Tactics
+        aiAnalysis.nextSteps?.[0] || '',
+        aiAnalysis.Act,
+
+        // Raw Backup
+        JSON.stringify(aiAnalysis)
       ]
     ]
 
     console.log('📊 Google Sheets: Attempting to append to Sheet1...')
-    const sheets = getSheets()
-    const result = await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Sheet1!A2', // Append to Sheet1, starting from A2 (search for first empty row)
+      range: 'Sheet1!A2',
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
-      requestBody: {
-        values,
-      },
+      requestBody: { values },
     })
 
-    console.log('✅ Google Sheets: Data saved successfully!')
-    console.log('✅ Google Sheets: Update range:', result.data.updates?.updatedRange)
+    console.log('✅ Google Sheets: Analysis data saved successfully!')
 
   } catch (error) {
     console.error('❌ Google Sheets: Save failed:', error instanceof Error ? error.message : error);
-
-    // Log additional error details for debugging
-    if (error instanceof Error) {
-      console.error('❌ Google Sheets: Error stack:', error.stack);
-      console.error('❌ Google Sheets: Error name:', error.name);
-    }
-
-    // Log the full error object for debugging
-    console.error('❌ Google Sheets: Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-
-    // Re-throw the error so it can be caught by the API route
     throw error;
   }
 }

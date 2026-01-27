@@ -2,6 +2,7 @@ export interface StrategistContext {
     profile: any;
     professionalRoles: string[];
     primaryGoal?: string;
+    deepResearchResult?: any;
 }
 
 export function getStrategistPrompt(context: StrategistContext): string {
@@ -15,6 +16,12 @@ export function getStrategistPrompt(context: StrategistContext): string {
     Professional Context:
     Roles: ${context.professionalRoles.join(', ')}
     ${context.primaryGoal ? `Primary Learning Goal: ${context.primaryGoal}` : ''}
+
+    ${context.deepResearchResult ? `
+    Deep Research Insights:
+    - Top Priorities: ${JSON.stringify(context.deepResearchResult.topPriorities)}
+    - Opportunity Map: ${JSON.stringify(context.deepResearchResult.aiOpportunityMap)}
+    ` : ''}
     
     Tasks:
     1. Identify: Re-state the top focus areas in the context of their career.
