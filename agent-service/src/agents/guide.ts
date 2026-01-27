@@ -1,5 +1,4 @@
 import { gemini20Flash } from '@genkit-ai/googleai';
-import { GUIDE_SYSTEM_PROMPT } from '../prompts/guide.system';
 import { QuizSessionSchema, QuizResponseSchema } from '../types';
 import { ai } from '../genkit';
 
@@ -10,61 +9,71 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
-        console.log('🤖 [Agent Service] Processing Guide Flow...');
+        console.log('🤖 [Agent Service] Processing Guide Flow (Restoration Mode)...');
 
-        // Filter and map messages
-        const allMessages = (input.messages || [])
-            .filter(m => m && m.content && (m.role === 'user' || m.role === 'model'));
+        const historyText = (input.messages || [])
+            .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+            .join('\n');
 
-        // GEMINI STABILITY FIX: History must start with a 'user' message.
-        // If the first message is 'model' (UI greeting), we skip it.
-        let startIndex = 0;
-        while (startIndex < allMessages.length && allMessages[startIndex].role !== 'user') {
-            startIndex++;
-        }
+        const systemPrompt = `
+You are the TeachMeAI Guide, a friendly and professional AI advisor. 
+Your goal is to have a natural conversation with the user to collect four key pieces of information for their personalized AI roadmap:
+1. Their Name
+2. Their Email Address
+3. Their Professional Role (succinct job title)
+4. Their Primary Learning Goal (what they want to achieve with AI)
 
-        const validHistory = allMessages.slice(startIndex).map(m => ({
-            role: (m.role === 'user' ? 'user' : 'model') as 'user' | 'model',
-            content: [{ text: m.content }]
-        }));
+ADHERENCE RULES:
+- Be empathetic and conversational. Don't sound like a form.
+- If you already have a piece of data, don't ask for it again.
+- If the user provides multiple pieces of info at once, update all of them in 'extractedData'.
+- Only mark 'isComplete: true' when you have ALL FOUR pieces of information.
+- If information is missing, use empty string "" in 'extractedData'.
+- Use the CURRENT DATA below to keep track of what you have.
 
-        // Genkit best practice: Separate history and the current prompt
-        const promptMessage = validHistory.pop();
-        const history = validHistory;
+CURRENT DATA:
+${JSON.stringify(input.extractedData || {}, null, 2)}
 
-        const systemPrompt = GUIDE_SYSTEM_PROMPT
-            .replace('{{CURRENT_DATA}}', JSON.stringify(input.extractedData || {}, null, 2));
+CONVERSATION HISTORY:
+${historyText}
+
+Respond with a JSON object:
+{
+  "message": "your next conversational response",
+  "extractedData": { "name": "...", "email": "...", "role": "...", "learningGoal": "..." },
+  "isComplete": boolean
+}
+`;
 
         try {
-            console.log(`💬 [Agent Service] Sending to AI: ${promptMessage?.content[0]?.text || 'No prompt'}`);
-
             const { output } = await ai.generate({
                 model: gemini20Flash,
-                system: systemPrompt,
-                history: history,
-                prompt: promptMessage?.content[0]?.text || "Hello",
+                prompt: systemPrompt, // Passing the whole context as one prompt is what worked this morning
                 output: { schema: QuizResponseSchema },
             });
 
-            if (!output) throw new Error("AI returned empty output");
+            if (!output) throw new Error("AI returned no response");
 
-            const clean = (s: any) => typeof s === 'string' ? s.trim().substring(0, 500) : "";
-            const d = output.extractedData || {};
+            // Safeguard: Ensure isComplete isn't hallucinated early
+            const d = output.extractedData;
+            const hasAll = !!(d.name && d.email && d.role && d.learningGoal);
+            const isComplete = hasAll && !!output.isComplete;
 
             return {
-                message: output.message || "Next step?",
+                message: output.message,
                 extractedData: {
-                    name: clean(d.name),
-                    email: clean(d.email).toLowerCase(),
-                    learningGoal: clean(d.learningGoal),
-                    role: clean(d.role)
+                    name: (d.name || "").substring(0, 100),
+                    email: (d.email || "").toLowerCase().substring(0, 100),
+                    role: (d.role || "").substring(0, 100),
+                    learningGoal: (d.learningGoal || "").substring(0, 200)
                 },
-                isComplete: !!output.isComplete
+                isComplete
             };
         } catch (error: any) {
-            console.error('💥 [Agent Service] AI CRASH:', error.message || error);
+            console.error('💥 [Agent Service] AI Flow Error:', error);
+            // Fallback that keeps the convo moving
             return {
-                message: "I'm processing that right now! Please tell me your name to begin.",
+                message: "I'm processing that! Could you please repeat your last point so I can save it correctly?",
                 extractedData: input.extractedData || {},
                 isComplete: false
             };
