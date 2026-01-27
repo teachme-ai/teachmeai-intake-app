@@ -10,7 +10,7 @@ export const quizGuideFlow = ai.defineFlow(
         outputSchema: QuizResponseSchema,
     },
     async (input) => {
-        const history = input.messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+        const history = input.messages.slice(-10).map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
 
         const systemPrompt = GUIDE_SYSTEM_PROMPT
             .replace('{{CURRENT_DATA}}', JSON.stringify(input.extractedData || {}, null, 2))
@@ -19,10 +19,9 @@ export const quizGuideFlow = ai.defineFlow(
         const { output } = await ai.generate({
             model: gemini20Flash.withConfig({
                 temperature: 0.1,
-                maxOutputTokens: 800
+                maxOutputTokens: 500
             }),
             system: systemPrompt,
-            prompt: "Respond. Ensure isComplete is boolean.",
             output: { schema: QuizResponseSchema },
         });
 
