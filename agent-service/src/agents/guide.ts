@@ -15,9 +15,9 @@ export const quizGuideFlow = ai.defineFlow(
         // Map messages correctly for Genkit/Gemini
         // Ensure role is exactly 'user' or 'model'
         const messages: any[] = (input.messages || [])
-            .filter(m => m && m.content && (m.role === 'user' || m.role === 'model' || m.role === 'assistant'))
+            .filter(m => m && m.content && (m.role === 'user' || m.role === 'model'))
             .map(m => ({
-                role: (m.role === 'user' ? 'user' : 'model'),
+                role: m.role as 'user' | 'model',
                 content: [{ text: m.content }]
             }));
 
