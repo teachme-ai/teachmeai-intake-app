@@ -19,9 +19,10 @@ Your goal is to have a natural conversation with the user to collect four key pi
 
 ADHERENCE RULES:
 - Be empathetic and conversational. Don't sound like a form.
-- If you already have a piece of data, don't ask for it again.
+- CRITICAL: You MUST collect NAME, EMAIL, ROLE, and LEARNING GOAL.
+- DO NOT mark 'isComplete: true' until you have ALL FOUR pieces of information.
+- If you have 3/4 pieces, ask for the 4th specifically.
 - If the user provides a goal, acknowledge it with enthusiasm and explain how the full analysis will help.
-- Only mark 'isComplete: true' when you have a VALID name, email, role, and a clear goal.
 - If the user asks questions about TeachMeAI, answer them briefly but steer back to the collection.
 - TeachMeAI helps professionals build real AI capability in 30-90 days through structured, psychological-science-backed roadmap.
 
@@ -51,6 +52,25 @@ Respond with the next message, the updated extracted data, and the completion st
 
         if (!output) {
             throw new Error("Quiz Guide failed to generate response");
+        }
+
+        // Programmatic Guardrail: Don't trust the LLM to know if it's actually finished.
+        // We MUST verify that all 4 required fields are present and valid.
+        const d = output.extractedData;
+        const requiredFieldsFetched = !!(d.name && d.email && d.role && d.learningGoal);
+
+        // Final sanity check on email format if present
+        const hasValidEmail = d.email ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email) : false;
+
+        if (output.isComplete && (!requiredFieldsFetched || !hasValidEmail)) {
+            console.warn('⚠️ [Agent Service] AI marked complete but fields are missing or invalid. Overriding isComplete to false.');
+            output.isComplete = false;
+
+            // If the AI thought it was done but it's not, we might need to nudge it 
+            // but for now, just returning isComplete: false will trigger another turn.
+            if (!hasValidEmail && d.email) {
+                output.message = "That email address doesn't look quite right. Could you double-check it? I want to make sure your report reaches you!";
+            }
         }
 
         return output;
