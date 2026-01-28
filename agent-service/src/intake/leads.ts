@@ -93,13 +93,13 @@ export async function saveLeadToSheet(leadData: any): Promise<string> {
     const values = [[
         leadId,
         new Date().toISOString(),
-        leadData.persona_id,
-        leadData.contact_info.name,
-        leadData.contact_info.email,
+        leadData.persona_id || 'N/A',
+        leadData.contact_info?.name || 'N/A',
+        leadData.contact_info?.email || 'N/A',
         leadData.quiz_version || 'N/A',
-        leadData.landing_page_id,
+        leadData.landing_page_id || 'N/A',
         JSON.stringify(leadData.attribution || {}),
-        JSON.stringify(leadData.answers_raw)
+        JSON.stringify(leadData.answers_raw || [])
     ]];
 
     await sheets.spreadsheets.values.append({
