@@ -1,6 +1,6 @@
 {
     "name": "teachmeai-agent-service",
-    "version": "1.0.0",
+    "version": "2.1.0",
     "engines": {
         "node": ">=18"
     },
