@@ -101,30 +101,39 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
 
     const [analysis, setAnalysis] = useState<any>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const triggerFinalAnalysis = useCallback(async () => {
+        if (isAnalyzing || analysis || error) return;
         setIsAnalyzing(true);
+        setError(null);
         try {
             const response = await fetch('/api/submit-chat-intake', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ state, messages })
             });
-            if (!response.ok) throw new Error('Analysis failed');
+
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Analysis failed');
+            }
+
             setAnalysis(data.analysis);
-        } catch (error) {
-            console.error('Final analysis error:', error);
+        } catch (err: any) {
+            console.error('Final analysis error:', err);
+            setError(err.message || 'Failed to generate your personalized report. Please try again or contact support.');
         } finally {
             setIsAnalyzing(false);
         }
-    }, [state, messages]);
+    }, [state, messages, analysis, isAnalyzing, error]);
 
     useEffect(() => {
-        if (state.isComplete && !analysis && !isAnalyzing) {
+        if (state.isComplete && !analysis && !isAnalyzing && !error) {
             triggerFinalAnalysis();
         }
-    }, [state.isComplete, analysis, isAnalyzing, triggerFinalAnalysis]);
+    }, [state.isComplete, analysis, isAnalyzing, error, triggerFinalAnalysis]);
 
     if (state.isComplete) {
         return (
@@ -143,6 +152,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         </div>
                     </div>
                 ) : analysis ? (
+                    // ... Analysis Results ...
                     <div className="space-y-6 mt-4 w-full">
                         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                             <h3 className="font-bold text-blue-900 mb-2 whitespace-pre-wrap">Targeted Strategy</h3>
@@ -161,11 +171,17 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                             </ul>
                         </div>
                     </div>
-                ) : (
-                    <div className="text-red-500 text-center py-4">
-                        Something went wrong during analysis. Please try again.
+                ) : error ? (
+                    <div className="bg-red-50 border border-red-100 rounded-xl p-6 mt-8 w-full text-center">
+                        <p className="text-red-700 font-medium mb-4">{error}</p>
+                        <button
+                            onClick={() => { setError(null); triggerFinalAnalysis(); }}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                        >
+                            Retry Analysis
+                        </button>
                     </div>
-                )}
+                ) : null}
             </div>
         );
     }
