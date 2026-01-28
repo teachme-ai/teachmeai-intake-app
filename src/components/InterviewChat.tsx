@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IntakeState, IntakeData } from '@/intake/schema';
-import { Loader2, Send, User, Bot, CheckCircle2 } from 'lucide-react';
+import { Loader2, Send, User, Bot, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface InterviewChatProps {
     initialState: IntakeState;
@@ -152,23 +152,135 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         </div>
                     </div>
                 ) : analysis ? (
-                    // ... Analysis Results ...
-                    <div className="space-y-6 mt-4 w-full">
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                            <h3 className="font-bold text-blue-900 mb-2 whitespace-pre-wrap">Targeted Strategy</h3>
-                            <p className="text-sm text-blue-800 leading-relaxed">{analysis.Identify}</p>
+                    <div className="space-y-8 mt-6 w-full max-w-2xl">
+                        {/* 1. Targeted Strategy */}
+                        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl p-6 shadow-sm">
+                            <h3 className="flex items-center gap-2 font-bold text-blue-900 text-lg mb-3">
+                                <Sparkles className="w-5 h-5" /> Targeted AI Strategy
+                            </h3>
+                            <p className="text-blue-800 leading-relaxed font-medium">{analysis.Identify}</p>
                         </div>
-                        <div className="bg-green-50 border border-green-100 rounded-xl p-4">
-                            <h3 className="font-bold text-green-900 mb-2">Detailed Plan</h3>
-                            <p className="text-sm text-green-800 leading-relaxed whitespace-pre-wrap">{analysis.Plan}</p>
+
+                        {/* 2. Opportunities (Deep Research) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Bot className="w-5 h-5 text-brand-primary" /> AI Opportunities
+                                </h3>
+                                <ul className="space-y-3">
+                                    {analysis.research?.aiOpportunityMap?.slice(0, 3).map((item: any, i: number) => (
+                                        <li key={i} className="flex gap-3 text-sm">
+                                            <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                            </div>
+                                            <div>
+                                                <span className="font-bold text-slate-700">{item.opportunity}:</span>
+                                                <span className="text-slate-600 ml-1">{item.impact}</span>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* 3. Top Priorities */}
+                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Top Priorities
+                                </h3>
+                                <ul className="space-y-3">
+                                    {analysis.research?.topPriorities?.slice(0, 3).map((item: any, i: number) => (
+                                        <li key={i} className="flex gap-3 text-sm">
+                                            <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            </div>
+                                            <div>
+                                                <span className="font-bold text-slate-700">{item.name}:</span>
+                                                <span className="text-slate-600 ml-1">{item.quickWin}</span>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         </div>
-                        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
-                            <h3 className="font-bold text-purple-900 mb-2">Next Steps</h3>
-                            <ul className="list-disc list-inside text-sm text-purple-800 space-y-1">
-                                {analysis.nextSteps?.map((step: string, i: number) => (
-                                    <li key={i}>{step}</li>
+
+                        {/* 4. IMPACT Roadmap */}
+                        <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                            <div className="absolute top-0 right-0 p-8 opacity-10">
+                                <Sparkles className="w-32 h-32" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 relative z-10">
+                                <CheckCircle2 className="w-6 h-6 text-blue-400" /> Your IMPACT Roadmap
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
+                                {[
+                                    { step: 'Identify', content: analysis.Identify, icon: '🔍' },
+                                    { step: 'Motivate', content: analysis.Motivate, icon: '🔥' },
+                                    { step: 'Plan', content: analysis.Plan, icon: '📅' },
+                                    { step: 'Act', content: analysis.Act, icon: '⚡' },
+                                    { step: 'Check', content: analysis.Check, icon: '✅' },
+                                    { step: 'Transform', content: analysis.Transform, icon: '🚀' }
+                                ].map((item, i) => (
+                                    <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xl">{item.icon}</span>
+                                            <span className="font-bold text-blue-400 text-xs uppercase tracking-widest">{item.step}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-300 line-clamp-3">{item.content}</p>
+                                    </div>
                                 ))}
-                            </ul>
+                            </div>
+                        </div>
+
+                        {/* 5. Learner Profile */}
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-8 shadow-sm">
+                            <h3 className="font-bold text-emerald-900 text-lg mb-4 flex items-center gap-2">
+                                <User className="w-5 h-5" /> Learner Profile & Psychological Fit
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {(() => {
+                                    try {
+                                        const profile = typeof analysis.learnerProfile === 'string'
+                                            ? JSON.parse(analysis.learnerProfile)
+                                            : analysis.learnerProfile;
+
+                                        return (
+                                            <>
+                                                <div className="bg-white/50 p-4 rounded-xl">
+                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Motivation Type</p>
+                                                    <p className="text-emerald-900 font-bold">{profile?.motivationType || 'Unified'}</p>
+                                                </div>
+                                                <div className="bg-white/50 p-4 rounded-xl">
+                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">SRL Readiness</p>
+                                                    <p className="text-emerald-900 font-bold">{profile?.srlLevel || 'Moderate'}</p>
+                                                </div>
+                                                <div className="col-span-1 sm:col-span-2 bg-white/50 p-4 rounded-xl">
+                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Psychological Capital</p>
+                                                    <p className="text-emerald-900 font-medium italic">&quot;{profile?.psyCap || 'Ready for transformation.'}&quot;</p>
+                                                </div>
+                                            </>
+                                        );
+                                    } catch (e) {
+                                        return <p className="text-emerald-800">{analysis.learnerProfile}</p>;
+                                    }
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* 6. CTA Section */}
+                        <div className="bg-gradient-to-br from-brand-primary to-blue-600 rounded-3xl p-8 text-white text-center shadow-xl shadow-blue-500/20">
+                            <h3 className="text-2xl font-bold mb-3">Unlock Your Full 15-Page Report</h3>
+                            <p className="text-blue-50 mb-8 max-w-md mx-auto leading-relaxed">
+                                Get your complete AI Adoption Blueprint, including specific automation workflows and a 90-day execution plan.
+                            </p>
+                            <a
+                                href="mailto:Irfan@teachmeai.in?subject=My AI Analysis Report&body=Hi Irfan, I just completed my diagnostic and would like to book a 1:1 session to discuss my full analysis."
+                                className="inline-flex items-center gap-2 bg-white text-brand-primary font-bold px-8 py-4 rounded-2xl hover:bg-blue-50 transition-all active:scale-95 shadow-lg"
+                            >
+                                Book 1:1 clarity call with Irfan <Send className="w-4 h-4 ml-1" />
+                            </a>
+                            <p className="text-blue-200 text-[10px] mt-6 font-bold uppercase tracking-widest">
+                                Your data and analysis will be presented in detail during the session.
+                            </p>
                         </div>
                     </div>
                 ) : error ? (
