@@ -106,11 +106,12 @@ export async function processUserTurn(
                     reason: 'exit_criteria_met'
                 });
 
+                const nextAgentConfig = AGENTS[nextAgentId];
                 state.activeAgent = nextAgentId;
                 state.handoffPending = {
                     from: currentAgentId,
                     to: nextAgentId,
-                    message: currentAgentConfig.introMessage || "Moving on..."
+                    message: nextAgentConfig.introMessage || "Moving on..."
                 };
 
                 // Loop again so new agent can make its first move immediately
