@@ -43,10 +43,10 @@ app.post('/handoff', async (req: Request, res: Response) => {
             lead_id: leadId,
             redirect_url: redirectUrl
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('💥 [Backend] Handoff Error:', error);
-        const msg = error instanceof Error ? error.message : 'Handoff failed';
-        res.status(500).json({ status: 'error', message: msg });
+        const msg = error.message || 'Handoff failed';
+        res.status(500).json({ status: 'error', message: msg, details: error.errors || error });
     }
 });
 

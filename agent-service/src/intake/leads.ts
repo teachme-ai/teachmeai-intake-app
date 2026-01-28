@@ -80,6 +80,7 @@ async function ensureLeadsSheet(spreadsheetId: string) {
         }
     } catch (error) {
         console.error('Error ensuring Leads sheet:', error);
+        throw error; // Rethrow to let the main handler catch it
     }
 }
 
