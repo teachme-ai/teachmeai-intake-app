@@ -13,5 +13,8 @@ export const ai = genkit({
 });
 
 export const DEFAULT_MODEL = 'googleai/gemini-2.0-flash';
+export const INTAKE_MODEL = 'googleai/gemini-2.0-flash';
+export const REPORT_MODEL = 'googleai/gemini-1.5-pro';
+
 
 

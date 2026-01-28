@@ -1,5 +1,5 @@
 import { IntakeState, IntakeData } from './schema';
-import { ai, DEFAULT_MODEL } from '../genkit';
+import { ai, DEFAULT_MODEL } from '../lib/genkit';
 import { z } from 'zod';
 import { GUIDE_SYSTEM_PROMPT } from '../prompts/guide.system';
 import { getProfilerPrompt } from '../prompts/profiler.system';

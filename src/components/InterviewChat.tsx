@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { IntakeState, IntakeData } from '@/intake/schema';
 import { Loader2, Send, User, Bot, CheckCircle2 } from 'lucide-react';
 
@@ -102,13 +102,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
     const [analysis, setAnalysis] = useState<any>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-    useEffect(() => {
-        if (state.isComplete && !analysis && !isAnalyzing) {
-            triggerFinalAnalysis();
-        }
-    }, [state.isComplete]);
-
-    const triggerFinalAnalysis = async () => {
+    const triggerFinalAnalysis = useCallback(async () => {
         setIsAnalyzing(true);
         try {
             const response = await fetch('/api/submit-chat-intake', {
@@ -124,7 +118,13 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
         } finally {
             setIsAnalyzing(false);
         }
-    };
+    }, [state, messages]);
+
+    useEffect(() => {
+        if (state.isComplete && !analysis && !isAnalyzing) {
+            triggerFinalAnalysis();
+        }
+    }, [state.isComplete, analysis, isAnalyzing, triggerFinalAnalysis]);
 
     if (state.isComplete) {
         return (
