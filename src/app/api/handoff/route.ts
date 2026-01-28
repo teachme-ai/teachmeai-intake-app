@@ -13,6 +13,18 @@ function isValidPayload(data: any): data is HandoffPayload {
 }
 
 export async function POST(req: Request) {
+    // 0. Handle Options for CORS
+    if (req.method === 'OPTIONS') {
+        return new Response(null, {
+            status: 204,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            }
+        });
+    }
+
     try {
         const body = await req.json();
 
@@ -37,6 +49,12 @@ export async function POST(req: Request) {
             status: 'success',
             lead_id: leadId,
             redirect_url: redirectUrl
+        }, {
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            }
         });
 
     } catch (error) {
