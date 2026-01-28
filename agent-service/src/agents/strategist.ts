@@ -2,7 +2,7 @@ import { gemini20Flash } from '@genkit-ai/googleai';
 import { getStrategistPrompt } from '../prompts/strategist.system';
 import { LearnerProfileSchema, StrategySchema, DeepResearchOutputSchema } from '../types';
 import { z } from 'zod';
-import { ai } from '../genkit';
+import { DEFAULT_MODEL, ai } from '../genkit';
 
 export const StrategistInputSchema = z.object({
     profile: LearnerProfileSchema,
@@ -27,10 +27,11 @@ export const strategistFlow = ai.defineFlow(
         });
 
         const { output } = await ai.generate({
-            model: gemini20Flash,
+            model: DEFAULT_MODEL,
             prompt: prompt,
             output: { schema: StrategySchema },
         });
+
 
         if (!output) {
             throw new Error("Strategist Agent failed to generate output");

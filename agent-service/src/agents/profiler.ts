@@ -1,7 +1,7 @@
-import { gemini20Flash } from '@genkit-ai/googleai';
-import { getProfilerPrompt } from '../prompts/profiler.system';
+import { DEFAULT_MODEL, ai } from '../genkit';
 import { IntakeResponseSchema, LearnerProfileSchema } from '../types';
-import { ai } from '../genkit';
+import { getProfilerPrompt } from '../prompts/profiler.system';
+
 
 export const profilerFlow = ai.defineFlow(
     {
@@ -13,10 +13,11 @@ export const profilerFlow = ai.defineFlow(
         const prompt = getProfilerPrompt(input);
 
         const { output } = await ai.generate({
-            model: gemini20Flash,
+            model: DEFAULT_MODEL,
             prompt: prompt,
             output: { schema: LearnerProfileSchema },
         });
+
 
         if (!output) {
             throw new Error("Profiler Agent failed to generate output");

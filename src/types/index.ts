@@ -76,3 +76,7 @@ export interface ChatQuizPayload {
   iat?: number;
   exp?: number;
 }
+export interface ChatTurnRequest {
+  state: any; // We use IntakeState usually
+  userMessage: string;
+}

@@ -2,8 +2,9 @@ import { SignJWT, jwtVerify } from 'jose';
 import { ChatQuizPayload } from '@/types';
 
 const secret = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'fallback-secret-for-dev-only'
+    '8fc3db9eca4d2c7cad8e2066985548c2ea8537a9b816f07f02bea261c0f8cd4e'
 );
+
 
 /**
  * Signs a payload to create a JWT token

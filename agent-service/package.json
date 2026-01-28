@@ -10,7 +10,7 @@
         "build": "tsc",
         "watch": "tsc -w",
         "start": "node lib/index.js",
-        "dev": "genkit start -- npx tsx --watch src/index.ts"
+        "dev": "./node_modules/.bin/tsc && node lib/index.js"
     },
     "dependencies": {
         "@genkit-ai/ai": "latest",

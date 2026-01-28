@@ -1,6 +1,9 @@
-import { gemini20Flash } from '@genkit-ai/googleai';
-import { QuizSessionSchema, QuizResponseSchema } from '../types';
 import { ai } from '../genkit';
+import { QuizSessionSchema, QuizResponseSchema } from '../types';
+import { initializeState } from '../intake/state';
+import { IntakeState, IntakeData } from '../intake/schema';
+import { processUserTurn } from '../intake/interviewEngine';
+import { logger } from '../utils/logger';
 
 export const quizGuideFlow = ai.defineFlow(
     {
@@ -8,65 +11,93 @@ export const quizGuideFlow = ai.defineFlow(
         inputSchema: QuizSessionSchema,
         outputSchema: QuizResponseSchema,
     },
+
     async (input) => {
-        console.log('🤖 [Agent Service] Processing Guide Flow (Form-First Logic)...');
+        const log = logger.child({ flow: 'quizGuideFlow' });
+        log.info({ event: 'flow.start', inputMessageCount: input.messages?.length });
 
-        // QUICK BYPASS: If we already have the 4 nodes, don't even talk to the AI.
-        // This makes the Form 100% reliable and prevents any hallucination loops.
-        const d = input.extractedData || {};
-        const hasName = typeof d.name === 'string' && d.name.trim().length > 1;
-        const hasEmail = typeof d.email === 'string' && d.email.includes('@');
-        const hasRole = typeof d.role === 'string' && d.role.trim().length > 1;
-        const hasGoal = (typeof d.learningGoal === 'string' && d.learningGoal.trim().length > 1) ||
-            (typeof (d as any).goal === 'string' && (d as any).goal.trim().length > 1);
+        // 1. HYDRATE STATE (Stateless Adaptor)
+        // We reconstruct the IntakeState from the inputs provided by the client.
 
-        if (hasName && hasEmail && hasRole && hasGoal) {
-            console.log('✅ [Agent Service] Data is full. Bypassing AI to ensure stability.');
-            return {
-                message: "Excellent! I have all your details. We're ready to start your AI analysis.",
-                extractedData: {
-                    name: String(d.name).trim(),
-                    email: String(d.email).trim().toLowerCase(),
-                    role: String(d.role).trim(),
-                    learningGoal: String(d.learningGoal || (d as any).goal).trim()
-                },
-                isComplete: true
-            };
-        }
+        // Generate a pseudo-session ID for logging correlation
+        const email = input.extractedData?.email || 'anon';
+        const sessionId = `sess_${email.replace(/[^a-z0-9]/gi, '_')}`;
 
-        // FALLBACK FOR CHAT: Only run AI if data is incomplete
-        const historyText = (input.messages || [])
-            .map(m => `${m.role.toUpperCase()}: ${m.content.substring(0, 200)}`)
-            .slice(-4)
-            .join('\n');
+        // Use the 'prefill' logic for core fields
+        let state = initializeState(sessionId, {
+            name: input.extractedData?.name,
+            email: input.extractedData?.email,
+            role: input.extractedData?.role,
+            goal: input.extractedData?.learningGoal
+        });
 
-        const systemPrompt = `
-You are the TeachMeAI Guide. Collect: Name, Email, Role, Goal.
-Current Data: ${JSON.stringify(d)}
-Recent History: ${historyText}
-Rule: Be extremely brief (max 15 words). Extract data into the JSON.
-`;
+        // Manually hydrate KEY fields for Phase 1 agents
+        // We iterate over input.extractedData and map known fields to state
+        if (input.extractedData) {
+            // Hydrate Active Agent if present
+            if ((input.extractedData as any)._activeAgent) {
+                state.activeAgent = (input.extractedData as any)._activeAgent;
+            }
 
-        try {
-            const { output } = await ai.generate({
-                model: gemini20Flash,
-                system: systemPrompt,
-                output: { schema: QuizResponseSchema },
+            // Hydrate Last Question Field
+            if ((input.extractedData as any)._lastQuestionField) {
+                state.lastQuestionField = (input.extractedData as any)._lastQuestionField;
+            }
+
+            Object.entries(input.extractedData).forEach(([key, val]) => {
+                if (key === '_activeAgent' || key === '_lastQuestionField') return; // Skip metadata
+
+                if (val && !state.fields[key as keyof IntakeData]) {
+                    // If not already set by initializeState (core fields), set it now
+                    // We assume frontend passes back raw values
+                    state.fields[key as keyof IntakeData] = {
+                        value: val,
+                        status: 'confirmed', // Assume historical data is confirmed
+                        confidence: 'high',
+                        evidence: 'history',
+                        updatedAt: new Date().toISOString()
+                    };
+                }
             });
-
-            if (!output) throw new Error("No output");
-
-            return {
-                message: output.message.substring(0, 200),
-                extractedData: output.extractedData,
-                isComplete: !!output.isComplete
-            };
-        } catch (error) {
-            return {
-                message: "Could you please tell me your professional role again?",
-                extractedData: d,
-                isComplete: false
-            };
         }
+
+        // Estimate turn count
+        state.turnCount = Math.floor((input.messages?.length || 0) / 2);
+
+        // Get last user message
+        const lastMsg = input.messages && input.messages.length > 0
+            ? input.messages[input.messages.length - 1].content
+            : "";
+
+        // 2. PROCESS TURN
+        const result = await processUserTurn(state, lastMsg);
+
+        // 3. MAP RESULT
+        // We map IntakeState back to QuizResponse. 
+        // We MUST include ALL fields so the client can send them back next turn.
+
+        const responseData: any = {};
+
+        // Persist Agent State
+        responseData._activeAgent = result.state.activeAgent;
+        responseData._lastQuestionField = result.state.lastQuestionField; // Persist for next turn
+
+        Object.entries(result.state.fields).forEach(([k, field]) => {
+            if (field && field.value !== undefined) {
+                responseData[k] = field.value;
+            }
+        });
+
+        // Ensure legacy mapping for frontend compatibility if needed
+        responseData.learningGoal = result.state.fields.goal_calibrated?.value || result.state.fields.goal_raw?.value;
+        responseData.role = result.state.fields.role_raw?.value;
+
+        log.info({ event: 'flow.end', isComplete: result.isComplete });
+
+        return {
+            message: result.message,
+            extractedData: responseData,
+            isComplete: result.isComplete
+        };
     }
 );

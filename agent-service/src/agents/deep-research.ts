@@ -1,7 +1,7 @@
-import { gemini20Flash } from '@genkit-ai/googleai';
-import { getDeepResearchPrompt } from '../prompts/deepResearch.system';
+import { DEFAULT_MODEL, ai } from '../genkit';
 import { DeepResearchInputSchema, DeepResearchOutputSchema } from '../types';
-import { ai } from '../genkit';
+import { getDeepResearchPrompt } from '../prompts/deepResearch.system';
+
 
 export const deepResearchFlow = ai.defineFlow(
     {
@@ -13,10 +13,11 @@ export const deepResearchFlow = ai.defineFlow(
         const prompt = getDeepResearchPrompt(input);
 
         const { output } = await ai.generate({
-            model: gemini20Flash,
+            model: DEFAULT_MODEL,
             prompt: prompt,
             output: { schema: DeepResearchOutputSchema },
         });
+
 
         if (!output) {
             throw new Error("Deep Research Agent failed to generate output");

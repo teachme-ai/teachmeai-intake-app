@@ -1,0 +1,149 @@
+import { google } from 'googleapis';
+import { IntakeState, IntakeData } from './schema';
+
+// We reuse the auth logic from the existing lib but adapt it for our Agent Service context
+// Since 'googleapis' is likely already installed, we just need to configure it.
+// Note: In the agent-service we might need to duplicate the auth logic if we can't import from src/lib directly
+// given the project structure. Assuming agent-service is a separate package/folder.
+
+const getAuth = () => {
+    const {
+        GOOGLE_SERVICE_ACCOUNT_BASE64,
+        GOOGLE_PROJECT_ID,
+        GOOGLE_PRIVATE_KEY_ID,
+        GOOGLE_PRIVATE_KEY,
+        GOOGLE_CLIENT_EMAIL,
+        GOOGLE_CLIENT_ID
+    } = process.env;
+
+    if (GOOGLE_SERVICE_ACCOUNT_BASE64) {
+        try {
+            const decoded = Buffer.from(GOOGLE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8');
+            const credentials = JSON.parse(decoded);
+            return new google.auth.GoogleAuth({
+                credentials,
+                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+            });
+        } catch (e) {
+            console.error('Auth error', e);
+        }
+    }
+
+    // Fallback logic similar to main app...
+    if (GOOGLE_PRIVATE_KEY && GOOGLE_CLIENT_EMAIL) {
+        let formattedKey = GOOGLE_PRIVATE_KEY.trim().replace(/^["'](.*)["']$/, '$1').replace(/\\n/g, '\n');
+        return new google.auth.GoogleAuth({
+            credentials: {
+                private_key: formattedKey,
+                client_email: GOOGLE_CLIENT_EMAIL,
+                project_id: GOOGLE_PROJECT_ID
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        });
+    }
+
+    return new google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
+};
+
+const sheets = google.sheets({ version: 'v4', auth: getAuth() });
+
+const SHEET_TITLE = 'Intake_v2';
+const HEADERS = [
+    'Timestamp', 'Session ID', 'Intake Mode', 'Status', 'Name', 'Email',
+    'Role Raw', 'Role Category', 'Goal Short', 'Time/Week (mins)',
+    'Skill Stage', 'Time Barrier', 'Turns', 'Last Updated', 'Confidence Overall',
+    'Prefill Payload JSON', 'Intake State JSON', 'Transcript JSON', 'Deep Research JSON',
+    'Learner Profile JSON', 'IMPACT Strategy JSON', 'Execution Plan JSON', 'Final Report JSON',
+    'Errors/Warn JSON', 'Versions JSON'
+];
+
+async function ensureSheetExists(spreadsheetId: string) {
+    try {
+        const meta = await sheets.spreadsheets.get({ spreadsheetId });
+        const exists = meta.data.sheets?.some(s => s.properties?.title === SHEET_TITLE);
+
+        if (!exists) {
+            console.log(`Creating ${SHEET_TITLE} tab...`);
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId,
+                requestBody: {
+                    requests: [{
+                        addSheet: { properties: { title: SHEET_TITLE } }
+                    }]
+                }
+            });
+            // Write headers
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: `${SHEET_TITLE}!A1`,
+                valueInputOption: 'RAW',
+                requestBody: { values: [HEADERS] }
+            });
+        }
+    } catch (e) {
+        console.error('Error ensuring sheet exists:', e);
+    }
+}
+
+export async function persistIntakeState(state: IntakeState): Promise<void> {
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    if (!spreadsheetId) {
+        console.warn('No GOOGLE_SHEET_ID, skipping persistence');
+        return;
+    }
+
+    try {
+        await ensureSheetExists(spreadsheetId);
+
+        // We need to find if the row exists for this session to update it, OR append a new one.
+        // For simplicity/perf in v1, we will always APPEND a new row (log style) OR 
+        // ideally we search for the Session ID.
+        // To keep it fast and atomic, let's treat it as an append-log for now 
+        // OR implement a quick lookup.
+
+        // BETTER APPROACH: Use the SessionID as a key.
+        // 1. Read Column B (Session ID)
+        // 2. Find Index
+        // 3. Update Row.
+
+        // Optimization: For the POC, we will just Append Latest State. 
+        // A "Last Updated" filter can dedupe later.
+
+        const row = [
+            state.metadata.startTime, // Timestamp (creation)
+            state.sessionId,
+            state.metadata.mode,
+            state.isComplete ? 'COMPLETE' : 'IN_PROGRESS',
+            state.fields.name?.value || '',
+            state.fields.email?.value || '',
+            state.fields.role_raw?.value || '',
+            state.fields.role_category?.value || '',
+            state.fields.goal_raw?.value || '',
+            state.fields.time_per_week_mins?.value || '',
+            state.fields.skill_stage?.value || '',
+            state.fields.time_barrier?.value || '',
+            state.turnCount,
+            new Date().toISOString(), // Last Updated
+            'HIGH', // TODO: calc overall confidence
+
+            // JSON BLOBS
+            JSON.stringify({}), // Prefill Payload (not stored in state currently, maybe add?)
+            JSON.stringify(state),
+            JSON.stringify([]), // Transcript (TODO)
+            '', '', '', '', '', '', '' // placeholders for future report artifacts
+        ];
+
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: `${SHEET_TITLE}!A2`,
+            valueInputOption: 'RAW',
+            insertDataOption: 'INSERT_ROWS',
+            requestBody: { values: [row] }
+        });
+
+    } catch (error) {
+        console.error('Persist failed:', error);
+    }
+}
