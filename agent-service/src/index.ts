@@ -4,6 +4,7 @@ import cors from 'cors';
 import { supervisorFlow } from './agents/supervisor';
 import { quizGuideFlow } from './agents/guide';
 import { saveLeadToSheet } from './intake/leads';
+import { persistIntakeState } from './intake/persist';
 
 const app = express();
 app.use(cors());
@@ -62,6 +63,27 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
         console.log('🧠 [Backend] Starting AI Agents...');
         const result = await supervisorFlow(req.body.data);
         console.log('✅ [Backend] AI Agents finished successfully');
+
+        // PERSIST the results if a sessionId is provided
+        const sessionId = req.body.sessionId || req.body.data.sessionId;
+        if (sessionId) {
+            console.log(`💾 [Backend] Persisting analysis for session: ${sessionId}`);
+            // Construct a minimal state for persistence
+            const minimalState: any = {
+                sessionId,
+                metadata: { startTime: new Date().toISOString(), mode: 'interview' },
+                fields: {
+                    name: { value: req.body.data.name || '' },
+                    email: { value: req.body.data.email || '' },
+                    role_raw: { value: (req.body.data.currentRoles || [])[0] || '' },
+                    goal_raw: { value: req.body.data.primaryGoal || '' }
+                },
+                isComplete: true,
+                turnCount: 99 // indicate final turn
+            };
+            await persistIntakeState(minimalState, result);
+        }
+
         res.json({ result });
     } catch (error) {
         console.error('💥 [Backend] AI ERROR:', error);

@@ -1,10 +1,14 @@
 import { google } from 'googleapis';
 import { IntakeState, IntakeData } from './schema';
 
-// We reuse the auth logic from the existing lib but adapt it for our Agent Service context
-// Since 'googleapis' is likely already installed, we just need to configure it.
-// Note: In the agent-service we might need to duplicate the auth logic if we can't import from src/lib directly
-// given the project structure. Assuming agent-service is a separate package/folder.
+// Utility to convert to IST
+function toIST(dateInput?: string | Date): string {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    // UTC to IST is +5.5 hours
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(d.getTime() + istOffset);
+    return istDate.toISOString().replace('Z', '+05:30');
+}
 
 const getAuth = () => {
     const {
@@ -62,7 +66,7 @@ const HEADERS = [
 async function ensureSheetExists(spreadsheetId: string) {
     try {
         const meta = await sheets.spreadsheets.get({ spreadsheetId });
-        const exists = meta.data.sheets?.some(s => s.properties?.title === SHEET_TITLE);
+        const exists = meta.data.sheets?.some((s: any) => s.properties?.title === SHEET_TITLE);
 
         if (!exists) {
             console.log(`Creating ${SHEET_TITLE} tab...`);
@@ -87,7 +91,7 @@ async function ensureSheetExists(spreadsheetId: string) {
     }
 }
 
-export async function persistIntakeState(state: IntakeState): Promise<void> {
+export async function persistIntakeState(state: IntakeState, analysis?: any): Promise<void> {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
     if (!spreadsheetId) {
         console.warn('No GOOGLE_SHEET_ID, skipping persistence');
@@ -104,10 +108,10 @@ export async function persistIntakeState(state: IntakeState): Promise<void> {
         });
 
         const rows = response.data.values || [];
-        const rowIndex = rows.findIndex(r => r[0] === state.sessionId);
+        const rowIndex = rows.findIndex((r: any) => r[0] === state.sessionId);
 
         const row = [
-            state.metadata.startTime, // Timestamp (creation)
+            toIST(state.metadata.startTime), // Timestamp (creation)
             state.sessionId,
             state.metadata.mode,
             state.isComplete ? 'COMPLETE' : 'IN_PROGRESS',
@@ -120,14 +124,27 @@ export async function persistIntakeState(state: IntakeState): Promise<void> {
             state.fields.skill_stage?.value || '',
             state.fields.time_barrier?.value || '',
             state.turnCount,
-            new Date().toISOString(), // Last Updated
+            toIST(), // Last Updated
             'HIGH', // TODO: calc overall confidence
 
             // JSON BLOBS
             JSON.stringify({}), // Prefill Payload
             JSON.stringify(state),
             JSON.stringify([]), // Transcript
-            '', '', '', '', '', '', '' // placeholders
+            JSON.stringify(analysis?.research || {}), // Deep Research JSON
+            analysis?.learnerProfile || '',           // Learner Profile JSON
+            JSON.stringify({
+                Identify: analysis?.Identify,
+                Motivate: analysis?.Motivate,
+                Plan: analysis?.Plan
+            }), // IMPACT Strategy JSON
+            JSON.stringify({
+                Act: analysis?.Act,
+                Check: analysis?.Check,
+                Transform: analysis?.Transform
+            }), // Execution Plan JSON
+            JSON.stringify({ nextSteps: analysis?.nextSteps, recommendations: analysis?.recommendations }), // Final Report JSON
+            '', '' // Errors/Warn, Versions
         ];
 
         if (rowIndex !== -1) {
