@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { supervisorFlow } from './agents/supervisor';
 import { quizGuideFlow } from './agents/guide';
+import { saveLeadToSheet } from './intake/leads';
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,27 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
         console.error('💥 [Backend] Quiz Error:', error);
         const msg = error instanceof Error ? error.message : 'Unknown Quiz Error';
         res.status(500).send(`Error in Quiz Guide: ${msg}`);
+    }
+});
+
+// Handoff endpoint to bypass Vercel WAF
+app.post('/handoff', async (req: Request, res: Response) => {
+    try {
+        console.log('🚀 [Backend] Received handoff lead');
+        const leadId = await saveLeadToSheet(req.body);
+
+        const baseUrl = process.env.INTAKE_APP_URL || 'https://teachmeai-intake-app.vercel.app';
+        const redirectUrl = `${baseUrl}/intake?lead_id=${leadId}`;
+
+        console.log('✅ [Backend] Lead persisted:', leadId);
+        res.json({
+            status: 'success',
+            lead_id: leadId,
+            redirect_url: redirectUrl
+        });
+    } catch (error) {
+        console.error('💥 [Backend] Handoff Error:', error);
+        res.status(500).json({ status: 'error', message: 'Handoff failed' });
     }
 });
 
