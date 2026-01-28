@@ -49,7 +49,7 @@ const getAuth = () => {
 
 const sheets = google.sheets({ version: 'v4', auth: getAuth() });
 
-const SHEET_TITLE = 'Intake_v2';
+export const SHEET_TITLE = 'Intake_v2';
 const HEADERS = [
     'Timestamp', 'Session ID', 'Intake Mode', 'Status', 'Name', 'Email',
     'Role Raw', 'Role Category', 'Goal Short', 'Time/Week (mins)',
