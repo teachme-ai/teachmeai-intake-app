@@ -97,19 +97,14 @@ export async function persistIntakeState(state: IntakeState): Promise<void> {
     try {
         await ensureSheetExists(spreadsheetId);
 
-        // We need to find if the row exists for this session to update it, OR append a new one.
-        // For simplicity/perf in v1, we will always APPEND a new row (log style) OR 
-        // ideally we search for the Session ID.
-        // To keep it fast and atomic, let's treat it as an append-log for now 
-        // OR implement a quick lookup.
+        // UPSERT LOGIC: Find existing row for this Session ID
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: `${SHEET_TITLE}!B:B`, // Column B is Session ID
+        });
 
-        // BETTER APPROACH: Use the SessionID as a key.
-        // 1. Read Column B (Session ID)
-        // 2. Find Index
-        // 3. Update Row.
-
-        // Optimization: For the POC, we will just Append Latest State. 
-        // A "Last Updated" filter can dedupe later.
+        const rows = response.data.values || [];
+        const rowIndex = rows.findIndex(r => r[0] === state.sessionId);
 
         const row = [
             state.metadata.startTime, // Timestamp (creation)
@@ -129,19 +124,33 @@ export async function persistIntakeState(state: IntakeState): Promise<void> {
             'HIGH', // TODO: calc overall confidence
 
             // JSON BLOBS
-            JSON.stringify({}), // Prefill Payload (not stored in state currently, maybe add?)
+            JSON.stringify({}), // Prefill Payload
             JSON.stringify(state),
-            JSON.stringify([]), // Transcript (TODO)
-            '', '', '', '', '', '', '' // placeholders for future report artifacts
+            JSON.stringify([]), // Transcript
+            '', '', '', '', '', '', '' // placeholders
         ];
 
-        await sheets.spreadsheets.values.append({
-            spreadsheetId,
-            range: `${SHEET_TITLE}!A2`,
-            valueInputOption: 'RAW',
-            insertDataOption: 'INSERT_ROWS',
-            requestBody: { values: [row] }
-        });
+        if (rowIndex !== -1) {
+            // Update existing row (Row indexes are 1-based in Sheets)
+            const sheetRowNumber = rowIndex + 1;
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: `${SHEET_TITLE}!A${sheetRowNumber}`,
+                valueInputOption: 'RAW',
+                requestBody: { values: [row] }
+            });
+            console.log(`✅ [Persist] Updated row ${sheetRowNumber} for session ${state.sessionId}`);
+        } else {
+            // Append new row
+            await sheets.spreadsheets.values.append({
+                spreadsheetId,
+                range: `${SHEET_TITLE}!A2`,
+                valueInputOption: 'RAW',
+                insertDataOption: 'INSERT_ROWS',
+                requestBody: { values: [row] }
+            });
+            console.log(`✅ [Persist] Appended new row for session ${state.sessionId}`);
+        }
 
     } catch (error) {
         console.error('Persist failed:', error);
