@@ -5,6 +5,7 @@ import { strategistFlow } from './strategist';
 import { tacticianFlow } from './tactician';
 import { z } from 'zod';
 import { ai } from '../genkit';
+import { runWithRetry, delay } from '../utils/retry';
 
 export const IMPACTAnalysisSchema = z.object({
     Identify: z.string(),
@@ -27,34 +28,42 @@ export const supervisorFlow = ai.defineFlow(
     },
     async (intake) => {
         // Phase 1: Profiling
-        const profile = await profilerFlow(intake);
+        console.log("🕵️ [Supervisor] Phase 1: Profiling...");
+        const profile = await runWithRetry(() => profilerFlow(intake));
+
+        await delay(1000); // Stagger
 
         // Phase 2: Deep Research
-        // We infer role/goal from intake
-        const research = await deepResearchFlow({
+        console.log("🔍 [Supervisor] Phase 2: Deep Research...");
+        const research = await runWithRetry(() => deepResearchFlow({
             role: intake.currentRoles[0] || "Professional",
             goal: intake.primaryGoal || "Upskilling",
-            // industry: intake.industry // Not available in current schema yet
-        });
+        }));
+
+        await delay(1000); // Stagger
 
         // Phase 3: Strategy
-        const strategy = await strategistFlow({
+        console.log("🎯 [Supervisor] Phase 3: Strategy...");
+        const strategy = await runWithRetry(() => strategistFlow({
             profile,
             professionalRoles: intake.currentRoles,
             careerVision: "Implicit based on intake",
             primaryGoal: intake.primaryGoal,
             deepResearchResult: research
-        });
+        }));
+
+        await delay(1000); // Stagger
 
         // Phase 4: Tactics
-        const tactics = await tacticianFlow({
+        console.log("🛠️ [Supervisor] Phase 4: Tactics...");
+        const tactics = await runWithRetry(() => tacticianFlow({
             strategy,
             name: intake.name,
             constraints: {
                 timeBarrier: intake.timeBarrier,
                 skillStage: intake.skillStage
             }
-        });
+        }));
 
         // Phase 5: Assembly
         return {
