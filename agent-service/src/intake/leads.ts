@@ -88,6 +88,8 @@ export async function saveLeadToSheet(leadData: any): Promise<string> {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
     if (!spreadsheetId) throw new Error('No GOOGLE_SHEET_ID provided');
 
+    console.log(`📊 [Leads] Attempting write to Sheet: ${spreadsheetId}`);
+
     const leadId = randomUUID();
     await ensureLeadsSheet(spreadsheetId);
 
@@ -103,13 +105,15 @@ export async function saveLeadToSheet(leadData: any): Promise<string> {
         JSON.stringify(leadData.answers_raw || [])
     ]];
 
-    await sheets.spreadsheets.values.append({
+    const response = await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: 'Leads!A2',
         valueInputOption: 'RAW',
         insertDataOption: 'INSERT_ROWS',
         requestBody: { values }
     });
+
+    console.log(`✅ [Leads] Google API Response:`, JSON.stringify(response.data, null, 2));
 
     return leadId;
 }
