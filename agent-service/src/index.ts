@@ -45,7 +45,8 @@ app.post('/handoff', async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('💥 [Backend] Handoff Error:', error);
-        res.status(500).json({ status: 'error', message: 'Handoff failed' });
+        const msg = error instanceof Error ? error.message : 'Handoff failed';
+        res.status(500).json({ status: 'error', message: msg });
     }
 });
 
