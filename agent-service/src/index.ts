@@ -19,6 +19,25 @@ app.get('/', (req: Request, res: Response) => {
 app.post('/quizGuide', async (req: Request, res: Response) => {
     try {
         console.log('🚀 [Backend] Received request for quizGuide');
+
+        // Payload Contract Log (keys + flags, no PII)
+        const keys = Object.keys(req.body);
+        const flags = {
+            hasState: !!req.body.state,
+            hasUserMessage: !!req.body.userMessage,
+            hasSessionId: !!req.body.state?.sessionId,
+            hasRoleRaw: !!req.body.state?.fields?.role_raw?.value,
+            hasGoalRaw: !!req.body.state?.fields?.goal_raw?.value,
+            hasEmail: !!req.body.state?.fields?.email?.value,
+            turnCount: req.body.state?.turnCount ?? -1
+        };
+        console.log(JSON.stringify({
+            event: 'quizGuide.payload_shape',
+            keys,
+            flags,
+            sizeBytes: JSON.stringify(req.body).length
+        }));
+
         console.log('📦 [Backend] Request Body:', JSON.stringify(req.body, null, 2));
         const result = await quizGuideFlow(req.body);
         res.json({ result });

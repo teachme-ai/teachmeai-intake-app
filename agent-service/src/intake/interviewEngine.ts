@@ -8,11 +8,20 @@ import { logger } from '../utils/logger';
 import { coerceAndSetField, applyRepetitionFallback } from './guardrails';
 
 export type IntakeAction = 'ask_next' | 'clarify' | 'confirm' | 'run_analysis' | 'done';
+export type QuestionMode = 'mcq' | 'scale' | 'numeric' | 'list' | 'free_text';
+
+export interface ActionHint {
+    targetField?: string;
+    mode?: QuestionMode;
+    options?: string[];  // For MCQ
+}
 
 export interface TurnResult {
     message: string;
     state: IntakeState;
     isComplete: boolean;
+    action?: ActionHint;
+    progress: number;
 }
 
 export async function processUserTurn(
@@ -36,6 +45,16 @@ export async function processUserTurn(
     // Initialize agent if missing
     if (!state.activeAgent) {
         state.activeAgent = 'guide';
+    }
+
+    // --- RUNTIME ASSERTION for missing prefill ---
+    if (state.turnCount === 0) {
+        const missingCritical = [];
+        if (!state.fields.role_raw?.value) missingCritical.push('role_raw');
+        if (!state.fields.goal_raw?.value) missingCritical.push('goal_raw');
+        if (missingCritical.length > 0) {
+            log.warn({ event: 'prefill.missing_critical', missing: missingCritical });
+        }
     }
 
     // --- PHASE 1: EXTRACTION (RUN ONCE) ---
@@ -230,9 +249,27 @@ export async function processUserTurn(
         log.error({ event: 'persist.fail', error: e });
     }
 
+    // Build action hint for UI
+    const action: ActionHint | undefined = state.nextField ? {
+        targetField: state.nextField as string,
+        mode: getQuestionModeForField(state.nextField),
+        options: undefined // MCQ options can be added later
+    } : undefined;
+
     return {
         message: assistantMessage,
         state,
-        isComplete: state.isComplete
+        isComplete: state.isComplete,
+        action,
+        progress: state.completionPercent || 0
     };
+}
+
+function getQuestionModeForField(field: keyof IntakeData): QuestionMode {
+    if (['role_category', 'industry_vertical', 'learner_type', 'motivation_type', 'vark_primary'].includes(field)) return 'mcq';
+    if (['skill_stage', 'time_barrier', 'srl_goal_setting', 'srl_adaptability', 'srl_reflection',
+        'tech_confidence', 'resilience', 'vision_clarity', 'success_clarity_1yr'].includes(field)) return 'scale';
+    if (['time_per_week_mins'].includes(field)) return 'numeric';
+    if (['constraints', 'current_tools', 'vark_ranked'].includes(field)) return 'list';
+    return 'free_text';
 }
