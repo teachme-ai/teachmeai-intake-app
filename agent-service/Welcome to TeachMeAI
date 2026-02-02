@@ -1,0 +1,11 @@
+Welcome to TeachMeAI
+Let's build your personalized learning path together.
+TeachMeAI Assistant
+Online
+Profile Completion
+Hi undefined! I see you're a undefined looking to undefined. To build your perfect plan, I just need to ask a few quick questions. Ready?
+I am a software engineer looking to learn AI to build my own startup.
+Could you provide more details?
+[0] (468,761)<input class='flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400' placeholder='Type your answer...' />
+Administrator Access
+[1] (500,945)<a class='inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500' href='/admin'>📊 View Submissions Dashboard />
