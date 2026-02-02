@@ -70,11 +70,16 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
-            // Minimum: skill level + one learning preference + motivation indicator
+            // Require at least 3 dimensions covered:
+            // 1. Skill stage (readiness)
             const hasSkill = isFieldFilled(state, 'skill_stage');
+            // 2. Learning preference (at least one)
             const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
+            // 3. SRL or Motivation (at least one)
+            const hasSRL = isFieldFilled(state, 'srl_goal_setting') || isFieldFilled(state, 'srl_adaptability');
             const hasMotivation = isFieldFilled(state, 'vision_clarity') || isFieldFilled(state, 'motivation_type');
-            return hasSkill && (hasLearner || hasMotivation);
+            
+            return hasSkill && hasLearner && (hasSRL || hasMotivation);
         }
     },
 
