@@ -47,10 +47,11 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Strategist. Let's align this with your career goals.",
         shouldExit: (state) => {
-            // Exit after collecting 2-3 strategic fields
+            // Require 3 core strategic fields: role, goal, context
             const hasRole = isFieldFilled(state, 'role_category');
             const hasGoal = isFieldFilled(state, 'goal_calibrated');
-            return hasRole && hasGoal;
+            const hasContext = isFieldFilled(state, 'application_context');
+            return hasRole && hasGoal && hasContext;
         }
     },
 
@@ -72,11 +73,12 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
-            // Exit after collecting 3-4 learner dimension fields
+            // Require 4 key fields: skill, learning style, SRL, motivation
             const hasSkill = isFieldFilled(state, 'skill_stage');
-            const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
-            const hasSRL = isFieldFilled(state, 'srl_goal_setting') || isFieldFilled(state, 'srl_adaptability');
-            return hasSkill && hasLearner && hasSRL;
+            const hasLearner = isFieldFilled(state, 'learner_type');
+            const hasSRL = isFieldFilled(state, 'srl_goal_setting');
+            const hasMotivation = isFieldFilled(state, 'motivation_type');
+            return hasSkill && hasLearner && hasSRL && hasMotivation;
         }
     },
 
@@ -99,8 +101,10 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
         introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
         shouldExit: (state) => {
-            // Exit after collecting time commitment
-            return isFieldFilled(state, 'time_per_week_mins');
+            // Require 2 fields: time and constraints
+            const hasTime = isFieldFilled(state, 'time_per_week_mins');
+            const hasConstraint = isFieldFilled(state, 'constraints');
+            return hasTime && hasConstraint;
         }
     }
 };
