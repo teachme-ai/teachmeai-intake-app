@@ -1,56 +1,92 @@
 export interface StrategistContext {
-    profile: any;
-    professionalRoles: string[];
-    primaryGoal?: string;
-    deepResearchResult?: any;
+  profile: any;
+  professionalRoles: string[];
+  primaryGoal?: string;
+  deepResearchResult?: any;
+  roleRaw?: string;
+  goalRaw?: string;
+}
+
+/**
+ * Determine which slot needs clarification based on what's missing
+ */
+export function selectFollowUpSlot(context: StrategistContext): { slot: string; reason: string } {
+  const { roleRaw, goalRaw, profile } = context;
+
+  // Priority 1: Role scope (who/where/what)
+  if (!profile?.role_category && !profile?.industry_vertical) {
+    return { slot: 'role_scope', reason: 'Missing target audience and context' };
+  }
+
+  // Priority 2: Goal outcome (what success looks like)
+  if (!profile?.goal_calibrated || profile?.goal_calibrated === goalRaw) {
+    return { slot: 'goal_outcome', reason: 'Goal needs calibration with outcome' };
+  }
+
+  // Priority 3: Context (where it will be applied)
+  if (!profile?.application_context) {
+    return { slot: 'application_context', reason: 'Missing context for application' };
+  }
+
+  // Priority 4: Timeframe
+  if (!profile?.vision_clarity) {
+    return { slot: 'timeframe', reason: 'Missing success timeline' };
+  }
+
+  return { slot: 'done', reason: 'All slots filled' };
 }
 
 export function getStrategistPrompt(context: StrategistContext): string {
-    return `
+  const slot = selectFollowUpSlot(context);
+
+  return `
 You are the TeachMeAI Strategist Agent.
-Your job is to convert the learner’s raw role/goal into a clear, outcome-focused goal and context.
+Your job is to convert the learner's raw role/goal into a clear, outcome-focused goal.
+
+GIVEN CONTEXT (from quiz - DO NOT re-ask these):
+- Role: "${context.roleRaw || 'Not provided'}"
+- Goal: "${context.goalRaw || 'Not provided'}"
 
 RULES:
 1) Ask exactly ONE question per turn.
-2) Do NOT ask for role/job title again. Use the provided role_raw.
-3) Prefer forward motion; do not over-verify.
-4) If role_category is missing, ask a multiple-choice question (do NOT ask "what is your role?").
-5) goal_calibrated must be specific: outcome + timeframe + artifact (if possible).
-6) Never repeat the same question twice. Second attempt must be multiple-choice or constrained.
+2) DO NOT ask for role/job title again. The quiz already collected role_raw.
+3) DO NOT ask "what is your learning goal?" again. Use goal_raw as context.
+4) Infer role_category and industry_vertical from role_raw text. Do not use hardcoded options.
+5) goal_calibrated must be outcome-focused: what artifact/skill + by when.
+6) Prefer forward motion. If unsure, make a reasonable inference and move on.
+7) Never repeat the same question twice.
 
-ROLE CATEGORY OPTIONS:
-Educator, Student, Product, Engineering, Data/AI, Marketing, Sales, HR, Operations, Founder/Leader, Other
+FOLLOW-UP STRATEGY:
+Based on what's missing, ask ONE targeted question about:
+- role_scope: "Who will you apply this to?" (team, students, clients, etc.)
+- goal_outcome: "What would success look like in 90 days?" (outcome + artifact)
+- application_context: "Where will you use this?" (workplace, classroom, etc.)
+- timeframe: "When do you need this by?" (deadline, milestone)
+
+CURRENT SLOT TO CLARIFY: ${slot.slot}
+REASON: ${slot.reason}
 
 Learner Profile:
 ${JSON.stringify(context.profile, null, 2)}
 
-Professional Context:
-Roles: ${context.professionalRoles.join(', ')}
-${context.primaryGoal ? `Primary Learning Goal: ${context.primaryGoal}` : ''}
-
 ${context.deepResearchResult ? `
-Deep Research Insights (if present):
-- Top Priorities: ${JSON.stringify(context.deepResearchResult.topPriorities)}
-- Opportunity Map: ${JSON.stringify(context.deepResearchResult.aiOpportunityMap)}
+Research Insights:
+- Priorities: ${JSON.stringify(context.deepResearchResult.topPriorities)}
+- Opportunities: ${JSON.stringify(context.deepResearchResult.aiOpportunityMap)}
 ` : ''}
-
-ALLOWED FIELDS:
-- role_category
-- industry
-- seniority
-- goal_calibrated
 
 OUTPUT FORMAT (JSON only):
 {
   "extractedData": {
-    "role_category": "...",
-    "industry": "...",
-    "seniority": "...",
-    "goal_calibrated": "..."
+    "role_category": "inferred from role_raw, e.g. 'Product', 'Educator', 'Engineering'",
+    "industry_vertical": "inferred, e.g. 'EdTech', 'Fintech', 'Healthcare'",
+    "goal_calibrated": "outcome-focused version of goal_raw",
+    "application_context": "where they'll apply this"
   },
-  "nextQuestion": "one short question",
-  "targetField": "role_category|industry|seniority|goal_calibrated",
-  "done": boolean
+  "nextQuestion": "one short question targeting the current slot",
+  "targetField": "role_category|industry_vertical|goal_calibrated|application_context|vision_clarity",
+  "slotReason": "${slot.reason}",
+  "done": false
 }
 `;
 }
