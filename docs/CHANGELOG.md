@@ -5,7 +5,46 @@ All notable changes to the TeachMeAI Intake App will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2026-01-24
+## [2.4.0] - 2026-02-02
+
+### ✨ Added
+
+#### JWT Integration Enhancements
+- **Environment-based JWT Secret**: Updated JWT utilities to use `JWT_SECRET` from environment variables instead of hardcoded values
+- **Token Verification API**: New `/api/verify-token` endpoint for server-side JWT validation
+- **Testing Documentation**: Comprehensive testing checklist with 26 test cases covering E2E, security, performance, and accessibility
+
+#### Implementation Plan Updates
+- **Phase 1-3 Completion**: Marked Foundation & Security, Intake App Integration, and ChatUI Development as complete
+- **Phase 4 Expansion**: Added detailed testing tasks including error scenarios, load testing, and token expiration handling
+- **Status Overview**: Added progress tracking showing 75% completion (3/4 phases)
+
+### 🔧 Changed
+
+- **JWT Secret Management**: Migrated from hardcoded secret to environment variable for better security
+- **Implementation Plan Structure**: Added status overview section with visual progress indicators
+
+### 📚 Documentation
+
+- **TESTING_CHECKLIST.md**: New comprehensive testing guide with 10 categories and 26 test cases
+- **IMPLEMENTATION_PLAN.md**: Updated with completion status and expanded Phase 4 tasks
+
+### 🔐 Security
+
+- Improved JWT secret management with environment variable support
+- Added token verification endpoint for secure server-side validation
+
+---
+
+## [2.3.0] - 2026-02-02
+
+### 🐛 Bug Fixes
+
+- **Empty Fields in Persist**: Fixed strategist.ts to pass `roleRaw` and `goalRaw` to prompt context
+- **Schema Mapping**: Updated index.ts to map `skill_stage`, `time_barrier`, `role_category` from IntakeResponse
+- **Root Cause**: Resolved supervisorFlow creating minimal state, losing intake fields from interview
+
+---
 
 ### 🎉 Initial Release - Production Ready
 
