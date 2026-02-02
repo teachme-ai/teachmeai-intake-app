@@ -1,0 +1,10 @@
+node_modules
+lib
+.DS_Store
+.npm-cache
+google-cloud-sdk/
+google-cloud-cli-darwin-x86_64.tar.gz
+.git
+.gitignore
+README.md
+!.env

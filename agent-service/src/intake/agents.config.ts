@@ -47,8 +47,11 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Strategist. Let's align this with your career goals.",
         shouldExit: (state) => {
-            // Simplified: just need role_category and goal_calibrated
-            return isFieldFilled(state, 'role_category') && isFieldFilled(state, 'goal_calibrated');
+            // Require: role_category, goal_calibrated, AND at least one of industry/benefits
+            const hasRole = isFieldFilled(state, 'role_category');
+            const hasGoal = isFieldFilled(state, 'goal_calibrated');
+            const hasContext = isFieldFilled(state, 'industry_vertical') || isFieldFilled(state, 'application_context');
+            return hasRole && hasGoal && hasContext;
         }
     },
 
@@ -70,16 +73,19 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
-            // Require at least 3 dimensions covered:
-            // 1. Skill stage (readiness)
-            const hasSkill = isFieldFilled(state, 'skill_stage');
-            // 2. Learning preference (at least one)
+            // Require ALL 5 dimensions with at least 1 field each:
+            // 1. SRL
+            const hasSRL = isFieldFilled(state, 'srl_goal_setting') || isFieldFilled(state, 'srl_adaptability') || isFieldFilled(state, 'srl_reflection');
+            // 2. Motivation
+            const hasMotivation = isFieldFilled(state, 'motivation_type') || isFieldFilled(state, 'vision_clarity');
+            // 3. Learning preference
             const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
-            // 3. SRL or Motivation (at least one)
-            const hasSRL = isFieldFilled(state, 'srl_goal_setting') || isFieldFilled(state, 'srl_adaptability');
-            const hasMotivation = isFieldFilled(state, 'vision_clarity') || isFieldFilled(state, 'motivation_type');
+            // 4. Readiness (REQUIRED)
+            const hasSkill = isFieldFilled(state, 'skill_stage');
+            // 5. Time barrier
+            const hasTime = isFieldFilled(state, 'time_barrier');
             
-            return hasSkill && hasLearner && (hasSRL || hasMotivation);
+            return hasSRL && hasMotivation && hasLearner && hasSkill && hasTime;
         }
     },
 
@@ -102,9 +108,10 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
         introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
         shouldExit: (state) => {
-            const time = state.fields.time_per_week_mins;
-            const hasTime = time?.value !== undefined;
-            return hasTime;
+            // Require time AND at least one constraint/frustration
+            const hasTime = isFieldFilled(state, 'time_per_week_mins');
+            const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
+            return hasTime && hasConstraint;
         }
     }
 };
