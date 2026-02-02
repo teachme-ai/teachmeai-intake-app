@@ -37,3 +37,6 @@ export const quizGuideFlow = ai.defineFlow(
         return result;
     }
 );
+
+// Export initializeState for external use
+export { initializeState };

@@ -1,18 +1,18 @@
 import { IntakeState, IntakeData } from './schema';
-import { ai, DEFAULT_MODEL } from '../genkit';
+import { ai, INTAKE_MODEL } from '../genkit';
 import { z } from 'zod';
-import { GUIDE_SYSTEM_PROMPT } from '../prompts/guide.system';
-import { getProfilerPrompt } from '../prompts/profiler.system';
-import { getStrategistPrompt } from '../prompts/strategist.system';
-import { getTacticianPrompt } from '../prompts/tactician.system';
 import { AGENTS } from './agents.config';
-
 import { logger } from '../utils/logger';
+import { withLLMResilience } from '../utils/llm-resilience';
+import { withConcurrencyLimit } from '../utils/concurrency';
 
 const QuestionResponseSchema = z.object({
     message: z.string().describe("The next question to ask. Friendly & concise."),
     targetField: z.string().optional().describe("The field you are asking about.")
 });
+
+// Load the Dotprompt
+const composerPrompt = ai.prompt('composer');
 
 export async function composeMoreQuestions(
     state: IntakeState
@@ -20,7 +20,7 @@ export async function composeMoreQuestions(
     const log = logger.child({ component: 'composer', activeAgent: state.activeAgent });
     log.debug({ event: 'compose.start', nextAction: state.nextAction, nextField: state.nextField });
 
-    const activeAgentId = state.activeAgent || 'guide'; // Default to guide
+    const activeAgentId = state.activeAgent || 'guide';
 
     // We deterministically decide WHAT to ask based on 'nextField' or 'nextAction'
     // But we let the LLM phrase it naturally.
@@ -44,85 +44,63 @@ export async function composeMoreQuestions(
         return "Thanks! I have everything I need. Generating your report now...";
     }
 
-    // --- AGENT PROMPT SELECTION ---
-    let systemPrompt = "";
-    if (activeAgentId === 'guide') {
-        systemPrompt = GUIDE_SYSTEM_PROMPT
-            .replace('{{CURRENT_DATA}}', JSON.stringify(state.fields, null, 2));
-    }
-    else if (activeAgentId === 'profiler') {
-        const inputData = { fields: state.fields, lastMessage: state.lastUserMessage };
-        systemPrompt = getProfilerPrompt(inputData);
-    }
-    else if (activeAgentId === 'strategist') {
-        systemPrompt = getStrategistPrompt({
-            profile: { psychologicalProfile: { motivationType: 'growth' }, learningGlobal: {} },
-            professionalRoles: [state.fields.role_raw?.value || 'Professional'],
-            primaryGoal: state.fields.goal_raw?.value,
-        });
-    }
-    else if (activeAgentId === 'tactician') {
-        systemPrompt = getTacticianPrompt({
-            strategy: { focus: "Immediate Implementation" },
-            name: state.fields.name?.value,
-            constraints: { timeBarrier: state.fields.time_barrier?.value || 3, skillStage: state.fields.skill_stage?.value || 3 }
-        });
-    }
-    else {
-        systemPrompt = `You are a helpful intake assistant. Goal: ${goal}`;
-    }
-
-    // --- QUESTION MODE INJECTION ---
+    // --- QUESTION MODE ---
     const field = state.nextField;
     const mode = getQuestionMode(field);
-
-    let modeInstruction = "";
-    switch (mode) {
-        case 'mcq':
-            modeInstruction = "FORMAT: Ask a Multiple Choice Question (MCQ). List 4-6 brief options. Do not ask open-endedly.";
-            break;
-        case 'scale':
-            modeInstruction = "FORMAT: Ask for a rating on a scale of 1 to 5. Define extremities (e.g. 1=Low, 5=High).";
-            break;
-        case 'numeric':
-            modeInstruction = "FORMAT: Ask for a specific number (e.g. minutes, hours).";
-            break;
-        case 'list':
-            modeInstruction = "FORMAT: Ask the user to list items (separated by commas).";
-            break;
-        case 'free_text':
-        default:
-            modeInstruction = "FORMAT: Ask a clear, concise open-ended question.";
-            break;
-    }
-
-    // Repetition/Clarification Handling
-    let repetitionInstruction = "";
-    if (field) {
-        const repeatCount = state.repeatCountByField?.[field] || 0;
-        if (repeatCount >= 1) {
-            repetitionInstruction = `\nNOTE: User failed to answer correctly ${repeatCount} times. BE EXTREMELY CLEAR.`;
-            if (repeatCount >= 2 && mode !== 'free_text') {
-                repetitionInstruction += " FORCE CHOICES. Do not allow ambiguity.";
-            }
-        }
-    }
-
-    systemPrompt += `\n\nIMMEDIATE INSTRUCTION: ${goal}\n${modeInstruction}\n${repetitionInstruction}\n\nIgnore any conflicted internal 'nextQuestion' logic. Ask EXACTLY ONE question about '${field}'.`;
+    const repeatCount = field ? (state.repeatCountByField?.[field] || 0) : 0;
 
     try {
-        const { output } = await ai.generate({
-            model: DEFAULT_MODEL, // INTAKE_MODEL alias
-            system: systemPrompt,
-            prompt: "Generate the next question.",
-            output: { schema: QuestionResponseSchema }
-        });
+        // Use Dotprompt with resilience and concurrency control
+        const { output } = await withConcurrencyLimit(
+            () => withLLMResilience(
+                () => composerPrompt({
+                    activeAgent: activeAgentId,
+                    nextField: String(field || 'general'),
+                    goal,
+                    mode,
+                    currentData: state.fields,
+                    repeatCount
+                }),
+                {
+                    component: 'composer',
+                    maxRetries: 3,
+                    // Fallback: use deterministic templates if LLM fails
+                    fallback: async () => {
+                        log.warn({ event: 'compose.llm_fallback' });
+                        return { output: { message: getDeterministicQuestion(field, mode) } };
+                    }
+                }
+            )
+        );
 
         return output?.message || "Could you tell me a bit more?";
     } catch (e) {
-        console.error("Composer Error", e);
-        return "Could you provide more details?";
+        log.error({ event: 'compose.error', error: String(e) });
+        return getDeterministicQuestion(field, mode);
     }
+}
+
+/**
+ * Deterministic fallback questions (no LLM needed)
+ */
+function getDeterministicQuestion(field?: keyof IntakeData, mode?: string): string {
+    const templates: Record<string, string> = {
+        time_per_week_mins: "How many hours per week can you dedicate to learning AI?",
+        skill_stage: "On a scale of 1-5, where would you rate your current AI skills? (1=Beginner, 5=Expert)",
+        time_barrier: "On a scale of 1-5, how much does time constraint affect your learning? (1=Not at all, 5=Major barrier)",
+        role_category: "What's your job function? (e.g., Product, Engineering, Sales, Marketing, Operations)",
+        industry_vertical: "Which industry are you in? (BFSI, Manufacturing, IT, Healthcare, EdTech, Sales & Marketing, Other)",
+        goal_calibrated: "What specific outcome would you like to achieve with AI in the next 3-6 months?",
+        tech_confidence: "On a scale of 1-5, how confident are you with technology in general?",
+        resilience: "On a scale of 1-5, how would you rate your ability to bounce back from setbacks?",
+        vision_clarity: "On a scale of 1-5, how clear is your vision of where you want to be in 2 years?"
+    };
+
+    if (field && templates[field]) {
+        return templates[field];
+    }
+
+    return "Could you provide more details?";
 }
 
 function getQuestionMode(field?: keyof IntakeData): 'mcq' | 'scale' | 'numeric' | 'list' | 'free_text' {

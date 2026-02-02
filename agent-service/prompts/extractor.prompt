@@ -1,0 +1,75 @@
+---
+model: googleai/gemini-2.0-flash
+input:
+  schema:
+    userMessage: string
+    currentRole?: string
+    currentGoal?: string
+    targetField?: string
+output:
+  schema:
+    name?: string
+    email?: string
+    role_category?: string
+    industry_vertical?: string
+    industry?: string
+    seniority?: string
+    goal_calibrated?: string
+    skill_stage?: number
+    time_barrier?: number
+    srl_goal_setting?: number
+    srl_adaptability?: number
+    srl_reflection?: number
+    tech_confidence?: number
+    resilience?: number
+    vision_clarity?: number
+    success_clarity_1yr?: number
+    learner_type?: string
+    motivation_type?: string
+    vark_primary?: string
+    vark_ranked?(array): string
+    constraints?(array): string
+    current_tools?(array): string
+    time_per_week_mins?: number
+    frustrations?: string
+    benefits?: string
+    application_context?: string
+config:
+  temperature: 0
+---
+
+You are an expert Data Extractor for an Intake Interview.
+
+## TASK
+Extract specific fields from the USER MESSAGE into JSON.
+
+## CONTEXT
+{{#if currentRole}}Role: {{currentRole}}{{/if}}
+{{#if currentGoal}}Goal: {{currentGoal}}{{/if}}
+{{#if targetField}}Target Field: {{targetField}}{{/if}}
+
+## EXTRACTION RULES
+
+### For SCALE fields (skill_stage, srl_*, vision_clarity, etc.)
+- Output NUMBER 1-5
+- Map: "Beginner/Low/Not at all" → 1, "Expert/High/Very much" → 5
+- Middle ground: "Somewhat/Average/Moderate" → 3
+
+### For INDUSTRY VERTICAL
+Match ONE of: BFSI, Manufacturing, Sales & Marketing, IT Consultancy, Healthcare, EdTech, Other
+
+### For TIME
+Convert to minutes (Number). Example: "2 hours" → 120
+
+### For ENUMS
+- learner_type: theorist, activist, reflector, pragmatist
+- motivation_type: intrinsic, outcome, hybrid
+- vark_primary: visual, audio, read_write, kinesthetic
+
+### General Rules
+- If user implies a field (e.g., "I manage products" → role_category: "Product"), extract it
+- If output is ambiguous or genuinely missing, do NOT guess — return null for that field
+- Only extract what is clearly stated or strongly implied
+
+## USER MESSAGE
+{{userMessage}}

@@ -1,7 +1,9 @@
 import { IntakeState, IntakeData } from './schema';
-import { ai, DEFAULT_MODEL } from '../genkit';
+import { ai, INTAKE_MODEL } from '../genkit';
 import { z } from 'zod';
 import { logger } from '../utils/logger';
+import { withLLMResilience } from '../utils/llm-resilience';
+import { withConcurrencyLimit } from '../utils/concurrency';
 
 export type ExtractResult =
     | { ok: true; data: Partial<IntakeData> }
@@ -44,6 +46,9 @@ const ExtractionSchema = z.object({
     application_context: z.string().optional()
 });
 
+// Load the Dotprompt
+const extractorPrompt = ai.prompt('extractor');
+
 export async function extractFields(
     userMessage: string,
     currentFields: IntakeState['fields'],
@@ -52,41 +57,34 @@ export async function extractFields(
     const log = logger.child({ component: 'extractor', targetField });
     log.debug({ event: 'extract.start', userMessageLen: userMessage.length });
 
-    // 1. Cheap deterministic parsing
+    // 1. Cheap deterministic parsing (always runs, no LLM cost)
     const quickExtract: Partial<IntakeData> = {};
     const hrMatch = userMessage.match(/(\d+)\s*(h|hr|hrs|hour|hours)/i);
     if (hrMatch) {
         quickExtract.time_per_week_mins = parseInt(hrMatch[1]) * 60;
     }
 
-    const systemPrompt = `
-    You are an expert Data Extractor for an Intake Interview.
-    EXTRACT specific fields from the USER MESSAGE into JSON.
-    
-    CONTEXT:
-    Role: ${currentFields.role_raw?.value}
-    Goal: ${currentFields.goal_raw?.value}
-    Target: ${String(targetField || 'any')}
-    
-    Instructions:
-    - Return JSON matching the schema.
-    - For SCALES (skill_stage, srl_*, vision_clarity, etc.):
-      - Output NUMBER 1-5.
-      - Map "Beginner/Low" -> 1. "Expert/High" -> 5.
-    - For INDUSTRY VERTICAL: Match one of: BFSI, Manufacturing, Sales & Marketing, IT Consultancy, Healthcare, EdTech, Other.
-    - For TIME: Convert to minutes (Number).
-    - If user implies a field (e.g. "I manage products" -> role_category: "Product"), extract it.
-    - If output is ambiguous, return null.
-    `;
-
     try {
-        const { output } = await ai.generate({
-            model: DEFAULT_MODEL,
-            system: systemPrompt,
-            prompt: userMessage,
-            output: { schema: ExtractionSchema },
-            config: { temperature: 0 }
-        });
+        // 2. LLM extraction with resilience and concurrency control
+        const { output } = await withConcurrencyLimit(
+            () => withLLMResilience(
+                () => extractorPrompt({
+                    userMessage,
+                    currentRole: currentFields.role_raw?.value,
+                    currentGoal: currentFields.goal_raw?.value,
+                    targetField: String(targetField || 'any')
+                }),
+                {
+                    component: 'extractor',
+                    maxRetries: 3,
+                    // Fallback: return quick extract only if LLM fails
+                    fallback: async () => {
+                        log.warn({ event: 'extract.llm_fallback' });
+                        return { output: {} };
+                    }
+                }
+            )
+        );
 
         let data = output ? JSON.parse(JSON.stringify(output)) : {};
         if (Object.keys(data).length === 0) data = {};
