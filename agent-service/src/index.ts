@@ -40,6 +40,48 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
 
         console.log('📦 [Backend] Request Body:', JSON.stringify(req.body, null, 2));
         const result = await quizGuideFlow(req.body);
+        
+        // If intake is complete, trigger IMPACT analysis
+        if (result.state.isComplete && result.state.fields.email?.value) {
+            console.log('🎯 [Backend] Intake complete, generating IMPACT analysis...');
+            try {
+                const { supervisorFlow } = await import('./agents/supervisor');
+                const intakeData = {
+                    name: result.state.fields.name?.value || '',
+                    email: result.state.fields.email?.value || '',
+                    primaryGoal: result.state.fields.goal_calibrated?.value || result.state.fields.goal_raw?.value || '',
+                    currentRoles: [result.state.fields.role_category?.value || result.state.fields.role_raw?.value || 'Professional'],
+                    goalSettingConfidence: result.state.fields.srl_goal_setting?.value || 3,
+                    newApproachesFrequency: result.state.fields.srl_adaptability?.value || 3,
+                    reflectionFrequency: result.state.fields.srl_reflection?.value || 3,
+                    aiToolsConfidence: result.state.fields.tech_confidence?.value || 3,
+                    resilienceLevel: result.state.fields.resilience?.value || 3,
+                    clearCareerVision: result.state.fields.vision_clarity?.value || 3,
+                    successDescription: result.state.fields.success_clarity_1yr?.value || 3,
+                    learningForChallenge: result.state.fields.motivation_type?.value === 'intrinsic' ? 5 : 3,
+                    outcomeDrivenLearning: result.state.fields.motivation_type?.value === 'outcome' ? 5 : 3,
+                    timeBarrier: result.state.fields.time_barrier?.value || 3,
+                    currentFrustrations: result.state.fields.frustrations?.value || '',
+                    learnerType: (result.state.fields.learner_type?.value || 'pragmatist') as any,
+                    varkPreferences: {
+                        visual: result.state.fields.vark_primary?.value === 'visual' ? 5 : 2,
+                        audio: result.state.fields.vark_primary?.value === 'audio' ? 5 : 2,
+                        readingWriting: result.state.fields.vark_primary?.value === 'reading' ? 5 : 2,
+                        kinesthetic: result.state.fields.vark_primary?.value === 'kinesthetic' ? 5 : 2,
+                    },
+                    skillStage: result.state.fields.skill_stage?.value || 2,
+                    concreteBenefits: result.state.fields.benefits?.value || '',
+                    shortTermApplication: result.state.fields.application_context?.value || '',
+                };
+                
+                const analysis = await supervisorFlow(intakeData);
+                result.analysis = analysis;
+                console.log('✅ [Backend] IMPACT analysis generated');
+            } catch (analysisError) {
+                console.error('❌ [Backend] IMPACT analysis failed:', analysisError);
+            }
+        }
+        
         res.json({ result });
     } catch (error) {
         console.error('💥 [Backend] Quiz Error:', error);
