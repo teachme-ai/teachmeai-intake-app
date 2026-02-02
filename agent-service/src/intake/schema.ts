@@ -76,7 +76,7 @@ export interface IntakeState {
     repeatCountByField?: Partial<Record<keyof IntakeData, number>>;
 
     // Agent Sequencing
-    activeAgent: "guide" | "profiler" | "strategist" | "tactician";
+    activeAgent: "guide" | "profiler" | "strategist" | "learner_dimensions" | "tactician";
     handoffPending?: { from: string; to: string; message: string };
     agentTurnCount?: Record<string, number>;
 

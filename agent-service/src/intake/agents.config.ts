@@ -5,7 +5,7 @@ import { GUIDE_SYSTEM_PROMPT } from '../prompts/guide.system';
 // We import these dynamically or define usage in composer, 
 // but for config we just need identifiers.
 
-export type AgentId = 'guide' | 'profiler' | 'strategist' | 'tactician';
+export type AgentId = 'guide' | 'profiler' | 'strategist' | 'learner_dimensions' | 'tactician';
 
 export interface AgentConfig {
     id: AgentId;
@@ -15,65 +15,124 @@ export interface AgentConfig {
     shouldExit: (state: IntakeState) => boolean;
 }
 
-export const AGENT_FLOW: AgentId[] = ['guide', 'profiler', 'strategist', 'tactician'];
+/**
+ * 5 Learner Dimensions (for learner_dimensions agent):
+ * 1. SRL (Self-Regulated Learning): goal setting, adaptability, reflection
+ * 2. Motivation: intrinsic/outcome, vision clarity
+ * 3. Preferences: VARK, learner type
+ * 4. Readiness: tech confidence, resilience, skill stage
+ * 5. Constraints: time barrier, constraints, frustrations
+ */
+
+export const AGENT_FLOW: AgentId[] = ['guide', 'strategist', 'learner_dimensions', 'tactician'];
 
 export const AGENTS: Record<AgentId, AgentConfig> = {
     guide: {
         id: 'guide',
         name: 'TeachMeAI Guide',
-        ownedFields: ['name', 'email'], // V2: Removed role/goal to prevent loop
+        ownedFields: ['name', 'email'],
         introMessage: "Hi, I'm the intake guide. Let's get you set up.",
         shouldExit: (state) => {
-            // Exit if name and email are present (or if we have a valid JWT handoff)
-            // We relax this to just 'email' if name is missing but we want to move on.
             return isFieldFilled(state, 'email');
         }
     },
+
+    // Moved before learner_dimensions to deepen role/goal first
+    strategist: {
+        id: 'strategist',
+        name: 'Career Strategist',
+        ownedFields: [
+            'industry_vertical', 'industry', 'role_category', 'seniority',
+            'goal_calibrated', 'benefits', 'application_context'
+        ],
+        introMessage: "I'm the Strategist. Let's align this with your career goals.",
+        shouldExit: (state) => {
+            // Simplified: just need role_category and goal_calibrated
+            return isFieldFilled(state, 'role_category') && isFieldFilled(state, 'goal_calibrated');
+        }
+    },
+
+    // New: Consolidated learner dimensions agent
+    learner_dimensions: {
+        id: 'learner_dimensions',
+        name: 'Learning Profile Analyst',
+        ownedFields: [
+            // Dimension 1: SRL (Self-Regulated Learning)
+            'srl_goal_setting', 'srl_adaptability', 'srl_reflection',
+            // Dimension 2: Motivation
+            'motivation_type', 'vision_clarity', 'success_clarity_1yr',
+            // Dimension 3: Learning Preferences
+            'learner_type', 'vark_primary', 'vark_ranked',
+            // Dimension 4: Readiness / Confidence
+            'skill_stage', 'tech_confidence', 'resilience',
+            // Dimension 5: Time Barrier (partial, rest handled by tactician)
+            'time_barrier'
+        ],
+        introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
+        shouldExit: (state) => {
+            // Minimum: skill level + one learning preference + motivation indicator
+            const hasSkill = isFieldFilled(state, 'skill_stage');
+            const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
+            const hasMotivation = isFieldFilled(state, 'vision_clarity') || isFieldFilled(state, 'motivation_type');
+            return hasSkill && (hasLearner || hasMotivation);
+        }
+    },
+
+    // Legacy profiler - redirects to learner_dimensions
     profiler: {
         id: 'profiler',
-        name: 'Profiler (Psychologist)',
-        // V2 Ownership: Deep profiling
-        ownedFields: [
-            'skill_stage', 'time_barrier',
-            'learner_type', 'vark_primary', 'vark_ranked',
-            'srl_goal_setting', 'srl_adaptability', 'tech_confidence'
-        ],
-        introMessage: "Nice to meet you. I'm the Profiler. I want to understand your learning style.",
+        name: 'Profiler (Legacy)',
+        ownedFields: ['skill_stage', 'time_barrier', 'learner_type', 'vark_primary'],
+        introMessage: "Nice to meet you. I'm the Profiler.",
         shouldExit: (state) => {
-            // Required: Skill, Time Barrier, Learner Type
             const hasSkill = isFieldFilled(state, 'skill_stage');
             const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
             return hasSkill && hasLearner;
         }
     },
-    strategist: {
-        id: 'strategist',
-        name: 'Career Strategist',
-        // V2 Ownership: Professional Alignment + Motivation
-        ownedFields: [
-            'industry_vertical', 'industry', 'role_category', 'seniority',
-            'goal_calibrated', 'motivation_type', 'vision_clarity', 'benefits', 'application_context'
-        ],
-        introMessage: "Thanks. I'm the Strategist. Let's align this with your career goals.",
-        shouldExit: (state) => {
-            // Required: Vertical, Role category, Goal
-            return isFieldFilled(state, 'industry_vertical') &&
-                isFieldFilled(state, 'role_category') &&
-                isFieldFilled(state, 'goal_calibrated');
-        }
-    },
+
     tactician: {
         id: 'tactician',
         name: 'Tactician (Agile Coach)',
-        // V2 Ownership: Execution Logistics + Pain Points
         ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
         introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
         shouldExit: (state) => {
-            // Exit if we have time commitment (or user skipped it with -1)
             const time = state.fields.time_per_week_mins;
             const hasTime = time?.value !== undefined;
-            // Note: Value can be -1 (skip), which is still "defined"
             return hasTime;
         }
     }
 };
+
+/**
+ * 5 Learner Dimensions Schema
+ * Used for reporting and structured output
+ */
+export const LEARNER_DIMENSIONS = {
+    srl: {
+        name: 'Self-Regulated Learning',
+        fields: ['srl_goal_setting', 'srl_adaptability', 'srl_reflection'] as const,
+        description: 'Ability to set goals, adapt strategies, and reflect on learning'
+    },
+    motivation: {
+        name: 'Motivation Profile',
+        fields: ['motivation_type', 'vision_clarity', 'success_clarity_1yr'] as const,
+        description: 'What drives learning - intrinsic curiosity vs outcome focus'
+    },
+    preferences: {
+        name: 'Learning Preferences',
+        fields: ['learner_type', 'vark_primary', 'vark_ranked'] as const,
+        description: 'How the learner prefers to consume and process information'
+    },
+    readiness: {
+        name: 'Readiness & Confidence',
+        fields: ['skill_stage', 'tech_confidence', 'resilience'] as const,
+        description: 'Current skill level and confidence in learning new tech'
+    },
+    constraints: {
+        name: 'Environment & Constraints',
+        fields: ['time_barrier', 'constraints', 'frustrations', 'current_tools'] as const,
+        description: 'External factors limiting learning capacity'
+    }
+} as const;
+
