@@ -151,7 +151,15 @@ export async function processUserTurn(
         log.debug({ event: 'agent.scope', agent: currentAgentId, missing: ownedMissing });
 
         if (ownedMissing.length > 0) {
-            state.nextField = ownedMissing[0];
+            // CRITICAL FIX: Don't re-ask the field we just filled in this turn
+            const justFilled = state.lastQuestionField && isFieldFilled(state, state.lastQuestionField);
+            if (justFilled && ownedMissing[0] === state.lastQuestionField && ownedMissing.length > 1) {
+                // Skip to next missing field
+                state.nextField = ownedMissing[1];
+                log.info({ event: 'skip_just_filled', field: state.lastQuestionField, nextField: state.nextField });
+            } else {
+                state.nextField = ownedMissing[0];
+            }
         }
         else {
             // Blocked State: Agent didn't exit, but has no owned fields left.
