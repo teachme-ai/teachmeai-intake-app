@@ -45,11 +45,15 @@ This plan outlines the steps to implement the conversational quiz and its integr
   - [x] Handoff proxy to bypass Vercel WAF (implemented in handoff-proxy/route.ts).
 
 ## Phase 4: Testing & Optimization 🔄 (In Progress)
+- [x] Build compilation test
+- [x] JWT token generation test
+- [x] JWT token verification test
+- [x] Invalid token handling test
+- [x] Expired token handling test
+- [x] API endpoint validation (valid/invalid/missing tokens)
 - [ ] End-to-end test: Chat -> Email -> Pre-filled Intake.
 - [ ] Mobile responsiveness check for ChatUI.
 - [ ] Performance audit for Gemini response times.
-- [ ] Verify JWT token expiration handling.
-- [ ] Test error scenarios (invalid tokens, expired tokens, missing data).
 - [ ] Load testing for concurrent users.
 
 ---
