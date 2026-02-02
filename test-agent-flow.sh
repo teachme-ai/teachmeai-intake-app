@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Test script for deployed agent service
+# Enhanced test script for deployed agent service with full output
 API_URL="https://teachmeai-agent-service-584680412286.us-central1.run.app/quizGuide"
+SUPERVISOR_URL="https://teachmeai-agent-service-584680412286.us-central1.run.app/supervisorFlow"
 
-echo "🧪 Testing Deployed Agent Service"
+echo "🧪 Testing Deployed Agent Service (Enhanced)"
 echo "URL: $API_URL"
 echo ""
 
@@ -23,130 +24,176 @@ STATE='{
   "isComplete": false
 }'
 
-# Test Turn 1: Name
-echo "📝 Turn 1: Providing name..."
-RESPONSE=$(curl -s -X POST "$API_URL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": '"$STATE"',
-    "userMessage": "Hi, I am Khalid"
-  }')
+# Array to store all responses
+declare -a TURNS
+declare -a AGENTS
+declare -a MESSAGES
 
-echo "$RESPONSE" | jq -r '.result.message' | head -3
-TURN_COUNT=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
-IS_COMPLETE=$(echo "$RESPONSE" | jq -r '.result.isComplete')
-echo "Turn: $TURN_COUNT | Complete: $IS_COMPLETE"
-echo ""
+# Function to make request and extract data
+make_turn() {
+    local turn_num=$1
+    local user_msg=$2
+    
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📝 Turn $turn_num"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "👤 USER: $user_msg"
+    echo ""
+    
+    RESPONSE=$(curl -s -X POST "$API_URL" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "state": '"$STATE"',
+        "userMessage": "'"$user_msg"'"
+      }')
+    
+    # Extract key fields
+    local agent_msg=$(echo "$RESPONSE" | jq -r '.result.message')
+    local turn_count=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
+    local is_complete=$(echo "$RESPONSE" | jq -r '.result.isComplete')
+    local active_agent=$(echo "$RESPONSE" | jq -r '.result.state.activeAgent')
+    local progress=$(echo "$RESPONSE" | jq -r '.result.progress')
+    local next_field=$(echo "$RESPONSE" | jq -r '.result.action.targetField // "none"')
+    
+    # Store for summary
+    TURNS[$turn_num]=$turn_count
+    AGENTS[$turn_num]=$active_agent
+    MESSAGES[$turn_num]="$agent_msg"
+    
+    # Display agent response
+    echo "🤖 AGENT ($active_agent):"
+    echo "$agent_msg" | fold -w 70 -s
+    echo ""
+    echo "📊 Status: Turn $turn_count | Progress: $progress% | Next: $next_field | Complete: $is_complete"
+    echo ""
+    
+    # Update state for next turn
+    STATE=$(echo "$RESPONSE" | jq -c '.result.state')
+    
+    # Return completion status
+    echo "$is_complete"
+}
 
-# Update state
-STATE=$(echo "$RESPONSE" | jq -c '.result.state')
+# Run conversation
+IS_COMPLETE=$(make_turn 1 "Hi, I am Khalid")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-# Test Turn 2: Email
-echo "📝 Turn 2: Providing email..."
-RESPONSE=$(curl -s -X POST "$API_URL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": '"$STATE"',
-    "userMessage": "khalid@teachmeai.in"
-  }')
+IS_COMPLETE=$(make_turn 2 "khalid@teachmeai.in")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-echo "$RESPONSE" | jq -r '.result.message' | head -3
-TURN_COUNT=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
-IS_COMPLETE=$(echo "$RESPONSE" | jq -r '.result.isComplete')
-ACTIVE_AGENT=$(echo "$RESPONSE" | jq -r '.result.state.activeAgent')
-echo "Turn: $TURN_COUNT | Agent: $ACTIVE_AGENT | Complete: $IS_COMPLETE"
-echo ""
+IS_COMPLETE=$(make_turn 3 "Technology")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-# Update state
-STATE=$(echo "$RESPONSE" | jq -c '.result.state')
+IS_COMPLETE=$(make_turn 4 "I am at skill level 3 out of 5")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-# Test Turn 3: Skill level
-echo "📝 Turn 3: Providing skill level..."
-RESPONSE=$(curl -s -X POST "$API_URL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": '"$STATE"',
-    "userMessage": "I would say I am at level 3 out of 5"
-  }')
+IS_COMPLETE=$(make_turn 5 "I learn best by doing hands-on projects, I'm a pragmatist")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-echo "$RESPONSE" | jq -r '.result.message' | head -3
-TURN_COUNT=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
-IS_COMPLETE=$(echo "$RESPONSE" | jq -r '.result.isComplete')
-ACTIVE_AGENT=$(echo "$RESPONSE" | jq -r '.result.state.activeAgent')
-echo "Turn: $TURN_COUNT | Agent: $ACTIVE_AGENT | Complete: $IS_COMPLETE"
-echo ""
+IS_COMPLETE=$(make_turn 6 "I have a clear vision - become an AI-powered PM in 6 months")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-# Update state
-STATE=$(echo "$RESPONSE" | jq -c '.result.state')
+IS_COMPLETE=$(make_turn 7 "I can dedicate 5 hours per week, about 300 minutes")
+[ "$IS_COMPLETE" = "true" ] && exit 0
 
-# Test Turn 4: Learning preference
-echo "📝 Turn 4: Providing learning preference..."
-RESPONSE=$(curl -s -X POST "$API_URL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": '"$STATE"',
-    "userMessage": "I learn best by doing hands-on projects"
-  }')
-
-echo "$RESPONSE" | jq -r '.result.message' | head -3
-TURN_COUNT=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
-IS_COMPLETE=$(echo "$RESPONSE" | jq -r '.result.isComplete')
-ACTIVE_AGENT=$(echo "$RESPONSE" | jq -r '.result.state.activeAgent')
-echo "Turn: $TURN_COUNT | Agent: $ACTIVE_AGENT | Complete: $IS_COMPLETE"
-echo ""
-
-# Update state
-STATE=$(echo "$RESPONSE" | jq -c '.result.state')
-
-# Test Turn 5: Motivation/Vision
-echo "📝 Turn 5: Providing motivation..."
-RESPONSE=$(curl -s -X POST "$API_URL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": '"$STATE"',
-    "userMessage": "I have a clear vision - I want to become an AI-powered PM within 6 months"
-  }')
-
-echo "$RESPONSE" | jq -r '.result.message' | head -3
-TURN_COUNT=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
-IS_COMPLETE=$(echo "$RESPONSE" | jq -r '.result.isComplete')
-ACTIVE_AGENT=$(echo "$RESPONSE" | jq -r '.result.state.activeAgent')
-echo "Turn: $TURN_COUNT | Agent: $ACTIVE_AGENT | Complete: $IS_COMPLETE"
-echo ""
-
-# Update state
-STATE=$(echo "$RESPONSE" | jq -c '.result.state')
-
-# Test Turn 6: Time commitment
-echo "📝 Turn 6: Providing time commitment..."
-RESPONSE=$(curl -s -X POST "$API_URL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "state": '"$STATE"',
-    "userMessage": "I can dedicate 5 hours per week"
-  }')
-
-echo "$RESPONSE" | jq -r '.result.message' | head -3
-TURN_COUNT=$(echo "$RESPONSE" | jq -r '.result.state.turnCount')
-IS_COMPLETE=$(echo "$RESPONSE" | jq -r '.result.isComplete')
-ACTIVE_AGENT=$(echo "$RESPONSE" | jq -r '.result.state.activeAgent')
-echo "Turn: $TURN_COUNT | Agent: $ACTIVE_AGENT | Complete: $IS_COMPLETE"
-echo ""
-
-# Summary
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📊 Test Summary"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Session ID: $SESSION_ID"
-echo "Total Turns: $TURN_COUNT"
-echo "Final Agent: $ACTIVE_AGENT"
-echo "Complete: $IS_COMPLETE"
-echo ""
-
-if [ "$IS_COMPLETE" = "true" ]; then
-    echo "✅ Interview completed successfully!"
-elif [ "$TURN_COUNT" -ge "4" ]; then
-    echo "✅ Fix verified: Interview progressed through multiple turns (expected 4-6)"
-else
-    echo "❌ Issue: Interview ended prematurely at turn $TURN_COUNT"
+# If still not complete, trigger supervisor analysis
+if [ "$IS_COMPLETE" != "true" ]; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧠 Triggering AI Analysis (Supervisor Flow)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    
+    # Extract collected data from state
+    INTAKE_DATA=$(echo "$STATE" | jq '{
+        name: .fields.name.value,
+        email: .fields.email.value,
+        currentRoles: [.fields.role_raw.value],
+        primaryGoal: .fields.goal_raw.value,
+        skillStage: .fields.skill_stage.value,
+        learnerType: .fields.learner_type.value,
+        timePerWeekMins: .fields.time_per_week_mins.value,
+        sessionId: .sessionId
+    }')
+    
+    echo "📦 Sending data to supervisor..."
+    
+    SUPERVISOR_RESPONSE=$(curl -s -X POST "$SUPERVISOR_URL" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "data": '"$INTAKE_DATA"',
+        "sessionId": "'$SESSION_ID'",
+        "intakeState": '"$STATE"'
+      }')
+    
+    echo "✅ Analysis complete!"
+    echo ""
 fi
+
+# Final Summary
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📊 CONVERSATION SUMMARY"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Session ID: $SESSION_ID"
+echo "Total Turns: ${#TURNS[@]}"
+echo ""
+
+for i in "${!TURNS[@]}"; do
+    echo "Turn $i: ${AGENTS[$i]}"
+done
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📋 COLLECTED DATA"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "$STATE" | jq -r '.fields | to_entries[] | select(.value.value != null) | "\(.key): \(.value.value)"'
+
+if [ -n "$SUPERVISOR_RESPONSE" ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🎯 AI ANALYSIS REPORT"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    
+    # Extract and display profile
+    echo "👤 LEARNER PROFILE:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.profile.summary' | fold -w 70 -s
+    echo ""
+    
+    # Extract and display strategy
+    echo "🎯 IMPACT STRATEGY:"
+    echo ""
+    echo "Identify:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.strategy.identify' | fold -w 70 -s
+    echo ""
+    echo "Motivate:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.strategy.motivate' | fold -w 70 -s
+    echo ""
+    echo "Plan:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.strategy.plan' | fold -w 70 -s
+    echo ""
+    echo "Act:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.strategy.act' | fold -w 70 -s
+    echo ""
+    echo "Check:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.strategy.check' | fold -w 70 -s
+    echo ""
+    echo "Transform:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.strategy.transform' | fold -w 70 -s
+    echo ""
+    
+    # Extract and display tactics
+    echo "🛠️ ACTIONABLE TACTICS:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.tactics.actions[]' | nl
+    echo ""
+    
+    # Extract and display next steps
+    echo "📌 NEXT STEPS:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.tactics.nextSteps[]' | nl
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ TEST COMPLETE"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
