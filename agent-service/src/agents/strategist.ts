@@ -23,7 +23,10 @@ export const strategistFlow = ai.defineFlow(
             profile: input.profile,
             professionalRoles: input.professionalRoles,
             primaryGoal: input.primaryGoal,
-            deepResearchResult: input.deepResearchResult
+            deepResearchResult: input.deepResearchResult,
+            // Pass role/goal raw for context
+            roleRaw: input.professionalRoles[0] || 'Professional',
+            goalRaw: input.primaryGoal || 'Upskilling'
         });
 
         const { output } = await ai.generate({

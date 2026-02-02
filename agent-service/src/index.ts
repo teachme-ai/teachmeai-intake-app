@@ -87,20 +87,27 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
         const sessionId = req.body.sessionId || req.body.data.sessionId;
         if (sessionId) {
             console.log(`💾 [Backend] Persisting analysis for session: ${sessionId}`);
-            // Construct a minimal state for persistence
-            const minimalState: any = {
+
+            // Use full intake state if provided, otherwise construct minimal
+            const intakeState = req.body.intakeState || {
                 sessionId,
                 metadata: { startTime: new Date().toISOString(), mode: 'interview' },
                 fields: {
                     name: { value: req.body.data.name || '' },
                     email: { value: req.body.data.email || '' },
                     role_raw: { value: (req.body.data.currentRoles || [])[0] || '' },
-                    goal_raw: { value: req.body.data.primaryGoal || '' }
+                    goal_raw: { value: req.body.data.primaryGoal || '' },
+                    // Map additional fields from IntakeResponse
+                    skill_stage: req.body.data.skillStage ? { value: req.body.data.skillStage } : undefined,
+                    time_barrier: req.body.data.timeBarrier ? { value: req.body.data.timeBarrier } : undefined,
+                    role_category: req.body.data.roleCategory ? { value: req.body.data.roleCategory } : undefined,
+                    goal_calibrated: { value: req.body.data.primaryGoal || '' },
+                    time_per_week_mins: req.body.data.timePerWeekMins ? { value: req.body.data.timePerWeekMins } : undefined
                 },
                 isComplete: true,
-                turnCount: 99 // indicate final turn
+                turnCount: 99
             };
-            await persistIntakeState(minimalState, result);
+            await persistIntakeState(intakeState, result);
         }
 
         res.json({ result });
