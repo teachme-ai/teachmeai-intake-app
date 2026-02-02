@@ -126,9 +126,10 @@ Turn 4+: tactician continues with time/constraints
 ### Verification Steps
 1. ✅ Code compiles without errors
 2. ✅ TypeScript validation passes
-3. ⏳ Deploy to Cloud Run
-4. ⏳ Test with real user flow
-5. ⏳ Verify 4-6 questions asked before completion
+3. ✅ Deploy to Cloud Run (revision 00049-l7s)
+4. ✅ Service health check passed
+5. ⏳ Test with real user flow
+6. ⏳ Verify 4-6 questions asked before completion
 
 ---
 
@@ -182,10 +183,14 @@ Turn 4+: tactician continues with time/constraints
 
 ### Steps
 1. ✅ Fix committed to main branch
-2. ⏳ Build agent service: `cd agent-service && npm run build`
-3. ⏳ Deploy to Cloud Run: `gcloud run deploy teachmeai-agent-service`
-4. ⏳ Verify deployment health
+2. ✅ Build agent service: `cd agent-service && npm run build`
+3. ✅ Deploy to Cloud Run: Revision `00049-l7s`
+4. ✅ Verify deployment health: Service responding
 5. ⏳ Test with sample intake flow
+
+**Deployed**: February 2, 2026  
+**Revision**: teachmeai-agent-service-00049-l7s  
+**URL**: https://teachmeai-agent-service-584680412286.us-central1.run.app
 
 ### Rollback Plan
 If issues persist:
@@ -208,5 +213,6 @@ gcloud run deploy teachmeai-agent-service
 
 **Fixed by**: Amazon Q  
 **Reviewed by**: Pending  
-**Deployed by**: Pending  
-**Status**: ✅ Code fixed, awaiting deployment
+**Deployed by**: Amazon Q  
+**Deployment**: ✅ Live (Revision 00049-l7s)  
+**Status**: ✅ Deployed to production, ready for testing
