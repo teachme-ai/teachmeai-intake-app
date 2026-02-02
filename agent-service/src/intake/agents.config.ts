@@ -51,7 +51,12 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasRole = isFieldFilled(state, 'role_category');
             const hasGoal = isFieldFilled(state, 'goal_calibrated');
             const hasContext = isFieldFilled(state, 'application_context');
-            return hasRole && hasGoal && hasContext;
+            const shouldExit = hasRole && hasGoal && hasContext;
+            
+            if (!shouldExit) {
+                console.log('[Strategist Exit Check]', { hasRole, hasGoal, hasContext });
+            }
+            return shouldExit;
         }
     },
 
@@ -78,7 +83,12 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasLearner = isFieldFilled(state, 'learner_type');
             const hasSRL = isFieldFilled(state, 'srl_goal_setting');
             const hasMotivation = isFieldFilled(state, 'motivation_type');
-            return hasSkill && hasLearner && hasSRL && hasMotivation;
+            const shouldExit = hasSkill && hasLearner && hasSRL && hasMotivation;
+            
+            if (!shouldExit) {
+                console.log('[Learner Dimensions Exit Check]', { hasSkill, hasLearner, hasSRL, hasMotivation });
+            }
+            return shouldExit;
         }
     },
 
@@ -104,7 +114,12 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             // Require 2 fields: time and constraints
             const hasTime = isFieldFilled(state, 'time_per_week_mins');
             const hasConstraint = isFieldFilled(state, 'constraints');
-            return hasTime && hasConstraint;
+            const shouldExit = hasTime && hasConstraint;
+            
+            if (!shouldExit) {
+                console.log('[Tactician Exit Check]', { hasTime, hasConstraint });
+            }
+            return shouldExit;
         }
     }
 };

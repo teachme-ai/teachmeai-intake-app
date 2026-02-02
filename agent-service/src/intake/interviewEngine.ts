@@ -38,8 +38,10 @@ export async function processUserTurn(
     log.info({
         event: 'turn.start',
         turn: state.turnCount,
+        activeAgent: state.activeAgent,
         lastQuestionField: state.lastQuestionField,
-        userMessageSummary: userMessage.substring(0, 50)
+        userMessageSummary: userMessage.substring(0, 50),
+        filledFieldsCount: Object.keys(state.fields).filter(k => isFieldFilled(state, k as keyof IntakeData)).length
     });
 
     // Initialize agent if missing
@@ -66,7 +68,7 @@ export async function processUserTurn(
         const keys = Object.keys(extracted);
 
         if (keys.length > 0) {
-            log.info({ event: 'extract.success', keys });
+            log.info({ event: 'extract.success', keys, values: extracted });
 
             // COERCE AND SET FIELDS
             Object.entries(extracted).forEach(([k, val]) => {
@@ -111,7 +113,15 @@ export async function processUserTurn(
         let currentAgentConfig = AGENTS[currentAgentId];
 
         // A. CHECK EXIT CRITERIA
-        if (currentAgentConfig.shouldExit(state)) {
+        const exitCheck = currentAgentConfig.shouldExit(state);
+        log.info({ 
+            event: 'agent.exit_check', 
+            agent: currentAgentId, 
+            shouldExit: exitCheck,
+            filledFields: Object.keys(state.fields).filter(k => state.fields[k as keyof IntakeData]?.value !== undefined)
+        });
+        
+        if (exitCheck) {
             const currentIndex = AGENT_FLOW.indexOf(currentAgentId);
 
             if (currentIndex < AGENT_FLOW.length - 1) {
@@ -148,7 +158,13 @@ export async function processUserTurn(
 
         // Find first missing owned field
         const ownedMissing = currentAgentConfig.ownedFields.filter(f => !isFieldFilled(state, f));
-        log.debug({ event: 'agent.scope', agent: currentAgentId, missing: ownedMissing });
+        log.info({ 
+            event: 'agent.scope', 
+            agent: currentAgentId, 
+            ownedFields: currentAgentConfig.ownedFields.length,
+            missing: ownedMissing,
+            missingCount: ownedMissing.length
+        });
 
         if (ownedMissing.length > 0) {
             // CRITICAL FIX: Don't re-ask the field we just filled in this turn
@@ -232,7 +248,9 @@ export async function processUserTurn(
         event: 'turn.decision',
         nextAction: state.nextAction,
         nextField: state.nextField,
-        activeAgent: state.activeAgent
+        activeAgent: state.activeAgent,
+        isComplete: state.isComplete,
+        totalFieldsFilled: Object.keys(state.fields).filter(k => isFieldFilled(state, k as keyof IntakeData)).length
     });
 
     let assistantMessage = "";
