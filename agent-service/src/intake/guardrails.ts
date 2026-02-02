@@ -118,6 +118,7 @@ export function coerceAndSetField(
 
 /**
  * Decides what to do when a user fails to answer a field correctly multiple times.
+ * UPDATED: Accept answer on first repeat, don't ask again
  */
 export function applyRepetitionFallback(
     state: IntakeState,
@@ -125,32 +126,16 @@ export function applyRepetitionFallback(
     userMessage: string,
     count: number
 ): GuardOutcome {
-    const isRequiredScale = ['skill_stage', 'time_barrier', 'role_category', 'industry_vertical'].includes(field);
-    const isOptional = !isRequiredScale; // Simplified logic for now
-
-    // 2nd Failure: Soft Fallback
-    if (count === 2) {
-        if (field === 'time_per_week_mins') return { handled: true, value: -1, action: 'force_skip' }; // Fail fast on time
-        if (field === 'role_category' || field === 'industry_vertical') return { handled: false, action: 'switch_to_mcq' };
-
-        // Scale: Force MCQ/Scale prompt
-        if (['skill_stage', 'time_barrier', 'srl_goal_setting', 'tech_confidence', 'resilience'].includes(field)) {
-            return { handled: false, action: 'switch_to_mcq' };
-        }
-
-        // Text: Just accept it
-        return { handled: true, value: userMessage, action: 'accept_raw' };
+    // 1st Repeat (count=1): Accept whatever they said
+    if (count === 1) {
+        console.log(`[Guard] First repeat for ${field}, accepting raw answer: "${userMessage}"`);
+        return { handled: true, value: userMessage.trim(), action: 'accept_raw' };
     }
 
-    // 3rd Failure: Hard Fallback
-    if (count >= 3) {
-        if (isRequiredScale) {
-            // Cannot skip, must default
-            return { handled: true, value: 3, action: 'default_value' };
-        } else {
-            // Optional fields can skip
-            return { handled: true, value: -1, action: 'force_skip' };
-        }
+    // 2nd Repeat (count=2): Should never happen, but force skip
+    if (count >= 2) {
+        console.log(`[Guard] Second repeat for ${field}, force skipping`);
+        return { handled: true, value: userMessage.trim() || 'Not provided', action: 'accept_raw' };
     }
 
     return { handled: false, action: 'continue' };

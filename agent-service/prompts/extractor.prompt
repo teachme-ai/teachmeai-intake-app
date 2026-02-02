@@ -50,6 +50,13 @@ Extract specific fields from the USER MESSAGE into JSON.
 
 ## EXTRACTION RULES
 
+### CRITICAL: INTERPRET USER INTENT
+- **ALWAYS try to extract the target field from the user's response**
+- If user says "use AI for game design" when asked about goal → goal_calibrated: "Use AI for game design"
+- If user says "game design" when asked about benefits → benefits: "Game design applications"
+- If user gives a vague answer, capture it as-is rather than returning null
+- Only return null if the response is completely unrelated or junk ("idk", "no", "pass")
+
 ### For SCALE fields (skill_stage, srl_*, vision_clarity, etc.)
 - Output NUMBER 1-5
 - Map: "Beginner/Low/Not at all" → 1, "Expert/High/Very much" → 5

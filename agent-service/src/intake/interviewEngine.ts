@@ -200,10 +200,10 @@ export async function processUserTurn(
         // Only run if we are about to ask the SAME question as last time
         if (state.nextField === state.lastQuestionField) {
             state.repeatCountByField = state.repeatCountByField || {};
-            const count = (state.repeatCountByField[state.nextField] || 0) + 1;
-            state.repeatCountByField[state.nextField] = count;
+            const count = (state.repeatCountByField[state.nextField] || 0);
 
-            if (count >= 2) {
+            if (count >= 1) {
+                // Already asked once, accept the answer now
                 const outcome = applyRepetitionFallback(state, state.nextField, userMessage, count);
 
                 log.warn({
@@ -214,8 +214,7 @@ export async function processUserTurn(
                 });
 
                 if (outcome.handled && outcome.value !== undefined) {
-                    // Force set value (Skip or Accept Raw)
-                    // Use coerce logic? No, guardrail output is explicit.
+                    // Force set value (Accept Raw)
                     state.fields[state.nextField] = {
                         value: outcome.value,
                         status: 'confirmed',
@@ -227,10 +226,12 @@ export async function processUserTurn(
                     // Loop again to find NEXT field
                     continue;
                 }
-                // If handled=false (e.g. switch_to_mcq), we break loop and call Composer with new instructions.
             }
+            
+            // Increment for next time
+            state.repeatCountByField[state.nextField] = count + 1;
         } else {
-            // New question, reset count for this field (optional but clean)
+            // New question, reset count for this field
             state.repeatCountByField = state.repeatCountByField || {};
             state.repeatCountByField[state.nextField] = 0;
         }

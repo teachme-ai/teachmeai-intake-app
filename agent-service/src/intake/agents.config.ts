@@ -47,14 +47,14 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Strategist. Let's align this with your career goals.",
         shouldExit: (state) => {
-            // Require 3 core strategic fields: role, goal, context
+            // Require only 2 essential fields: role and goal
+            // Context/benefits are nice-to-have but not required
             const hasRole = isFieldFilled(state, 'role_category');
-            const hasGoal = isFieldFilled(state, 'goal_calibrated');
-            const hasContext = isFieldFilled(state, 'application_context');
-            const shouldExit = hasRole && hasGoal && hasContext;
+            const hasGoal = isFieldFilled(state, 'goal_calibrated') || isFieldFilled(state, 'goal_raw');
+            const shouldExit = hasRole && hasGoal;
             
             if (!shouldExit) {
-                console.log('[Strategist Exit Check]', { hasRole, hasGoal, hasContext });
+                console.log('[Strategist Exit Check]', { hasRole, hasGoal });
             }
             return shouldExit;
         }
