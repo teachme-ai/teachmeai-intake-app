@@ -17,6 +17,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const originalConsoleError = console.error;
+                console.error = function(...args) {
+                  if (args[0]?.includes?.('Meta Pixel') || args[0]?.includes?.('Removed parameters')) {
+                    return;
+                  }
+                  originalConsoleError.apply(console, args);
+                };
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
           {children}
