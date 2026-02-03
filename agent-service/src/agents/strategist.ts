@@ -19,19 +19,35 @@ export const strategistFlow = ai.defineFlow(
         outputSchema: StrategySchema,
     },
     async (input) => {
-        const prompt = getStrategistPrompt({
-            profile: input.profile,
-            professionalRoles: input.professionalRoles,
-            primaryGoal: input.primaryGoal,
-            deepResearchResult: input.deepResearchResult,
-            // Pass role/goal raw for context
-            roleRaw: input.professionalRoles[0] || 'Professional',
-            goalRaw: input.primaryGoal || 'Upskilling'
-        });
+        // Use direct prompt for IMPACT analysis generation
+        const analysisPrompt = `
+You are a Strategic AI Adoption Advisor.
+
+Given the learner profile and research insights, generate a strategic IMPACT framework analysis.
+
+LEARNER PROFILE:
+- Role: ${input.professionalRoles.join(', ')}
+- Goal: ${input.primaryGoal}
+- SRL Level: ${input.profile.psychologicalProfile.srlLevel}
+- Motivation: ${input.profile.psychologicalProfile.motivationType}
+- Primary Learning Style: ${input.profile.learningPreferences.primaryStyle}
+
+RESEARCH INSIGHTS:
+${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}
+
+Generate:
+1. IDENTIFY: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal
+2. MOTIVATE: A 2-3 sentence compelling reason why this matters for their career/impact
+3. PLAN: A 2-3 sentence high-level roadmap of what they need to learn/build
+4. priorities: 3-5 strategic priorities as an array of strings
+5. recommendedWorkflows: 2-3 specific AI workflows they should implement
+
+Be specific, actionable, and personalized to their context.
+`;
 
         const { output } = await ai.generate({
             model: DEFAULT_MODEL,
-            prompt: prompt,
+            prompt: analysisPrompt,
             output: { schema: StrategySchema },
         });
 
