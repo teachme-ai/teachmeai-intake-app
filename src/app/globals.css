@@ -22,6 +22,35 @@
   body {
     @apply bg-gray-50 text-gray-900;
   }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-25%);
+    }
+  }
+
+  .animate-bounce {
+    animation: bounce 1s infinite;
+    will-change: transform;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+    will-change: transform;
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: opacity;
+  }
 }
 
 @layer components {
