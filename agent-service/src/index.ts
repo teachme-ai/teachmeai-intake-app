@@ -41,6 +41,13 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
         console.log('📦 [Backend] Request Body:', JSON.stringify(req.body, null, 2));
         const result = await quizGuideFlow(req.body);
         
+        console.log('🔍 [Backend] Result state:', JSON.stringify({
+            isComplete: result.state?.isComplete,
+            hasEmail: !!result.state?.fields?.email?.value,
+            email: result.state?.fields?.email?.value,
+            turnCount: result.state?.turnCount
+        }));
+        
         // If intake is complete, trigger IMPACT analysis
         if (result.state.isComplete && result.state.fields.email?.value) {
             console.log('🎯 [Backend] Intake complete, generating IMPACT analysis...');
