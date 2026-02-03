@@ -90,8 +90,13 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
                 console.log('💾 [Backend] Analysis persisted to Google Sheets');
                 
                 result.analysis = analysis;
-            } catch (analysisError) {
+            } catch (analysisError: any) {
                 console.error('❌ [Backend] IMPACT analysis failed:', analysisError);
+                console.error('❌ [Backend] Error details:', JSON.stringify({
+                    message: analysisError.message,
+                    stack: analysisError.stack?.split('\n').slice(0, 3),
+                    cause: analysisError.cause
+                }));
             }
         }
         
