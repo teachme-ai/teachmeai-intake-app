@@ -277,7 +277,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         {/* 6. CTA Section - PROMINENT */}
                         <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 rounded-3xl p-10 text-white text-center shadow-2xl shadow-red-500/40 border-4 border-white animate-pulse-slow">
                             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                                <h3 className="text-3xl font-black mb-4 text-white drop-shadow-lg">🎯 Unlock Your Full 15-Page Report</h3>
+                                <h3 className="text-3xl font-black mb-4 text-white drop-shadow-lg">🎯 Unlock Your Full 10-Page Report</h3>
                                 <p className="text-white text-lg mb-8 max-w-lg mx-auto leading-relaxed font-semibold">
                                     Get your complete AI Adoption Blueprint, including specific automation workflows and a 90-day execution plan.
                                 </p>
