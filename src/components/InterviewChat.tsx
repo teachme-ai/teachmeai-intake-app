@@ -71,6 +71,12 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
 
             setState(nextState);
 
+            // If analysis is included in response, set it immediately
+            if (data.analysis) {
+                console.log('✅ Analysis received from /quizGuide:', data.analysis);
+                setAnalysis(data.analysis);
+            }
+
             const botMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
