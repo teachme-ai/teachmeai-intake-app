@@ -66,15 +66,17 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
             if (!response.ok) throw new Error('API Error');
 
             const data = await response.json();
-            const nextState: IntakeState = data.state;
-            const assistantMsgContent = data.message;
+            const nextState: IntakeState = data.state || data.result?.state;
+            const assistantMsgContent = data.message || data.result?.message;
 
             setState(nextState);
 
             // If analysis is included in response, set it immediately
-            if (data.analysis) {
-                console.log('✅ Analysis received from /quizGuide:', data.analysis);
-                setAnalysis(data.analysis);
+            // Check both data.analysis and data.result.analysis
+            const analysis = data.analysis || data.result?.analysis;
+            if (analysis) {
+                console.log('✅ Analysis received from /quizGuide:', analysis);
+                setAnalysis(analysis);
             }
 
             const botMsg: Message = {
