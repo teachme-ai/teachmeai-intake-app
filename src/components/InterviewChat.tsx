@@ -282,7 +282,9 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                                     Get your complete AI Adoption Blueprint, including specific automation workflows and a 90-day execution plan.
                                 </p>
                                 <a
-                                    href="mailto:Irfan@teachmeai.in?subject=My AI Analysis Report&body=Hi Irfan, I just completed my diagnostic and would like to book a 1:1 session to discuss my full analysis."
+                                    href="https://topmate.io/khalidirfan/1622786"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="inline-flex items-center gap-3 bg-white text-red-600 font-black text-lg px-10 py-5 rounded-2xl hover:bg-yellow-50 hover:scale-105 transition-all active:scale-95 shadow-2xl hover:shadow-yellow-500/50 border-4 border-yellow-400"
                                 >
                                     📞 Book 1:1 Clarity Call with Irfan <Send className="w-5 h-5" />
