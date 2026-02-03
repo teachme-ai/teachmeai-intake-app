@@ -88,7 +88,13 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             }
         }
         
+        
         res.json({ result });
+        console.log('📤 [Backend /quizGuide] Response:', JSON.stringify({ 
+            isComplete: result.state?.isComplete, 
+            hasAnalysis: !!result.analysis,
+            analysisKeys: result.analysis ? Object.keys(result.analysis) : []
+        }));
     } catch (error) {
         console.error('💥 [Backend] Quiz Error:', error);
         const msg = error instanceof Error ? error.message : 'Unknown Quiz Error';
