@@ -74,9 +74,15 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
                     shortTermApplication: result.state.fields.application_context?.value || '',
                 };
                 
+                console.log('📊 [Backend] Calling supervisorFlow with:', JSON.stringify(intakeData, null, 2));
                 const analysis = await supervisorFlow(intakeData);
+                console.log('✅ [Backend] IMPACT analysis generated:', JSON.stringify(analysis, null, 2));
+                
+                // Persist analysis to Google Sheets
+                await persistIntakeState(result.state, analysis);
+                console.log('💾 [Backend] Analysis persisted to Google Sheets');
+                
                 result.analysis = analysis;
-                console.log('✅ [Backend] IMPACT analysis generated');
             } catch (analysisError) {
                 console.error('❌ [Backend] IMPACT analysis failed:', analysisError);
             }
