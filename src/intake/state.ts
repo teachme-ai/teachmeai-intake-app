@@ -26,12 +26,12 @@ export function initializeState(
         fields.email = { value: prefill.email, status: 'confirmed', confidence: 'high', evidence: 'prefill', updatedAt: now };
     }
     if (prefill.role) {
-        // Role is candidate until we verify it's specific enough
-        fields.role_raw = { value: prefill.role, status: 'candidate', confidence: 'medium', evidence: 'prefill', updatedAt: now };
+        // Role is confirmed from prefill to prevent redundant loops
+        fields.role_raw = { value: prefill.role, status: 'confirmed', confidence: 'high', evidence: 'prefill', updatedAt: now };
     }
     if (prefill.goal) {
-        // Goal is candidate until calibrated
-        fields.goal_raw = { value: prefill.goal, status: 'candidate', confidence: 'medium', evidence: 'prefill', updatedAt: now };
+        // Goal is confirmed until calibrated
+        fields.goal_raw = { value: prefill.goal, status: 'confirmed', confidence: 'high', evidence: 'prefill', updatedAt: now };
     }
 
     // 2. Identify Missing Fields

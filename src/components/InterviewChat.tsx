@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IntakeState, IntakeData } from '@/intake/schema';
-import { Loader2, Send, User, Bot, CheckCircle2, Sparkles } from 'lucide-react';
+import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, ChevronLeft } from 'lucide-react';
+import { InfoPanelIntake } from './InfoPanelIntake';
 
 interface InterviewChatProps {
     initialState: IntakeState;
@@ -313,90 +314,100 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
 
 
     return (
-        <div className="flex flex-col h-[600px] w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            {/* Header / Progress */}
-            <div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between">
-                <div>
-                    <h3 className="font-bold text-gray-800">TeachMeAI Assistant</h3>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className={`w-2 h-2 rounded-full ${isTyping ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-                        {isTyping ? 'Thinking...' : 'Online'}
-                    </div>
-                </div>
-                <div className="text-right">
-                    <div className="text-xs font-medium text-gray-500 mb-1">Profile Completion</div>
-                    <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-primary-600 transition-all duration-500"
-                            style={{ width: `${state.completionPercent}%` }}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50">
-                {messages.map((msg) => (
-                    <div
-                        key={msg.id}
-                        className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                        <div className={`
-                            w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                            ${msg.role === 'user' ? 'bg-primary-100' : 'bg-white border border-gray-200'}
-                        `}>
-                            {msg.role === 'user' ? <User className="w-5 h-5 text-primary-600" /> : <Bot className="w-5 h-5 text-blue-600" />}
-                        </div>
-
-                        <div className={`
-                            max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed shadow-sm
-                            ${msg.role === 'user'
-                                ? 'bg-primary-600 text-white rounded-tr-none'
-                                : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'}
-                        `}>
-                            {msg.content}
-                        </div>
-                    </div>
-                ))}
-
-                {isTyping && (
-                    <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center">
-                            <Bot className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="bg-white border border-gray-100 rounded-2xl p-4 rounded-tl-none shadow-sm flex items-center gap-1">
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
-                    </div>
-                )}
-
-                <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-100">
-                <form
-                    onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                    className="flex gap-2"
-                >
-                    <input
-                        type="text"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="Type your answer..."
-                        className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400"
-                        autoFocus
-                    />
-                    <button
-                        type="submit"
-                        disabled={!inputValue.trim() || isTyping}
-                        className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 rounded-xl transition-all shadow-lg shadow-primary-600/20 flex items-center justify-center"
-                    >
-                        {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+        <div className="flex flex-col lg:flex-row w-full h-full gap-4 lg:gap-6">
+            {/* Chat Section - 75% on desktop */}
+            {/* Chat Section - 75% on desktop - Cream/Light */}
+            {/* Chat Section - Minimalist Column (Approx 60-65% width) */}
+            <div className="w-full lg:w-[65%] flex flex-col h-full overflow-hidden relative">
+                {/* Header - Minimalist Text Only */}
+                <div className="flex items-center p-4 lg:p-6 pb-2">
+                    <button className="mr-4 text-gray-400 hover:text-gray-900 transition-colors">
+                        <ChevronLeft className="w-6 h-6" />
                     </button>
-                </form>
+                    <h3 className="font-bold text-gray-900 text-[var(--font-size-xl)] tracking-tight">
+                        AI Assistant
+                    </h3>
+                </div>
+
+
+                {/* Chat Area - Clean White Background */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white">
+                    {messages.map((msg) => (
+                        <div
+                            key={msg.id}
+                            className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                        >
+                            <div className={`
+                                w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-transform hover:scale-105
+                                ${msg.role === 'user' ? 'bg-gradient-to-br from-[#7F9CFF] to-[#547AFF] text-white shadow-blue-500/20' : 'bg-[#F3F4F6] text-gray-600 border border-gray-100'}
+                            `}>
+                                {msg.role === 'user' ? <User className="w-5 h-5 lg:w-6 lg:h-6" /> : <Bot className="w-6 h-6 lg:w-7 lg:h-7" />}
+                            </div>
+
+                            <div className={`
+                                max-w-[85%] lg:max-w-[80%] rounded-2xl lg:rounded-[2rem] p-5 lg:p-7 shadow-sm transition-all relative group
+                                ${msg.role === 'user'
+                                    ? 'bg-gradient-to-br from-[#7F9CFF] to-[#547AFF] text-white rounded-tr-none shadow-blue-500/10'
+                                    : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none shadow-gray-200/50'}
+                            `}>
+                                <p className="text-[var(--font-size-base)] leading-relaxed font-medium">
+                                    {msg.content}
+                                </p>
+                                <span className={`text-[12px] absolute -bottom-7 ${msg.role === 'user' ? 'right-0' : 'left-0'} opacity-0 group-hover:opacity-100 transition-opacity font-bold uppercase tracking-widest ${msg.role === 'user' ? 'text-blue-500' : 'text-gray-400'}`}>
+                                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+
+                    {isTyping && (
+                        <div className="flex gap-3 animate-in fade-in duration-300">
+                            <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+                                <Bot className="w-5 h-5 text-gray-400" />
+                            </div>
+                            <div className="bg-white border border-gray-100 rounded-2xl p-4 rounded-tl-none shadow-sm flex items-center gap-1.5 ring-1 ring-gray-50">
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" />
+                            </div>
+                        </div>
+                    )}
+
+                    <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input Area - Simple Clean Capsule */}
+                <div className="p-4 lg:p-6 bg-white flex-shrink-0 z-20">
+                    <form
+                        onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                        className="flex gap-3 lg:gap-5 max-w-4xl items-center relative"
+                    >
+                        <div className="flex-1 relative group/input">
+                            <input
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                placeholder="Type a message..."
+                                className="w-full pl-6 pr-16 py-4 lg:py-5 bg-white border border-gray-100 rounded-[2rem] focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all placeholder:text-gray-400 text-[var(--font-size-base)] font-medium text-gray-800 shadow-sm"
+                                autoFocus
+                            />
+                            <div className="absolute right-2 top-2 bottom-2">
+                                <button
+                                    type="submit"
+                                    disabled={!inputValue.trim() || isTyping}
+                                    className="h-full aspect-square bg-[#547AFF] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-full transition-all flex items-center justify-center hover:scale-105 active:scale-95 shadow-md shadow-blue-500/20"
+                                >
+                                    {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {/* Info Panel - 25% on desktop */}
+            <div className="hidden lg:block lg:w-[25%] h-full">
+                <InfoPanelIntake />
             </div>
         </div>
     );

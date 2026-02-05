@@ -47,12 +47,12 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Strategist. Let's align this with your career goals.",
         shouldExit: (state) => {
-            // Require only 2 essential fields: role and goal
-            // Context/benefits are nice-to-have but not required
-            const hasRole = isFieldFilled(state, 'role_category');
+            // Require 2 essential signals: role and goal
+            // We accept 'raw' prefilled versions OR 'calibrated' versions
+            const hasRole = isFieldFilled(state, 'role_category') || isFieldFilled(state, 'role_raw');
             const hasGoal = isFieldFilled(state, 'goal_calibrated') || isFieldFilled(state, 'goal_raw');
             const shouldExit = hasRole && hasGoal;
-            
+
             if (!shouldExit) {
                 console.log('[Strategist Exit Check]', { hasRole, hasGoal });
             }
@@ -84,7 +84,7 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasSRL = isFieldFilled(state, 'srl_goal_setting');
             const hasMotivation = isFieldFilled(state, 'motivation_type');
             const shouldExit = hasSkill && hasLearner && hasSRL && hasMotivation;
-            
+
             if (!shouldExit) {
                 console.log('[Learner Dimensions Exit Check]', { hasSkill, hasLearner, hasSRL, hasMotivation });
             }
@@ -115,7 +115,7 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasTime = isFieldFilled(state, 'time_per_week_mins');
             const hasConstraint = isFieldFilled(state, 'constraints');
             const shouldExit = hasTime && hasConstraint;
-            
+
             if (!shouldExit) {
                 console.log('[Tactician Exit Check]', { hasTime, hasConstraint });
             }

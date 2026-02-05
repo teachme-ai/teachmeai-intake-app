@@ -28,43 +28,50 @@ export default async function Home({
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          {prefilledData?.name && (
-            <div className="mb-4 inline-block px-4 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
-              Welcome back, {prefilledData.name}! 👋
+    <main className="h-screen w-screen bg-[#FDFBF7] overflow-hidden flex flex-col">
+      <div className="w-full h-full flex flex-col p-2 lg:p-4 pb-2 lg:pb-4">
+        {/* Header - Minimal and Compact */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white/40 backdrop-blur-md rounded-2xl mb-4 border border-white/40 shadow-sm flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl lg:text-2xl font-black text-slate-900 tracking-tighter">
+              TeachMeAI <span className="text-blue-600">Consultation</span>
+            </h1>
+            {prefilledData?.name && (
+              <div className="px-3 py-1 bg-blue-100/80 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest ring-1 ring-blue-200">
+                L: {prefilledData.name}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Status</span>
+              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Live Pipeline
+              </span>
             </div>
-          )}
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Welcome to TeachMeAI
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            {INTAKE_MODE === 'chat'
-              ? "Let's build your personalized learning path together."
-              : "This intake helps us design a personalized learning pathway for you."}
-          </p>
+          </div>
         </div>
 
-        {/* Content Area */}
-        {INTAKE_MODE === 'chat' && initialState ? (
-          <InterviewChat initialState={initialState} />
-        ) : (
-          <IntakeForm initialData={prefilledData || undefined} />
-        )}
+        {/* Dynamic height content area - Absolute Full Height Fill */}
+        <div className="flex-1 min-h-0 relative z-10 w-full overflow-hidden flex flex-col mb-2 lg:mb-4">
+          {INTAKE_MODE === 'chat' && initialState ? (
+            <InterviewChat initialState={initialState} />
+          ) : (
+            <div className="w-full h-full bg-white rounded-t-[2.5rem] shadow-2xl border-x border-t border-gray-100 overflow-hidden">
+              <div className="h-full overflow-y-auto p-10">
+                <IntakeForm initialData={prefilledData || undefined} />
+              </div>
+            </div>
+          )}
+        </div>
 
-        {/* Admin Link */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-500 mb-2">Administrator Access</p>
-          <a
-            href="/admin"
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            📊 View Submissions Dashboard
-          </a>
+        {/* Simple Minimal Footer */}
+        <div className="flex items-center justify-center py-2 flex-shrink-0">
+          <p className="text-[var(--font-size-xs)] font-black text-slate-400 uppercase tracking-[0.3em] opacity-40 hover:opacity-100 transition-opacity cursor-default">
+            teachmeai.in
+          </p>
         </div>
       </div>
     </main>
-  )
+  );
 }
