@@ -9,8 +9,14 @@ const TacticianInput = z.object({
     name: z.string().optional(),
     constraints: z.object({
         timeBarrier: z.number(),
-        skillStage: z.number()
-    })
+        skillStage: z.number(),
+        // NEW: Enhanced constraints for Phase 3
+        constraintsList: z.array(z.string()).optional(),
+        currentTools: z.array(z.string()).optional(),
+    }),
+    // NEW: Enhanced context fields for Phase 3
+    learnerType: z.string().optional(),
+    timePerWeekMins: z.number().optional(),
 });
 
 export const tacticianFlow = ai.defineFlow(
@@ -23,7 +29,10 @@ export const tacticianFlow = ai.defineFlow(
         const prompt = getTacticianPrompt({
             strategy: input.strategy,
             name: input.name,
-            constraints: input.constraints
+            constraints: input.constraints,
+            // NEW: Pass enhanced context
+            learnerType: input.learnerType,
+            timePerWeekMins: input.timePerWeekMins,
         });
 
         const { output } = await ai.generate({

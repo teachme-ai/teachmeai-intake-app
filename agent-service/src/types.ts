@@ -26,6 +26,15 @@ export const IntakeResponseSchema = z.object({
     skillStage: z.number(),
     concreteBenefits: z.string(),
     shortTermApplication: z.string(),
+    // NEW: Enhanced context fields for better AI output
+    industry: z.string().optional(),
+    industry_vertical: z.string().optional(),
+    seniority: z.string().optional(),
+    application_context: z.string().optional(),
+    skill_stage: z.number().optional(),
+    current_tools: z.array(z.string()).optional(),
+    time_per_week_mins: z.number().optional(),
+    constraints: z.array(z.string()).optional(),  // For tactician
 });
 
 export const LearnerProfileSchema = z.object({
@@ -103,20 +112,32 @@ export type QuizResponse = z.infer<typeof QuizResponseSchema>;
 export const DeepResearchInputSchema = z.object({
     role: z.string(),
     goal: z.string(),
-    industry: z.string().optional(),
+    industry: z.string(),  // Now required
+    seniority: z.string().optional(),
+    application_context: z.string().optional(),
+    skill_stage: z.number().min(1).max(5).optional(),
+    current_tools: z.array(z.string()).optional(),
 });
 
 export const DeepResearchOutputSchema = z.object({
     aiOpportunityMap: z.array(z.object({
-        opportunity: z.string(),
-        impact: z.string()
-    })).max(6),
+        useCase: z.string(),
+        whyItMatters: z.string(),
+        dataNeeded: z.string(),
+        tools: z.array(z.string())
+    })),
     topPriorities: z.array(z.object({
-        name: z.string(),
+        priority: z.string(),
+        impact: z.enum(['high', 'medium', 'low']),
+        feasibility: z.enum(['high', 'medium', 'low']),
         quickWin: z.string(),
         portfolioArtifact: z.string()
-    })).max(4),
-    assumptions: z.array(z.string())
+    })),
+    risksAndGuardrails: z.array(z.string()),
+    recommendedCapstone: z.object({
+        title: z.string(),
+        deliverables: z.array(z.string())
+    })
 });
 
 export type DeepResearchOutput = z.infer<typeof DeepResearchOutputSchema>;
