@@ -1,11 +1,11 @@
 import { gemini20Flash } from '@genkit-ai/googleai';
 import { getStrategistPrompt } from '../prompts/strategist.system';
-import { LearnerProfileSchema, StrategySchema, DeepResearchOutputSchema } from '../types';
+import { PsychographicProfileSchema, StrategySchema, DeepResearchOutputSchema } from '../types';
 import { z } from 'zod';
 import { DEFAULT_MODEL, ai } from '../genkit';
 
 export const StrategistInputSchema = z.object({
-    profile: LearnerProfileSchema,
+    profile: PsychographicProfileSchema,
     professionalRoles: z.array(z.string()),
     careerVision: z.string().optional(),
     primaryGoal: z.string().optional(),
@@ -28,9 +28,11 @@ Given the learner profile and research insights, generate a strategic IMPACT fra
 LEARNER PROFILE:
 - Role: ${input.professionalRoles.join(', ')}
 - Goal: ${input.primaryGoal}
-- SRL Level: ${input.profile.psychologicalProfile.srlLevel}
-- Motivation: ${input.profile.psychologicalProfile.motivationType}
-- Primary Learning Style: ${input.profile.learningPreferences.primaryStyle}
+- Decision Style: ${input.profile.decisionStyle}
+- Uncertainty Handling: ${input.profile.uncertaintyHandling}
+- Change Preference: ${input.profile.changePreference}/10
+- Social Entanglement: ${input.profile.socialEntanglement}
+- Cognitive Load: ${input.profile.cognitiveLoadTolerance}
 
 RESEARCH INSIGHTS:
 ${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}

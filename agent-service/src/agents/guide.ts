@@ -15,7 +15,9 @@ const ChatTurnResponseSchema = z.object({
     message: z.string(),
     state: z.any(),
     isComplete: z.boolean(),
-    analysis: z.any().optional()
+    analysis: z.any().optional(),
+    action: z.any().optional(),
+    progress: z.number().optional()
 });
 
 export const quizGuideFlow = ai.defineFlow(

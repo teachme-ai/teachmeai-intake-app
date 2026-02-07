@@ -1,6 +1,6 @@
 import { IntakeResponseSchema, DeepResearchOutputSchema } from '../types';
 import { deepResearchFlow } from './deep-research';
-import { profilerFlow } from './profiler';
+import { profilingAgentFlow } from './profiler';
 import { strategistFlow } from './strategist';
 import { tacticianFlow } from './tactician';
 import { z } from 'zod';
@@ -29,7 +29,10 @@ export const supervisorFlow = ai.defineFlow(
     async (intake) => {
         // Phase 1: Profiling
         console.log("🕵️ [Supervisor] Phase 1: Profiling...");
-        const profile = await runWithRetry(() => profilerFlow(intake));
+        const profile = await runWithRetry(() => profilingAgentFlow({
+            goal: intake.primaryGoal || "",
+            challenge: intake.currentFrustrations || ""
+        }));
 
         await delay(1000); // Stagger
 
@@ -38,6 +41,10 @@ export const supervisorFlow = ai.defineFlow(
         const research = await runWithRetry(() => deepResearchFlow({
             role: intake.currentRoles[0] || "Professional",
             goal: intake.primaryGoal || "Upskilling",
+            // Industry is effectively optional (defaults to General if missing)
+            industry: intake.industry_vertical || "General",
+            skillStage: intake.skillStage,
+            learnerType: intake.learnerType
         }));
 
         await delay(1000); // Stagger
@@ -74,7 +81,7 @@ export const supervisorFlow = ai.defineFlow(
             Check: tactics.check,
             Transform: tactics.transform,
             nextSteps: tactics.nextSteps,
-            learnerProfile: JSON.stringify(profile.psychologicalProfile),
+            learnerProfile: JSON.stringify(profile),
             recommendations: tactics.recommendations,
             research: research
         };

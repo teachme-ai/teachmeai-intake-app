@@ -15,6 +15,10 @@ app.get('/', (req: Request, res: Response) => {
     res.send('✅ TeachMeAI Agent Service is LIVE and ready for analysis! Send POST requests to /supervisorFlow or /quizGuide');
 });
 
+app.get('/health', (req: Request, res: Response) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Expose the quiz guide flow
 app.post('/quizGuide', async (req: Request, res: Response) => {
     try {
@@ -40,17 +44,21 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
 
         console.log('📦 [Backend] Request Body:', JSON.stringify(req.body, null, 2));
         const result = await quizGuideFlow(req.body);
-        
+
         console.log('🔍 [Backend] Result state:', JSON.stringify({
             isComplete: result.state?.isComplete,
             hasEmail: !!result.state?.fields?.email?.value,
             email: result.state?.fields?.email?.value,
             turnCount: result.state?.turnCount
         }));
-        
+
         // If intake is complete, trigger IMPACT analysis
         if (result.state.isComplete && result.state.fields.email?.value) {
-            console.log('🎯 [Backend] Intake complete, generating IMPACT analysis...');
+            console.log('🎯 [Backend] Intake complete. PERSISTING RAW STATE first...');
+            // FAIL-SAFE: Save to sheet before complex analysis runs
+            await persistIntakeState(result.state);
+
+            console.log('🎯 [Backend] Generating IMPACT analysis...');
             try {
                 const { supervisorFlow } = await import('./agents/supervisor');
                 const intakeData = {
@@ -80,15 +88,15 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
                     concreteBenefits: result.state.fields.benefits?.value || '',
                     shortTermApplication: result.state.fields.application_context?.value || '',
                 };
-                
+
                 console.log('📊 [Backend] Calling supervisorFlow with:', JSON.stringify(intakeData, null, 2));
                 const analysis = await supervisorFlow(intakeData);
                 console.log('✅ [Backend] IMPACT analysis generated:', JSON.stringify(analysis, null, 2));
-                
+
                 // Persist analysis to Google Sheets
                 await persistIntakeState(result.state, analysis);
                 console.log('💾 [Backend] Analysis persisted to Google Sheets');
-                
+
                 result.analysis = analysis;
             } catch (analysisError: any) {
                 console.error('❌ [Backend] IMPACT analysis failed:', analysisError);
@@ -99,11 +107,11 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
                 }));
             }
         }
-        
-        
+
+
         res.json({ result });
-        console.log('📤 [Backend /quizGuide] Response:', JSON.stringify({ 
-            isComplete: result.state?.isComplete, 
+        console.log('📤 [Backend /quizGuide] Response:', JSON.stringify({
+            isComplete: result.state?.isComplete,
             hasAnalysis: !!result.analysis,
             analysisKeys: result.analysis ? Object.keys(result.analysis) : []
         }));

@@ -26,6 +26,8 @@ export const IntakeResponseSchema = z.object({
     skillStage: z.number(),
     concreteBenefits: z.string(),
     shortTermApplication: z.string(),
+    industry: z.string().optional(),
+    industry_vertical: z.string().optional(),
 });
 
 export const LearnerProfileSchema = z.object({
@@ -104,6 +106,8 @@ export const DeepResearchInputSchema = z.object({
     role: z.string(),
     goal: z.string(),
     industry: z.string().optional(),
+    skillStage: z.number().optional().describe("1-5 scale: Novice to Expert"),
+    learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']).optional(),
 });
 
 export const DeepResearchOutputSchema = z.object({
@@ -120,3 +124,13 @@ export const DeepResearchOutputSchema = z.object({
 });
 
 export type DeepResearchOutput = z.infer<typeof DeepResearchOutputSchema>;
+
+export const PsychographicProfileSchema = z.object({
+    decisionStyle: z.enum(['Intuitive', 'Analytical']),
+    uncertaintyHandling: z.enum(['Paralyzed', 'Checklist-Driven', 'Experimenter']),
+    changePreference: z.number().describe("1-10 Scale: 1=Resistant, 10=Seeker"),
+    socialEntanglement: z.enum(['Solitary', 'Social']),
+    cognitiveLoadTolerance: z.enum(['Low', 'Medium', 'High'])
+});
+
+export type PsychographicProfile = z.infer<typeof PsychographicProfileSchema>;

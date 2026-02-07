@@ -33,6 +33,15 @@ export async function processUserTurn(
 
     // Add requestId for tracing (mock uuid for now or passed from ctrl)
     const requestId = `req_${Date.now()}`;
+
+    // SAFEGUARD: Ensure fields object exists
+    if (!state.fields) {
+        state.fields = {};
+    }
+    if (typeof state.turnCount !== 'number') {
+        state.turnCount = 0;
+    }
+
     const log = logger.child({ sessionId, requestId, activeAgent: state.activeAgent });
 
     log.info({
@@ -114,13 +123,13 @@ export async function processUserTurn(
 
         // A. CHECK EXIT CRITERIA
         const exitCheck = currentAgentConfig.shouldExit(state);
-        log.info({ 
-            event: 'agent.exit_check', 
-            agent: currentAgentId, 
+        log.info({
+            event: 'agent.exit_check',
+            agent: currentAgentId,
             shouldExit: exitCheck,
             filledFields: Object.keys(state.fields).filter(k => state.fields[k as keyof IntakeData]?.value !== undefined)
         });
-        
+
         if (exitCheck) {
             const currentIndex = AGENT_FLOW.indexOf(currentAgentId);
 
@@ -158,9 +167,9 @@ export async function processUserTurn(
 
         // Find first missing owned field
         const ownedMissing = currentAgentConfig.ownedFields.filter(f => !isFieldFilled(state, f));
-        log.info({ 
-            event: 'agent.scope', 
-            agent: currentAgentId, 
+        log.info({
+            event: 'agent.scope',
+            agent: currentAgentId,
             ownedFields: currentAgentConfig.ownedFields.length,
             missing: ownedMissing,
             missingCount: ownedMissing.length
@@ -227,7 +236,7 @@ export async function processUserTurn(
                     continue;
                 }
             }
-            
+
             // Increment for next time
             state.repeatCountByField[state.nextField] = count + 1;
         } else {
