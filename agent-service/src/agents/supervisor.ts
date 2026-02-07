@@ -43,7 +43,10 @@ export const supervisorFlow = ai.defineFlow(
             skillStage: intake.skillStage,
             learnerType: intake.learnerType,
             digital_skills: intake.digital_skills,
-            tech_savviness: intake.tech_savviness
+            tech_savviness: intake.tech_savviness,
+            seniority: intake.seniority,
+            application_context: intake.application_context,
+            current_tools: intake.current_tools
         }));
 
         await delay(1000); // Stagger
@@ -57,7 +60,10 @@ export const supervisorFlow = ai.defineFlow(
             primaryGoal: intake.primaryGoal,
             deepResearchResult: research,
             digital_skills: intake.digital_skills,
-            tech_savviness: intake.tech_savviness
+            tech_savviness: intake.tech_savviness,
+            time_per_week_mins: intake.time_per_week_mins,
+            seniority: intake.seniority,
+            application_context: intake.application_context
         }));
 
         await delay(1000); // Stagger
@@ -72,7 +78,11 @@ export const supervisorFlow = ai.defineFlow(
                 skillStage: intake.skillStage,
                 digital_skills: intake.digital_skills,
                 tech_savviness: intake.tech_savviness
-            }
+            },
+            learnerType: intake.learnerType,
+            constraintsList: intake.constraints,
+            currentTools: intake.current_tools,
+            timePerWeekMins: intake.time_per_week_mins
         }));
 
         // Phase 5: Assembly

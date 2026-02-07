@@ -11,7 +11,10 @@ export const StrategistInputSchema = z.object({
     primaryGoal: z.string().optional(),
     deepResearchResult: DeepResearchOutputSchema.optional(),
     digital_skills: z.number().optional(),
-    tech_savviness: z.number().optional()
+    tech_savviness: z.number().optional(),
+    time_per_week_mins: z.number().optional(),
+    seniority: z.string().optional(),
+    application_context: z.string().optional()
 });
 
 export const strategistFlow = ai.defineFlow(
@@ -37,16 +40,22 @@ LEARNER PROFILE:
 - Cognitive Load: ${input.profile.cognitiveLoadTolerance}
 - Digital Mastery: ${input.digital_skills || 3}/5
 - Technical Depth: ${input.tech_savviness || 3}/5
+- Time Available: ${input.time_per_week_mins === -1 ? 'Flexible/Unspecified' : `${input.time_per_week_mins} mins/week`}
+- Seniority: ${input.seniority || 'Not specified'}
+- Application Context: ${input.application_context || 'Not specified'}
 
 RESEARCH INSIGHTS:
 ${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}
 
-Generate:
-1. identify: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal
-2. motivate: A 2-3 sentence compelling reason why this matters for their career/impact
-3. plan: A 2-3 sentence high-level roadmap of what they need to learn/build
-4. priorities: 3-5 strategic priorities as an array of strings
-5. recommendedWorkflows: 2-3 specific AI workflows they should implement
+RULES for IMPACT Framework:
+1. identify: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal.
+2. motivate: A 2-3 sentence compelling reason why this matters for their career/impact.
+3. plan: SCALE THIS TO TIME AVAILABLE.
+   - If < 120 mins/week: Plan must be ultra-efficient, focus on "one-click" tools and low-barrier activities.
+   - If 120-300 mins/week: Plan can include structured learning and setup of custom workflows.
+   - If > 300 mins/week: Suggest deep dives, fine-tuning, or architectural changes.
+4. priorities: 3-5 strategic priorities as an array of strings.
+5. recommendedWorkflows: 2-3 specific AI workflows they should implement.
 
 Be specific, actionable, and personalized to their context.
 `;

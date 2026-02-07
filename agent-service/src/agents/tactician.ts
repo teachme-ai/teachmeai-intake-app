@@ -12,7 +12,11 @@ const TacticianInput = z.object({
         skillStage: z.number(),
         digital_skills: z.number().optional(),
         tech_savviness: z.number().optional()
-    })
+    }),
+    learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']).optional(),
+    constraintsList: z.array(z.string()).optional(),
+    currentTools: z.array(z.string()).optional(),
+    timePerWeekMins: z.number().optional()
 });
 
 export const tacticianFlow = ai.defineFlow(

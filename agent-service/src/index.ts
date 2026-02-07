@@ -101,7 +101,17 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
                     concreteBenefits: result.state.fields.benefits?.value || '',
                     shortTermApplication: result.state.fields.application_context?.value || '',
                     digital_skills: toNum(result.state.fields.digital_skills?.value, 3),
-                    tech_savviness: toNum(result.state.fields.tech_savviness?.value, 3)
+                    tech_savviness: toNum(result.state.fields.tech_savviness?.value, 3),
+                    seniority: result.state.fields.seniority?.value || '',
+                    application_context: result.state.fields.application_context?.value || '',
+                    // Safely handle current_tools which should be an array
+                    current_tools: Array.isArray(result.state.fields.current_tools?.value)
+                        ? result.state.fields.current_tools?.value
+                        : (result.state.fields.current_tools?.value ? [result.state.fields.current_tools?.value] : []),
+                    time_per_week_mins: toNum(result.state.fields.time_per_week_mins?.value, -1),
+                    constraints: Array.isArray(result.state.fields.constraints?.value)
+                        ? result.state.fields.constraints?.value
+                        : []
                 };
 
                 console.log('📊 [Backend] [LOG-SEARCH-ME] Calling supervisorFlow with session:', result.state.sessionId);

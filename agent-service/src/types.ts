@@ -29,7 +29,12 @@ export const IntakeResponseSchema = z.object({
     industry: z.string().optional(),
     industry_vertical: z.string().optional(),
     digital_skills: z.number().optional(),
-    tech_savviness: z.number().optional()
+    tech_savviness: z.number().optional(),
+    seniority: z.string().optional(),
+    application_context: z.string().optional(),
+    current_tools: z.array(z.string()).optional(),
+    time_per_week_mins: z.number().optional(),
+    constraints: z.array(z.string()).optional()
 });
 
 export const LearnerProfileSchema = z.object({
@@ -111,7 +116,10 @@ export const DeepResearchInputSchema = z.object({
     skillStage: z.number().optional().describe("1-5 scale: Novice to Expert"),
     learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']).optional(),
     digital_skills: z.number().optional(),
-    tech_savviness: z.number().optional()
+    tech_savviness: z.number().optional(),
+    seniority: z.string().optional().describe("Junior, Mid-level, Senior, Lead"),
+    application_context: z.string().optional().describe("Context where AI will be applied (e.g. Work, Personal)"),
+    current_tools: z.array(z.string()).optional().describe("Tools currently used by the learner")
 });
 
 export const DeepResearchOutputSchema = z.object({
