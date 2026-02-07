@@ -1,6 +1,6 @@
 import IntakeForm from '@/components/IntakeForm';
 import InterviewChat from '@/components/InterviewChat';
-import { verifyToken } from '@/lib/jwt';
+import { verifyIntakeToken } from '@/lib/jwt';
 import { initializeState } from '@/intake/state';
 import { randomUUID } from 'crypto';
 
@@ -10,7 +10,7 @@ export default async function Home({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const token = typeof searchParams.token === 'string' ? searchParams.token : undefined;
-  const prefilledData = token ? await verifyToken(token) : null;
+  const prefilledData = token ? await verifyIntakeToken(token) : null;
 
   // FEATURE FLAG: Switch to 'false' to rollback to static form
   const INTAKE_MODE: 'static' | 'chat' = 'chat';

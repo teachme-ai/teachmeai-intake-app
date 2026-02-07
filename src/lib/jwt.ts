@@ -33,3 +33,7 @@ export async function verifyToken(token: string): Promise<ChatQuizPayload | null
         return null;
     }
 }
+
+export async function verifyIntakeToken(token: string): Promise<ChatQuizPayload | null> {
+    return verifyToken(token);
+}
