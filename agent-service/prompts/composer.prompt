@@ -40,7 +40,8 @@ Generate the next question based on the current context and instructions.
 
 ## RULES
 1. Ask EXACTLY ONE question about '{{nextField}}'
-2. Keep it friendly and concise
+2. **PERSONALIZE**: Reference the user's name, role, or goal if known (e.g., "As a Product Manager...", "To help with your goal of...")
+3. Keep it friendly and concise
 3. Do not repeat preamble or context the user already knows
 4. If asking about a scale, explain what 1 and 5 mean
 5. For MCQ, number the options for easy selection

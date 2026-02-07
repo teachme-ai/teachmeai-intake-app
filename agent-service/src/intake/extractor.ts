@@ -52,27 +52,46 @@ const extractorPrompt = ai.prompt('extractor');
 export async function extractFields(
     userMessage: string,
     currentFields: IntakeState['fields'],
-    targetField?: keyof IntakeData
+    targetField?: keyof IntakeData,
+    lastAssistantMessage?: string
 ): Promise<ExtractResult> {
     const log = logger.child({ component: 'extractor', targetField });
     log.debug({ event: 'extract.start', userMessageLen: userMessage.length });
 
     // 1. Cheap deterministic parsing (always runs, no LLM cost)
     const quickExtract: Partial<IntakeData> = {};
+
+    // Better Time Regex:
+    // Matches: "2 hours", "2 hrs", "2h", "10" (when target is time)
+    // We prioritize explicit units. If raw number & target=time, we assume hours.
+
+    // Check for explicit units first
     const hrMatch = userMessage.match(/(\d+)\s*(h|hr|hrs|hour|hours)/i);
+    const minMatch = userMessage.match(/(\d+)\s*(m|min|mins|minute|minutes)/i);
+
     if (hrMatch) {
         quickExtract.time_per_week_mins = parseInt(hrMatch[1]) * 60;
+    } else if (minMatch) {
+        quickExtract.time_per_week_mins = parseInt(minMatch[1]);
+    } else if (targetField === 'time_per_week_mins') {
+        // Fallback: If targeted, assume raw number is hours (unless > 20, then maybe mins? No, keep simple)
+        const rawNum = userMessage.match(/(\d+)/);
+        if (rawNum) {
+            // Assume hours for now as per common inputs
+            quickExtract.time_per_week_mins = parseInt(rawNum[1]) * 60;
+        }
     }
 
     try {
         // 2. LLM extraction with resilience and concurrency control
-        const { output } = await withConcurrencyLimit(
+        const { output: llmOutput } = await withConcurrencyLimit(
             () => withLLMResilience(
                 () => extractorPrompt({
                     userMessage,
                     currentRole: currentFields.role_raw?.value,
                     currentGoal: currentFields.goal_raw?.value,
-                    targetField: String(targetField || 'any')
+                    targetField: String(targetField || 'any'),
+                    lastAssistantMessage
                 }),
                 {
                     component: 'extractor',
@@ -86,10 +105,11 @@ export async function extractFields(
             )
         );
 
-        let data = output ? JSON.parse(JSON.stringify(output)) : {};
+        let data: Partial<IntakeData> = llmOutput ? JSON.parse(JSON.stringify(llmOutput)) : {};
         if (Object.keys(data).length === 0) data = {};
 
-        const merged = { ...quickExtract, ...data };
+        // Merge strategies: Quick extract overrides LLM for time if present (deterministic is safer)
+        const merged = { ...data, ...quickExtract };
 
         // --- FALLBACK LOGIC (TRUST USER) ---
         if (targetField) {
@@ -103,10 +123,10 @@ export async function extractFields(
                 const safeTextFields = ['role_raw', 'goal_raw', 'goal_calibrated', 'industry', 'seniority', 'frustrations', 'benefits', 'application_context', 'role_category', 'industry_vertical'];
 
                 const cleanMsg = userMessage.trim();
-                const isJunk = cleanMsg.length < 2 || /^(no|nah|idk|pass)/i.test(cleanMsg);
+                const isJunk = cleanMsg.length < 1 || /^(no|nah|idk|pass)/i.test(cleanMsg);
 
                 if (safeTextFields.includes(targetField as string) && !isJunk) {
-                    merged[targetField] = cleanMsg;
+                    (merged as any)[targetField] = cleanMsg;
                     log.info({ event: 'extract.fallback_text', field: targetField });
                 } else {
                     // For Scales/Enums, if we missed it, we leave it undefined.

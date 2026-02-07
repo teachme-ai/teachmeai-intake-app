@@ -70,10 +70,14 @@ export async function processUserTurn(
 
     // --- PHASE 1: EXTRACTION (RUN ONCE) ---
     // Update fields based on user message
-    const extractRes = await extractFields(userMessage, state.fields, state.lastQuestionField);
-
-    if (extractRes.ok) {
-        const extracted = extractRes.data || {};
+    const extraction = await extractFields(
+        userMessage,
+        state.fields,
+        state.lastQuestionField,
+        state.lastAssistantMessage
+    );
+    if (extraction.ok) {
+        const extracted = extraction.data || {};
         const keys = Object.keys(extracted);
 
         if (keys.length > 0) {
@@ -100,7 +104,7 @@ export async function processUserTurn(
             }
         }
     } else {
-        log.error({ event: 'extract.fail', error: extractRes.error });
+        log.error({ event: 'extract.fail', error: extraction.error });
     }
 
     state.turnCount++; // Increment user turns once per message
@@ -123,11 +127,18 @@ export async function processUserTurn(
 
         // A. CHECK EXIT CRITERIA
         const exitCheck = currentAgentConfig.shouldExit(state);
+
+        // Detailed Exit Decision Logging
+        const filledOwnFields = currentAgentConfig.ownedFields.filter(f => isFieldFilled(state, f));
+        const missingOwnFields = currentAgentConfig.ownedFields.filter(f => !isFieldFilled(state, f));
+
         log.info({
             event: 'agent.exit_check',
             agent: currentAgentId,
             shouldExit: exitCheck,
-            filledFields: Object.keys(state.fields).filter(k => state.fields[k as keyof IntakeData]?.value !== undefined)
+            filledCount: filledOwnFields.length,
+            missingCount: missingOwnFields.length,
+            missing: missingOwnFields
         });
 
         if (exitCheck) {
@@ -141,7 +152,8 @@ export async function processUserTurn(
                     event: 'agent.handoff',
                     from: currentAgentId,
                     to: nextAgentId,
-                    reason: 'exit_criteria_met'
+                    reason: 'exit_criteria_met',
+                    turnCount: state.turnCount
                 });
 
                 const nextAgentConfig = AGENTS[nextAgentId];
@@ -155,8 +167,16 @@ export async function processUserTurn(
                 // Loop again so new agent can make its first move immediately
                 continue;
             } else {
-                // All agents done
-                state.nextAction = 'done';
+                // All agents done - DOUBLE CHECK with global logic
+                if (isIntakeComplete(state)) {
+                    log.info({ event: 'agent.all_done', session: state.sessionId });
+                    state.nextAction = 'done';
+                } else {
+                    // Safety: if global check fails, go back to guide or stay in current
+                    log.warn({ event: 'agent.all_done_but_incomplete', session: state.sessionId });
+                    state.nextAction = 'ask_next';
+                    state.activeAgent = 'tactician'; // Stay at the end
+                }
                 break;
             }
         }
@@ -166,13 +186,12 @@ export async function processUserTurn(
         state.nextAction = 'ask_next';
 
         // Find first missing owned field
-        const ownedMissing = currentAgentConfig.ownedFields.filter(f => !isFieldFilled(state, f));
+        const ownedMissing = missingOwnFields;
         log.info({
-            event: 'agent.scope',
+            event: 'agent.decision',
             agent: currentAgentId,
-            ownedFields: currentAgentConfig.ownedFields.length,
-            missing: ownedMissing,
-            missingCount: ownedMissing.length
+            nextAction: state.nextAction,
+            missingFields: ownedMissing
         });
 
         if (ownedMissing.length > 0) {

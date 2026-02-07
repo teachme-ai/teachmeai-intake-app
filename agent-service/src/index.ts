@@ -54,57 +54,69 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
 
         // If intake is complete, trigger IMPACT analysis
         if (result.state.isComplete && result.state.fields.email?.value) {
-            console.log('🎯 [Backend] Intake complete. PERSISTING RAW STATE first...');
-            // FAIL-SAFE: Save to sheet before complex analysis runs
-            await persistIntakeState(result.state);
+            console.log('🎯 [Backend] [LOG-SEARCH-ME] Intake complete for:', result.state.sessionId);
+            // No longer persisting twice (raw and analysis). We just do it once inside the analysis block or after.
 
-            console.log('🎯 [Backend] Generating IMPACT analysis...');
+            console.log('🎯 [Backend] [LOG-SEARCH-ME] Generating IMPACT analysis...');
             try {
                 const { supervisorFlow } = await import('./agents/supervisor');
+                const motivation = String(result.state.fields.motivation_type?.value || '').toLowerCase();
+                const learnerTypeVal = String(result.state.fields.learner_type?.value || 'pragmatist').toLowerCase();
+                const varkPrimary = String(result.state.fields.vark_primary?.value || '').toLowerCase();
+
+                const toNum = (val: any, fallback: number = 3) => {
+                    const parsed = Number(val);
+                    return isNaN(parsed) ? fallback : parsed;
+                };
+
                 const intakeData = {
                     name: result.state.fields.name?.value || '',
                     email: result.state.fields.email?.value || '',
                     primaryGoal: result.state.fields.goal_calibrated?.value || result.state.fields.goal_raw?.value || '',
                     currentRoles: [result.state.fields.role_category?.value || result.state.fields.role_raw?.value || 'Professional'],
-                    goalSettingConfidence: result.state.fields.srl_goal_setting?.value || 3,
-                    newApproachesFrequency: result.state.fields.srl_adaptability?.value || 3,
-                    reflectionFrequency: result.state.fields.srl_reflection?.value || 3,
-                    aiToolsConfidence: result.state.fields.tech_confidence?.value || 3,
-                    resilienceLevel: result.state.fields.resilience?.value || 3,
-                    clearCareerVision: result.state.fields.vision_clarity?.value || 3,
-                    successDescription: result.state.fields.success_clarity_1yr?.value || 3,
-                    learningForChallenge: result.state.fields.motivation_type?.value === 'intrinsic' ? 5 : 3,
-                    outcomeDrivenLearning: result.state.fields.motivation_type?.value === 'outcome' ? 5 : 3,
-                    timeBarrier: result.state.fields.time_barrier?.value || 3,
+                    goalSettingConfidence: toNum(result.state.fields.srl_goal_setting?.value, 3),
+                    newApproachesFrequency: toNum(result.state.fields.srl_adaptability?.value, 3),
+                    reflectionFrequency: toNum(result.state.fields.srl_reflection?.value, 3),
+                    aiToolsConfidence: toNum(result.state.fields.tech_confidence?.value, 3),
+                    resilienceLevel: toNum(result.state.fields.resilience?.value, 3),
+                    clearCareerVision: toNum(result.state.fields.vision_clarity?.value, 3),
+                    successDescription: toNum(result.state.fields.success_clarity_1yr?.value, 3),
+                    learningForChallenge: motivation === 'intrinsic' ? 5 : 3,
+                    outcomeDrivenLearning: motivation === 'outcome' ? 5 : 3,
+                    timeBarrier: toNum(result.state.fields.time_barrier?.value, 3),
                     currentFrustrations: result.state.fields.frustrations?.value || '',
-                    learnerType: (result.state.fields.learner_type?.value || 'pragmatist') as any,
+                    learnerType: (['theorist', 'activist', 'reflector', 'pragmatist'].includes(learnerTypeVal) ? learnerTypeVal : 'pragmatist') as any,
                     varkPreferences: {
-                        visual: result.state.fields.vark_primary?.value === 'visual' ? 5 : 2,
-                        audio: result.state.fields.vark_primary?.value === 'audio' ? 5 : 2,
-                        readingWriting: result.state.fields.vark_primary?.value === 'reading' ? 5 : 2,
-                        kinesthetic: result.state.fields.vark_primary?.value === 'kinesthetic' ? 5 : 2,
+                        visual: varkPrimary === 'visual' ? 5 : 2,
+                        audio: varkPrimary === 'audio' ? 5 : 2,
+                        readingWriting: varkPrimary === 'read_write' ? 5 : 2,
+                        kinesthetic: varkPrimary === 'kinesthetic' ? 5 : 2,
                     },
-                    skillStage: result.state.fields.skill_stage?.value || 2,
+                    skillStage: toNum(result.state.fields.skill_stage?.value, 2),
                     concreteBenefits: result.state.fields.benefits?.value || '',
                     shortTermApplication: result.state.fields.application_context?.value || '',
                 };
 
-                console.log('📊 [Backend] Calling supervisorFlow with:', JSON.stringify(intakeData, null, 2));
+                console.log('📊 [Backend] [LOG-SEARCH-ME] Calling supervisorFlow with session:', result.state.sessionId);
                 const analysis = await supervisorFlow(intakeData);
-                console.log('✅ [Backend] IMPACT analysis generated:', JSON.stringify(analysis, null, 2));
+                console.log('✅ [Backend] [LOG-SEARCH-ME] IMPACT analysis generated for:', result.state.sessionId);
 
-                // Persist analysis to Google Sheets
+                // Persist combined result
                 await persistIntakeState(result.state, analysis);
-                console.log('💾 [Backend] Analysis persisted to Google Sheets');
+                console.log('💾 [Backend] [LOG-SEARCH-ME] FINAL state + analysis persisted');
 
                 result.analysis = analysis;
             } catch (analysisError: any) {
-                console.error('❌ [Backend] IMPACT analysis failed:', analysisError);
-                console.error('❌ [Backend] Error details:', JSON.stringify({
+                console.error('❌ [Backend] [LOG-SEARCH-ME] IMPACT analysis failed:', analysisError);
+                console.error('❌ [Backend] [LOG-SEARCH-ME] Error details:', JSON.stringify({
                     message: analysisError.message,
                     stack: analysisError.stack?.split('\n').slice(0, 3),
                     cause: analysisError.cause
                 }));
+            }
+        } else {
+            if (result.state.isComplete) {
+                console.warn('⚠️ [Backend] [LOG-SEARCH-ME] Intake complete but EMAIL IS MISSING. Skipping analysis.');
             }
         }
 

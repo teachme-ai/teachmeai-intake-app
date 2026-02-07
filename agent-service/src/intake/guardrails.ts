@@ -57,8 +57,9 @@ export function coerceAndSetField(
     // 2. ENUMS
     // Fields: role_category, industry_vertical, learner_type, motivation_type
     if (field === 'role_category' || field === 'industry_vertical' || field === 'learner_type' || field === 'motivation_type') {
-        // Simple Zod check or Keyword check can go here if needed.
-        // For now we trust the extractor but could add strict validation if desired.
+        if (typeof rawValue === 'string') {
+            finalValue = rawValue.toLowerCase().trim();
+        }
         status = 'confirmed';
     }
 
@@ -126,9 +127,24 @@ export function applyRepetitionFallback(
     userMessage: string,
     count: number
 ): GuardOutcome {
-    // 1st Repeat (count=1): Accept whatever they said
+    // 1st Repeat (count=1): Accept whatever they said, but try to parse number for scale fields
     if (count === 1) {
         console.log(`[Guard] First repeat for ${field}, accepting raw answer: "${userMessage}"`);
+
+        // SCALE FIELDS (1-5)
+        const scaleFields = ['skill_stage', 'time_barrier', 'srl_goal_setting', 'srl_adaptability', 'srl_reflection', 'tech_confidence', 'resilience', 'vision_clarity', 'success_clarity_1yr'];
+
+        if (scaleFields.includes(field)) {
+            const num = parseInt(userMessage);
+            if (!isNaN(num)) return { handled: true, value: Math.max(1, Math.min(5, num)), action: 'accept_raw' };
+
+            // Map keywords even in fallback
+            const lower = userMessage.toLowerCase();
+            if (lower.includes('expert') || lower.includes('high')) return { handled: true, value: 5, action: 'accept_raw' };
+            if (lower.includes('beginner') || lower.includes('low')) return { handled: true, value: 1, action: 'accept_raw' };
+            if (lower.includes('inter') || lower.includes('med')) return { handled: true, value: 3, action: 'accept_raw' };
+        }
+
         return { handled: true, value: userMessage.trim(), action: 'accept_raw' };
     }
 

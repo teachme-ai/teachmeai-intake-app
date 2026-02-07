@@ -10,8 +10,10 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load .env from project root (not affected by CWD)
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+// Load .env from project root (not in production to avoid shadowing cloud env vars)
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+}
 
 import { genkit } from 'genkit';
 import { googleAI, gemini20Flash, gemini15Pro } from '@genkit-ai/googleai';

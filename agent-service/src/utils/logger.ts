@@ -67,11 +67,13 @@ class Logger {
         const entry = {
             ts: new Date().toISOString(),
             level,
+            marker: '[LOG-SEARCH-ME]',
             ...this.base,
             ...payload
         };
 
-        console.log(JSON.stringify(entry));
+        // Use a prefix so it hits textPayload while remaining greaseable
+        console.log(`[LOG-SEARCH-ME] ${JSON.stringify(entry)}`);
     }
 
     info(data: Record<string, any> | string, msg?: string) { this.log('info', data, msg); }

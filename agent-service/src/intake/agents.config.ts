@@ -49,16 +49,14 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Strategist. Let's align this with your career goals.",
         shouldExit: (state) => {
-            // Require only 2 essential fields: role and goal
-            // Context/benefits are nice-to-have but not required
-            const hasRole = isFieldFilled(state, 'role_category');
+            // MUST have role_category (which indicates we deep-dived beyond raw role)
+            const hasRoleCategory = isFieldFilled(state, 'role_category');
             const hasGoal = isFieldFilled(state, 'goal_calibrated') || isFieldFilled(state, 'goal_raw');
-            const shouldExit = hasRole && hasGoal;
 
-            if (!shouldExit) {
-                console.log('[Strategist Exit Check]', { hasRole, hasGoal });
-            }
-            return shouldExit;
+            // Force at least 2 user turns for Strategist (Turn 1 is user msg, Turn 2 is confirmation/deepening)
+            const minTurnsMet = (state.activeAgent === 'strategist' && state.turnCount >= 2);
+
+            return hasRoleCategory && hasGoal && minTurnsMet;
         }
     },
 
@@ -77,53 +75,47 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             'tech_confidence', 'resilience',
             'time_barrier'
         ],
-        ],
-introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
-    shouldExit: (state) => {
-        // Require 4 key fields: skill, learning style, SRL, motivation
-        const hasSkill = isFieldFilled(state, 'skill_stage');
-        const hasLearner = isFieldFilled(state, 'learner_type');
-        const hasSRL = isFieldFilled(state, 'srl_goal_setting');
-        const hasMotivation = isFieldFilled(state, 'motivation_type');
-        const shouldExit = hasSkill && hasLearner && hasSRL && hasMotivation;
+        introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
+        shouldExit: (state) => {
+            // Require 4 key fields: skill, learning style, SRL, motivation
+            const hasSkill = isFieldFilled(state, 'skill_stage');
+            const hasLearner = isFieldFilled(state, 'learner_type');
+            const hasSRL = isFieldFilled(state, 'srl_goal_setting');
+            const hasMotivation = isFieldFilled(state, 'motivation_type');
 
-        if (!shouldExit) {
-            console.log('[Learner Dimensions Exit Check]', { hasSkill, hasLearner, hasSRL, hasMotivation });
+            // Force at least 1-2 turns session-wide by the time we hit here
+            const minTurnsMet = (state.turnCount >= 4);
+
+            return hasSkill && hasLearner && hasSRL && hasMotivation && minTurnsMet;
         }
-        return shouldExit;
-    }
     },
 
-// Legacy profiler - redirects to learner_dimensions
-profiler: {
-    id: 'profiler',
+    // Legacy profiler - redirects to learner_dimensions
+    profiler: {
+        id: 'profiler',
         name: 'Profiler (Legacy)',
-            ownedFields: ['skill_stage', 'time_barrier', 'learner_type', 'vark_primary'],
-                introMessage: "Nice to meet you. I'm the Profiler.",
-                    shouldExit: (state) => {
-                        const hasSkill = isFieldFilled(state, 'skill_stage');
-                        const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
-                        return hasSkill && hasLearner;
-                    }
-},
+        ownedFields: ['skill_stage', 'time_barrier', 'learner_type', 'vark_primary'],
+        introMessage: "Nice to meet you. I'm the Profiler.",
+        shouldExit: (state) => {
+            const hasSkill = isFieldFilled(state, 'skill_stage');
+            const hasLearner = isFieldFilled(state, 'learner_type');
+            return hasSkill && hasLearner;
+        }
+    },
 
-tactician: {
-    id: 'tactician',
+    tactician: {
+        id: 'tactician',
         name: 'Tactician (Agile Coach)',
-            ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
-                introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
-                    shouldExit: (state) => {
-                        // Require 2 fields: time and constraints
-                        const hasTime = isFieldFilled(state, 'time_per_week_mins');
-                        const hasConstraint = isFieldFilled(state, 'constraints');
-                        const shouldExit = hasTime && hasConstraint;
+        ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
+        introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
+        shouldExit: (state) => {
+            // Require 2 fields: time and constraints
+            const hasTime = isFieldFilled(state, 'time_per_week_mins');
+            const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
 
-                        if (!shouldExit) {
-                            console.log('[Tactician Exit Check]', { hasTime, hasConstraint });
-                        }
-                        return shouldExit;
-                    }
-}
+            return hasTime && hasConstraint;
+        }
+    }
 };
 
 /**

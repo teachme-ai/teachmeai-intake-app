@@ -47,6 +47,7 @@ Extract specific fields from the USER MESSAGE into JSON.
 {{#if currentRole}}Role: {{currentRole}}{{/if}}
 {{#if currentGoal}}Goal: {{currentGoal}}{{/if}}
 {{#if targetField}}Target Field: {{targetField}}{{/if}}
+{{#if lastAssistantMessage}}Last Agent Message: {{lastAssistantMessage}}{{/if}}
 
 ## EXTRACTION RULES
 
@@ -56,6 +57,10 @@ Extract specific fields from the USER MESSAGE into JSON.
 - If user says "game design" when asked about benefits → benefits: "Game design applications"
 - If user gives a vague answer, capture it as-is rather than returning null
 - Only return null if the response is completely unrelated or junk ("idk", "no", "pass")
+
+### CRITICAL: NUMERIC MCQ MAPPING
+- If `userMessage` is a single number (e.g., "1", "2") and the `Last Agent Message` contains a numbered list (e.g., "1. Product", "2. Engineering"), map the number to the corresponding option value for the `targetField`.
+- Example: If agent asks "1. Product, 2. Eng" and user says "1", extract `role_category: "product"`.
 
 ### For SCALE fields (skill_stage, srl_*, vision_clarity, etc.)
 - Output NUMBER 1-5

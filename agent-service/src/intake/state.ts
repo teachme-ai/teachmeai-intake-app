@@ -71,11 +71,16 @@ export function calculateCompletion(state: IntakeState): number {
  * Determines if we have enough info to trigger the report
  */
 export function isIntakeComplete(state: IntakeState): boolean {
-    const hasRole = state.fields.role_raw?.status === 'confirmed';
-    const hasGoal = state.fields.goal_raw?.status === 'confirmed';
-    const hasTime = state.fields.time_per_week_mins?.status === 'confirmed' || state.fields.time_per_week_mins?.value === -1; // -1 means skipped
+    const hasRole = isFieldFilled(state, 'role_raw') || isFieldFilled(state, 'role_category');
+    const hasGoal = isFieldFilled(state, 'goal_raw') || isFieldFilled(state, 'goal_calibrated');
+    const hasSkill = isFieldFilled(state, 'skill_stage');
+    const hasTime = isFieldFilled(state, 'time_per_week_mins');
+    const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
 
-    return hasRole && hasGoal && hasTime;
+    // Total turns safeguard
+    const hasMinTurns = state.turnCount >= 4;
+
+    return hasRole && hasGoal && hasSkill && hasTime && hasConstraint && hasMinTurns;
 }
 
 export function isFieldFilled(state: IntakeState, field: keyof IntakeData): boolean {

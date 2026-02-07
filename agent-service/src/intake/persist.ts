@@ -86,13 +86,16 @@ async function ensureSheetExists(spreadsheetId: string) {
                 requestBody: { values: [HEADERS] }
             });
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error('Error ensuring sheet exists:', e);
+        throw new Error(`Google Sheets Access Failed: ${e.message}`);
     }
 }
 
 export async function persistIntakeState(state: IntakeState, analysis?: any): Promise<void> {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    console.log(`📊 [Persist] [LOG-SEARCH-ME] Starting persistence for session ${state.sessionId || 'unknown'} (Sheet: ${spreadsheetId || 'MISSING'})`);
+
     if (!spreadsheetId) {
         console.warn('No GOOGLE_SHEET_ID, skipping persistence');
         return;
@@ -111,9 +114,9 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
         const rowIndex = rows.findIndex((r: any) => r[0] === state.sessionId);
 
         const row = [
-            toIST(state.metadata.startTime), // Timestamp (creation)
+            toIST(state.metadata?.startTime || new Date()), // Timestamp (creation)
             state.sessionId,
-            state.metadata.mode,
+            state.metadata?.mode || 'interview',
             state.isComplete ? 'COMPLETE' : 'IN_PROGRESS',
             state.fields.name?.value || '',
             state.fields.email?.value || '',
