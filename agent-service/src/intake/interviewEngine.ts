@@ -112,7 +112,7 @@ export async function processUserTurn(
     // This loop does NOT re-run extraction.
 
     let loopCount = 0;
-    const MAX_INTERNAL_LOOPS = 2;
+    const MAX_INTERNAL_LOOPS = 5;
 
     while (loopCount < MAX_INTERNAL_LOOPS) {
         loopCount++;
