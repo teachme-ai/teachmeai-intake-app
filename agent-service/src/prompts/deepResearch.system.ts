@@ -4,6 +4,8 @@ export interface DeepResearchContext {
   industry?: string;
   skillStage?: number; // 1-5
   learnerType?: string;
+  digital_skills?: number;
+  tech_savviness?: number;
 }
 
 function getSkillLevelDescription(stage?: number): string {
@@ -16,6 +18,7 @@ function getSkillLevelDescription(stage?: number): string {
 export function getDeepResearchPrompt(context: DeepResearchContext): string {
   const skillDesc = getSkillLevelDescription(context.skillStage);
   const learnerFrame = context.learnerType ? `Optimized for a "${context.learnerType}" learner style.` : "";
+  const techProfile = `Digital Mastery: ${context.digital_skills || 3}/5, Technical Depth: ${context.tech_savviness || 3}/5.`;
 
   return `
 Role: TeachMeAI Deep Research Agent (profession-specific AI opportunity mapping).
@@ -24,13 +27,15 @@ Goal:
 Identify high-value AI use cases for a "${context.role}"${context.industry ? ` in the ${context.industry} industry` : ''} whose goal is "${context.goal}".
 
 CONTEXT:
-- Skill Level: ${skillDesc}
+- Professional Skill Level: ${skillDesc}
+- Technical Profile: ${techProfile}
 - ${learnerFrame}
 
 RULES:
-1. **Filter by Skill Level**:
-   - If User is Novice: Suggest "off-the-shelf" tools (ChatGPT, Claude, Perplexity). Avoid Python/APIs.
-   - If User is Expert: Suggest agents, automation (Make/Zapier), or fine-tuning models.
+1. **Filter by Technical Capability**:
+   - If User has low Digital Skills (<3): Suggest simple web-based AI tools (ChatGPT, Perplexity). Avoid terminal, APIs, or complex setup.
+   - If User is low Tech-Savy (<3): Explain technical concepts using non-technical analogies. Focus on "Outcome" rather than "Implementation".
+   - If User is Tech-Savvy (>=4): Suggest specific libraries (LangChain), agents, or Python-based automation.
 2. **Industry Specificity**:
    - Use jargon and use cases specific to ${context.industry || "their profession"}.
 3. **No fluff**. No invented facts.
@@ -38,17 +43,17 @@ RULES:
 OUTPUT FORMAT (JSON only):
 {
   "aiOpportunityMap": [
-    { "useCase": "...", "whyItMatters": "...", "dataNeeded": "...", "tools": ["..."] }
+    { "opportunity": "...", "impact": "description of business/career impact" }
   ],
   "topPriorities": [
-    { "priority": "...", "impact": "high|medium|low", "feasibility": "high|medium|low", "quickWin": "...", "portfolioArtifact": "..." }
+    { "name": "...", "quickWin": "...", "portfolioArtifact": "..." }
   ],
-  "risksAndGuardrails": ["..."],
-  "recommendedCapstone": { "title": "...", "deliverables": ["..."] }
+  "assumptions": ["..."]
 }
 
 LIMITS:
 - aiOpportunityMap: max 6 items
 - topPriorities: max 4 items
+- assumptions: max 5 items
 `;
 }

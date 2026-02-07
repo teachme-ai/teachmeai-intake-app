@@ -76,11 +76,12 @@ export function isIntakeComplete(state: IntakeState): boolean {
     const hasSkill = isFieldFilled(state, 'skill_stage');
     const hasTime = isFieldFilled(state, 'time_per_week_mins');
     const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
+    const hasTech = isFieldFilled(state, 'digital_skills') && isFieldFilled(state, 'tech_savviness');
 
     // Total turns safeguard
     const hasMinTurns = state.turnCount >= 4;
 
-    return hasRole && hasGoal && hasSkill && hasTime && hasConstraint && hasMinTurns;
+    return hasRole && hasGoal && hasSkill && hasTime && hasConstraint && hasTech && hasMinTurns;
 }
 
 export function isFieldFilled(state: IntakeState, field: keyof IntakeData): boolean {

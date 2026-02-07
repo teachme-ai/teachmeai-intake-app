@@ -73,7 +73,8 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             'vision_clarity', 'success_clarity_1yr',
             'vark_primary', 'vark_ranked',
             'tech_confidence', 'resilience',
-            'time_barrier'
+            'time_barrier',
+            'digital_skills', 'tech_savviness'
         ],
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
@@ -82,11 +83,12 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasLearner = isFieldFilled(state, 'learner_type');
             const hasSRL = isFieldFilled(state, 'srl_goal_setting');
             const hasMotivation = isFieldFilled(state, 'motivation_type');
+            const hasTech = isFieldFilled(state, 'digital_skills') && isFieldFilled(state, 'tech_savviness');
 
             // Force at least 1-2 turns session-wide by the time we hit here
             const minTurnsMet = (state.turnCount >= 4);
 
-            return hasSkill && hasLearner && hasSRL && hasMotivation && minTurnsMet;
+            return hasSkill && hasLearner && hasSRL && hasMotivation && hasTech && minTurnsMet;
         }
     },
 

@@ -26,7 +26,8 @@ export function coerceAndSetField(
     const scaleFields = [
         'skill_stage', 'time_barrier',
         'srl_goal_setting', 'srl_adaptability', 'srl_reflection', 'tech_confidence', 'resilience',
-        'vision_clarity', 'success_clarity_1yr'
+        'vision_clarity', 'success_clarity_1yr',
+        'digital_skills', 'tech_savviness'
     ];
 
     if (scaleFields.includes(field)) {

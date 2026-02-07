@@ -1,21 +1,16 @@
-import { z } from 'zod';
-import { PsychographicProfileSchema, PsychographicProfile } from '../types';
+import { IntakeResponseSchema, PsychographicProfileSchema } from '../types';
 import { getProfilerPrompt } from '../prompts/profiler.system';
 import { ai, DEFAULT_MODEL } from '../genkit';
 
 export const profilingAgentFlow = ai.defineFlow(
     {
         name: 'profilingAgent',
-        inputSchema: z.object({
-            goal: z.string(),
-            challenge: z.string()
-        }),
+        inputSchema: IntakeResponseSchema,
         outputSchema: PsychographicProfileSchema,
     },
     async (input) => {
-        const prompt = getProfilerPrompt(input.goal, input.challenge);
+        const prompt = getProfilerPrompt(input);
 
-        /*
         const { output } = await ai.generate({
             model: DEFAULT_MODEL,
             prompt: prompt,
@@ -30,13 +25,5 @@ export const profilingAgentFlow = ai.defineFlow(
         }
 
         return output;
-        */
-        return {
-            decisionStyle: 'Intuitive',
-            uncertaintyHandling: 'Experimenter',
-            changePreference: 8,
-            socialEntanglement: 'Social',
-            cognitiveLoadTolerance: 'Medium'
-        } as PsychographicProfile;
     }
 );

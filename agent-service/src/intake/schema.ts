@@ -58,7 +58,11 @@ export const IntakeSchemaV1 = z.object({
     application_context: z.string().optional(),
 
     // Meta
-    current_tools: z.array(z.string()).optional()
+    current_tools: z.array(z.string()).optional(),
+
+    // Technical Proficiency - V2.1
+    digital_skills: z.number().min(1).max(5).optional(),
+    tech_savviness: z.number().min(1).max(5).optional()
 });
 
 export type IntakeData = z.infer<typeof IntakeSchemaV1>;

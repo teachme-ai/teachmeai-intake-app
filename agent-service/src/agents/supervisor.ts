@@ -1,4 +1,4 @@
-import { IntakeResponseSchema, DeepResearchOutputSchema } from '../types';
+import { IntakeResponseSchema, DeepResearchOutputSchema, PsychographicProfileSchema } from '../types';
 import { deepResearchFlow } from './deep-research';
 import { profilingAgentFlow } from './profiler';
 import { strategistFlow } from './strategist';
@@ -15,7 +15,7 @@ export const IMPACTAnalysisSchema = z.object({
     Check: z.string(),
     Transform: z.string(),
     nextSteps: z.array(z.string()),
-    learnerProfile: z.string(),
+    learnerProfile: PsychographicProfileSchema,
     recommendations: z.array(z.string()),
     research: DeepResearchOutputSchema
 });
@@ -29,10 +29,7 @@ export const supervisorFlow = ai.defineFlow(
     async (intake) => {
         // Phase 1: Profiling
         console.log("🕵️ [Supervisor] Phase 1: Profiling...");
-        const profile = await runWithRetry(() => profilingAgentFlow({
-            goal: intake.primaryGoal || "",
-            challenge: intake.currentFrustrations || ""
-        }));
+        const profile = await runWithRetry(() => profilingAgentFlow(intake));
 
         await delay(1000); // Stagger
 
@@ -44,7 +41,9 @@ export const supervisorFlow = ai.defineFlow(
             // Industry is effectively optional (defaults to General if missing)
             industry: intake.industry_vertical || "General",
             skillStage: intake.skillStage,
-            learnerType: intake.learnerType
+            learnerType: intake.learnerType,
+            digital_skills: intake.digital_skills,
+            tech_savviness: intake.tech_savviness
         }));
 
         await delay(1000); // Stagger
@@ -56,7 +55,9 @@ export const supervisorFlow = ai.defineFlow(
             professionalRoles: intake.currentRoles,
             careerVision: "Implicit based on intake",
             primaryGoal: intake.primaryGoal,
-            deepResearchResult: research
+            deepResearchResult: research,
+            digital_skills: intake.digital_skills,
+            tech_savviness: intake.tech_savviness
         }));
 
         await delay(1000); // Stagger
@@ -68,7 +69,9 @@ export const supervisorFlow = ai.defineFlow(
             name: intake.name,
             constraints: {
                 timeBarrier: intake.timeBarrier,
-                skillStage: intake.skillStage
+                skillStage: intake.skillStage,
+                digital_skills: intake.digital_skills,
+                tech_savviness: intake.tech_savviness
             }
         }));
 
@@ -81,7 +84,7 @@ export const supervisorFlow = ai.defineFlow(
             Check: tactics.check,
             Transform: tactics.transform,
             nextSteps: tactics.nextSteps,
-            learnerProfile: JSON.stringify(profile),
+            learnerProfile: profile,
             recommendations: tactics.recommendations,
             research: research
         };

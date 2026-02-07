@@ -43,7 +43,9 @@ const ExtractionSchema = z.object({
     time_per_week_mins: z.number().optional(),
     frustrations: z.string().optional(),
     benefits: z.string().optional(),
-    application_context: z.string().optional()
+    application_context: z.string().optional(),
+    digital_skills: z.number().optional(),
+    tech_savviness: z.number().optional()
 });
 
 // Load the Dotprompt
@@ -120,7 +122,7 @@ export async function extractFields(
                 // Only force-assign RAW TEXT for specific text fields.
                 // Do NOT force-assign Enums, Scales, or Numbers (let Guardrails handle repetition/MCQ).
 
-                const safeTextFields = ['role_raw', 'goal_raw', 'goal_calibrated', 'industry', 'seniority', 'frustrations', 'benefits', 'application_context', 'role_category', 'industry_vertical'];
+                const safeTextFields = ['role_raw', 'goal_raw', 'goal_calibrated', 'industry', 'seniority', 'frustrations', 'benefits', 'application_context', 'role_category', 'industry_vertical', 'digital_skills', 'tech_savviness'];
 
                 const cleanMsg = userMessage.trim();
                 const isJunk = cleanMsg.length < 1 || /^(no|nah|idk|pass)/i.test(cleanMsg);

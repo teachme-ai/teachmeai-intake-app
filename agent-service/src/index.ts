@@ -100,11 +100,19 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
                     skillStage: toNum(result.state.fields.skill_stage?.value, 2),
                     concreteBenefits: result.state.fields.benefits?.value || '',
                     shortTermApplication: result.state.fields.application_context?.value || '',
+                    digital_skills: toNum(result.state.fields.digital_skills?.value, 3),
+                    tech_savviness: toNum(result.state.fields.tech_savviness?.value, 3)
                 };
 
                 console.log('📊 [Backend] [LOG-SEARCH-ME] Calling supervisorFlow with session:', result.state.sessionId);
                 const analysis = await supervisorFlow(intakeData);
                 console.log('✅ [Backend] [LOG-SEARCH-ME] IMPACT analysis generated for:', result.state.sessionId);
+                console.log('🔍 [Backend] [LOG-SEARCH-ME] Analysis Structure:', JSON.stringify({
+                    keys: Object.keys(analysis || {}),
+                    researchType: typeof analysis?.research,
+                    profileType: typeof analysis?.learnerProfile,
+                    hasResearchEntries: Array.isArray(analysis?.research?.aiOpportunityMap)
+                }));
 
                 // Persist combined result
                 await persistIntakeState(result.state, analysis);

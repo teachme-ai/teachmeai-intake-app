@@ -34,6 +34,8 @@ output:
     frustrations?: string
     benefits?: string
     application_context?: string
+    digital_skills?: number
+    tech_savviness?: number
 config:
   temperature: 0
 ---
@@ -61,6 +63,11 @@ Extract specific fields from the USER MESSAGE into JSON.
 ### CRITICAL: NUMERIC MCQ MAPPING
 - If `userMessage` is a single number (e.g., "1", "2") and the `Last Agent Message` contains a numbered list (e.g., "1. Product", "2. Engineering"), map the number to the corresponding option value for the `targetField`.
 - Example: If agent asks "1. Product, 2. Eng" and user says "1", extract `role_category: "product"`.
+
+### Technical Proficiency (digital_skills, tech_savviness)
+- Output NUMBER 1-5
+- digital_skills: 1 (cannot use computer/internet) to 5 (expert digital user)
+- tech_savviness: 1 (non-tech background, hates details) to 5 (tech-savvy, understands architecture)
 
 ### For SCALE fields (skill_stage, srl_*, vision_clarity, etc.)
 - Output NUMBER 1-5

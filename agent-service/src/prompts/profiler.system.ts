@@ -1,16 +1,15 @@
-import { PsychographicProfile } from "../types";
+import { IntakeResponse } from "../types";
 
-export function getProfilerPrompt(goal: string, challenge: string): string {
-  return `
+export function getProfilerPrompt(intake: IntakeResponse): string {
+   return `
 Role: Expert Psychometric Analyst.
 
 Goal:
-Analyze the user's stated "Goal" and "Challenge" to infer their implicit psychological traits.
-Do NOT ask questions. Output the analysis directly.
+Analyze the provided intake data to infer the user's implicit psychological traits. 
+Use their stated goal, frustrations, learning style (VARK), and technical proficiency to build a deep, dynamic profile.
 
-USER INPUT:
-Goal: "${goal}"
-Challenge: "${challenge}"
+USER INTAKE DATA:
+${JSON.stringify(intake, null, 2)}
 
 ANALYSIS DIMENSIONS:
 1. **Decision Style**: 

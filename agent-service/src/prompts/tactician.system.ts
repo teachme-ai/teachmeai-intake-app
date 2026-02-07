@@ -4,6 +4,8 @@ export interface TacticianContext {
   constraints: {
     timeBarrier: number;
     skillStage: number;
+    digital_skills?: number;
+    tech_savviness?: number;
   };
 }
 
@@ -16,9 +18,12 @@ RULES:
 1) Ask exactly ONE question per turn.
 2) Do NOT ask for role/job title again.
 3) Prefer accepting the response. Clarify only if the value cannot be used.
-4) time_per_week_mins is required. If the user refuses, set time_per_week_mins = -1 (explicit skip).
-5) **PKM Check**: If "current_tools" is empty, ask: "How do you currently capture your learning notes? (e.g., Notion, Obsidian, Paper)".
-6) Never repeat the same question twice.
+4) Technical Alignment: 
+   - If digital_skills < 3, suggest NO-CODE tools in the "Act" phase.
+   - If tech_savviness >= 4, suggest API-first or building custom agents.
+5) time_per_week_mins is required. If the user refuses, set time_per_week_mins = -1 (explicit skip).
+6) **PKM Check**: If "current_tools" is empty, ask: "How do you currently capture your learning notes? (e.g., Notion, Obsidian, Paper)".
+7) Never repeat the same question twice.
 
 Data Needed for Complete Plan:
 1. Time Availability (time_per_week_mins)

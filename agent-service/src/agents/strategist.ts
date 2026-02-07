@@ -9,7 +9,9 @@ export const StrategistInputSchema = z.object({
     professionalRoles: z.array(z.string()),
     careerVision: z.string().optional(),
     primaryGoal: z.string().optional(),
-    deepResearchResult: DeepResearchOutputSchema.optional()
+    deepResearchResult: DeepResearchOutputSchema.optional(),
+    digital_skills: z.number().optional(),
+    tech_savviness: z.number().optional()
 });
 
 export const strategistFlow = ai.defineFlow(
@@ -33,14 +35,16 @@ LEARNER PROFILE:
 - Change Preference: ${input.profile.changePreference}/10
 - Social Entanglement: ${input.profile.socialEntanglement}
 - Cognitive Load: ${input.profile.cognitiveLoadTolerance}
+- Digital Mastery: ${input.digital_skills || 3}/5
+- Technical Depth: ${input.tech_savviness || 3}/5
 
 RESEARCH INSIGHTS:
 ${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}
 
 Generate:
-1. IDENTIFY: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal
-2. MOTIVATE: A 2-3 sentence compelling reason why this matters for their career/impact
-3. PLAN: A 2-3 sentence high-level roadmap of what they need to learn/build
+1. identify: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal
+2. motivate: A 2-3 sentence compelling reason why this matters for their career/impact
+3. plan: A 2-3 sentence high-level roadmap of what they need to learn/build
 4. priorities: 3-5 strategic priorities as an array of strings
 5. recommendedWorkflows: 2-3 specific AI workflows they should implement
 

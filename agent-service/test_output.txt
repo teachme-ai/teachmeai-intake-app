@@ -1,0 +1,57 @@
+🧠 Starting SMART E2E Test
+
+✅ SUCCESS: Conversation Complete!
+
+==========================================
+       📄 CONVERSATION TRANSCRIPT
+==========================================
+
+👤 **User**: Hi, I'm a Developer wanting to learn AI.
+🤖 **strategist**: What's your job function? (e.g., Product, Engineering, Sales, Marketing, Operations)
+
+👤 **User**: 2
+🤖 **strategist**: What specific outcome would you like to achieve with AI in the next 3-6 months?
+
+👤 **User**: To build autonomous AI agents for my business.
+🤖 **learner_dimensions**: I'm the Learning Profile Analyst. I'll help understand your learning style.
+
+On a scale of 1-5, where would you rate your current AI skills? (1=Beginner, 5=Expert)
+
+👤 **User**: I am an expert (5/5).
+🤖 **learner_dimensions**: On a scale of 1-5, where would you rate your current AI skills? (1=Beginner, 5=Expert)
+
+👤 **User**: I am an expert (5/5).
+🤖 **learner_dimensions**: Which best describes your learning style? (Theorist, Activist, Reflector, Pragmatist)
+
+👤 **User**: I learn by building and coding.
+🤖 **learner_dimensions**: Which best describes your learning style? (Theorist, Activist, Reflector, Pragmatist)
+
+👤 **User**: I learn by building and coding.
+🤖 **learner_dimensions**: What drives you most? (Intrinsic curiosity, Career outcome, or a mix?)
+
+👤 **User**: I am driven by curiosity and building new things.
+🤖 **learner_dimensions**: What drives you most? (Intrinsic curiosity, Career outcome, or a mix?)
+
+👤 **User**: I am driven by curiosity and building new things.
+🤖 **learner_dimensions**: How often do you set specific learning goals? (1=Never, 5=Daily)
+
+👤 **User**: I set specific learning goals every single day.
+🤖 **learner_dimensions**: How often do you set specific learning goals? (1=Never, 5=Daily)
+
+👤 **User**: I set specific learning goals every single day.
+🤖 **tactician**: Finally, I'm the Tactician. Let's make this actionable.
+
+How many hours per week can you dedicate to learning AI? (e.g., 2 hours)
+
+👤 **User**: 10
+🤖 **tactician**: Do you have any specific constraints or blockers?
+
+👤 **User**: I have severe time constraints due to my job.
+🤖 **tactician**: Do you have any specific constraints or blockers?
+
+👤 **User**: I have severe time constraints due to my job.
+🤖 **tactician**: Perfect! I have everything I need. Generating your report now...
+
+
+==========================================
+

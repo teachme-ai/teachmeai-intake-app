@@ -57,7 +57,7 @@ export const SHEET_TITLE = 'Intake_v2';
 const HEADERS = [
     'Timestamp', 'Session ID', 'Intake Mode', 'Status', 'Name', 'Email',
     'Role Raw', 'Role Category', 'Goal Short', 'Time/Week (mins)',
-    'Skill Stage', 'Time Barrier', 'Turns', 'Last Updated', 'Confidence Overall',
+    'Skill Stage', 'Time Barrier', 'Digital Skills', 'Tech Savviness', 'Turns', 'Last Updated', 'Confidence Overall',
     'Prefill Payload JSON', 'Intake State JSON', 'Transcript JSON', 'Deep Research JSON',
     'Learner Profile JSON', 'IMPACT Strategy JSON', 'Execution Plan JSON', 'Final Report JSON',
     'Errors/Warn JSON', 'Versions JSON'
@@ -85,6 +85,22 @@ async function ensureSheetExists(spreadsheetId: string) {
                 valueInputOption: 'RAW',
                 requestBody: { values: [HEADERS] }
             });
+        } else {
+            // Check if headers match current code version
+            const headerResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: `${SHEET_TITLE}!A1:AZ1`,
+            });
+            const currentHeaders = headerResponse.data.values?.[0] || [];
+            if (currentHeaders.length < HEADERS.length || !currentHeaders.includes('Digital Skills')) {
+                console.warn(`✨ [Persist] [LOG-SEARCH-ME] Header mismatch detected in ${SHEET_TITLE}. Updating headers to version ${HEADERS.length} columns...`);
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `${SHEET_TITLE}!A1`,
+                    valueInputOption: 'RAW',
+                    requestBody: { values: [HEADERS] }
+                });
+            }
         }
     } catch (e: any) {
         console.error('Error ensuring sheet exists:', e);
@@ -126,6 +142,8 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
             state.fields.time_per_week_mins?.value || '',
             state.fields.skill_stage?.value || '',
             state.fields.time_barrier?.value || '',
+            state.fields.digital_skills?.value || '',
+            state.fields.tech_savviness?.value || '',
             state.turnCount,
             toIST(), // Last Updated
             'HIGH', // TODO: calc overall confidence
@@ -135,7 +153,7 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
             JSON.stringify(state),
             JSON.stringify([]), // Transcript
             JSON.stringify(analysis?.research || {}), // Deep Research JSON
-            analysis?.learnerProfile || '',           // Learner Profile JSON
+            JSON.stringify(analysis?.learnerProfile || {}),           // Learner Profile JSON
             JSON.stringify({
                 Identify: analysis?.Identify,
                 Motivate: analysis?.Motivate,

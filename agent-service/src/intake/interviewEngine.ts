@@ -172,10 +172,22 @@ export async function processUserTurn(
                     log.info({ event: 'agent.all_done', session: state.sessionId });
                     state.nextAction = 'done';
                 } else {
-                    // Safety: if global check fails, go back to guide or stay in current
+                    // Safety: if global check fails, find ANY missing field required by state.ts
                     log.warn({ event: 'agent.all_done_but_incomplete', session: state.sessionId });
-                    state.nextAction = 'ask_next';
-                    state.activeAgent = 'tactician'; // Stay at the end
+
+                    // Fields required by isIntakeComplete in state.ts
+                    const globalRequired: Array<keyof IntakeData> = [
+                        'skill_stage', 'time_per_week_mins', 'digital_skills', 'tech_savviness'
+                    ];
+                    const nextGlobal = globalRequired.find(f => !isFieldFilled(state, f));
+
+                    if (nextGlobal) {
+                        state.nextAction = 'ask_next';
+                        state.nextField = nextGlobal;
+                        log.info({ event: 'agent.fallback_to_global', field: nextGlobal });
+                    } else {
+                        state.nextAction = 'done'; // Fallback to done if we truly can't find anything
+                    }
                 }
                 break;
             }

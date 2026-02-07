@@ -1,5 +1,5 @@
 import { gemini20Flash } from '@genkit-ai/googleai';
-import { getTacticianPrompt } from '../prompts/tactician.system';
+import { getTacticianAssemblyPrompt } from '../prompts/tacticianAssembly.system';
 import { StrategySchema, TacticsSchema } from '../types';
 import { z } from 'zod';
 import { DEFAULT_MODEL, ai } from '../genkit';
@@ -9,7 +9,9 @@ const TacticianInput = z.object({
     name: z.string().optional(),
     constraints: z.object({
         timeBarrier: z.number(),
-        skillStage: z.number()
+        skillStage: z.number(),
+        digital_skills: z.number().optional(),
+        tech_savviness: z.number().optional()
     })
 });
 
@@ -20,7 +22,7 @@ export const tacticianFlow = ai.defineFlow(
         outputSchema: TacticsSchema,
     },
     async (input) => {
-        const prompt = getTacticianPrompt({
+        const prompt = getTacticianAssemblyPrompt({
             strategy: input.strategy,
             name: input.name,
             constraints: input.constraints

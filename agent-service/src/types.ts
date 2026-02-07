@@ -28,6 +28,8 @@ export const IntakeResponseSchema = z.object({
     shortTermApplication: z.string(),
     industry: z.string().optional(),
     industry_vertical: z.string().optional(),
+    digital_skills: z.number().optional(),
+    tech_savviness: z.number().optional()
 });
 
 export const LearnerProfileSchema = z.object({
@@ -108,6 +110,8 @@ export const DeepResearchInputSchema = z.object({
     industry: z.string().optional(),
     skillStage: z.number().optional().describe("1-5 scale: Novice to Expert"),
     learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']).optional(),
+    digital_skills: z.number().optional(),
+    tech_savviness: z.number().optional()
 });
 
 export const DeepResearchOutputSchema = z.object({
