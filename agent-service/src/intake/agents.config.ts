@@ -42,8 +42,10 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         id: 'strategist',
         name: 'Career Strategist',
         ownedFields: [
-            'industry_vertical', 'industry', 'role_category', 'seniority',
-            'goal_calibrated', 'benefits', 'application_context'
+            // Exit Criteria First
+            'role_category', 'goal_calibrated',
+            // Context (Optional)
+            'industry_vertical', 'industry', 'seniority', 'benefits', 'application_context'
         ],
         introMessage: "I'm the Strategist. Let's align this with your career goals.",
         shouldExit: (state) => {
@@ -65,64 +67,63 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         id: 'learner_dimensions',
         name: 'Learning Profile Analyst',
         ownedFields: [
-            ownedFields: [
-                // Critical Exit Fields First (Fast Pass)
-                'skill_stage', 'learner_type', 'motivation_type', 'srl_goal_setting',
+            // Critical Exit Fields First (Fast Pass)
+            'skill_stage', 'learner_type', 'motivation_type', 'srl_goal_setting',
 
-                // Secondary Context (Optional / Deepening)
-                'srl_adaptability', 'srl_reflection',
-                'vision_clarity', 'success_clarity_1yr',
-                'vark_primary', 'vark_ranked',
-                'tech_confidence', 'resilience',
-                'time_barrier'
-            ],
+            // Secondary Context (Optional / Deepening)
+            'srl_adaptability', 'srl_reflection',
+            'vision_clarity', 'success_clarity_1yr',
+            'vark_primary', 'vark_ranked',
+            'tech_confidence', 'resilience',
+            'time_barrier'
         ],
-        introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
-        shouldExit: (state) => {
-            // Require 4 key fields: skill, learning style, SRL, motivation
-            const hasSkill = isFieldFilled(state, 'skill_stage');
-            const hasLearner = isFieldFilled(state, 'learner_type');
-            const hasSRL = isFieldFilled(state, 'srl_goal_setting');
-            const hasMotivation = isFieldFilled(state, 'motivation_type');
-            const shouldExit = hasSkill && hasLearner && hasSRL && hasMotivation;
+        ],
+introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
+    shouldExit: (state) => {
+        // Require 4 key fields: skill, learning style, SRL, motivation
+        const hasSkill = isFieldFilled(state, 'skill_stage');
+        const hasLearner = isFieldFilled(state, 'learner_type');
+        const hasSRL = isFieldFilled(state, 'srl_goal_setting');
+        const hasMotivation = isFieldFilled(state, 'motivation_type');
+        const shouldExit = hasSkill && hasLearner && hasSRL && hasMotivation;
 
-            if (!shouldExit) {
-                console.log('[Learner Dimensions Exit Check]', { hasSkill, hasLearner, hasSRL, hasMotivation });
-            }
-            return shouldExit;
+        if (!shouldExit) {
+            console.log('[Learner Dimensions Exit Check]', { hasSkill, hasLearner, hasSRL, hasMotivation });
         }
-    },
-
-    // Legacy profiler - redirects to learner_dimensions
-    profiler: {
-        id: 'profiler',
-        name: 'Profiler (Legacy)',
-        ownedFields: ['skill_stage', 'time_barrier', 'learner_type', 'vark_primary'],
-        introMessage: "Nice to meet you. I'm the Profiler.",
-        shouldExit: (state) => {
-            const hasSkill = isFieldFilled(state, 'skill_stage');
-            const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
-            return hasSkill && hasLearner;
-        }
-    },
-
-    tactician: {
-        id: 'tactician',
-        name: 'Tactician (Agile Coach)',
-        ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
-        introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
-        shouldExit: (state) => {
-            // Require 2 fields: time and constraints
-            const hasTime = isFieldFilled(state, 'time_per_week_mins');
-            const hasConstraint = isFieldFilled(state, 'constraints');
-            const shouldExit = hasTime && hasConstraint;
-
-            if (!shouldExit) {
-                console.log('[Tactician Exit Check]', { hasTime, hasConstraint });
-            }
-            return shouldExit;
-        }
+        return shouldExit;
     }
+    },
+
+// Legacy profiler - redirects to learner_dimensions
+profiler: {
+    id: 'profiler',
+        name: 'Profiler (Legacy)',
+            ownedFields: ['skill_stage', 'time_barrier', 'learner_type', 'vark_primary'],
+                introMessage: "Nice to meet you. I'm the Profiler.",
+                    shouldExit: (state) => {
+                        const hasSkill = isFieldFilled(state, 'skill_stage');
+                        const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
+                        return hasSkill && hasLearner;
+                    }
+},
+
+tactician: {
+    id: 'tactician',
+        name: 'Tactician (Agile Coach)',
+            ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
+                introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
+                    shouldExit: (state) => {
+                        // Require 2 fields: time and constraints
+                        const hasTime = isFieldFilled(state, 'time_per_week_mins');
+                        const hasConstraint = isFieldFilled(state, 'constraints');
+                        const shouldExit = hasTime && hasConstraint;
+
+                        if (!shouldExit) {
+                            console.log('[Tactician Exit Check]', { hasTime, hasConstraint });
+                        }
+                        return shouldExit;
+                    }
+}
 };
 
 /**

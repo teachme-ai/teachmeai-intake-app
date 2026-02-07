@@ -100,7 +100,7 @@ export async function extractFields(
                 // Only force-assign RAW TEXT for specific text fields.
                 // Do NOT force-assign Enums, Scales, or Numbers (let Guardrails handle repetition/MCQ).
 
-                const safeTextFields = ['role_raw', 'goal_raw', 'goal_calibrated', 'industry', 'seniority', 'frustrations', 'benefits', 'application_context'];
+                const safeTextFields = ['role_raw', 'goal_raw', 'goal_calibrated', 'industry', 'seniority', 'frustrations', 'benefits', 'application_context', 'role_category', 'industry_vertical'];
 
                 const cleanMsg = userMessage.trim();
                 const isJunk = cleanMsg.length < 2 || /^(no|nah|idk|pass)/i.test(cleanMsg);
