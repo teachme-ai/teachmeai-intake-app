@@ -52,7 +52,7 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasRole = isFieldFilled(state, 'role_category');
             const hasGoal = isFieldFilled(state, 'goal_calibrated') || isFieldFilled(state, 'goal_raw');
             const shouldExit = hasRole && hasGoal;
-            
+
             if (!shouldExit) {
                 console.log('[Strategist Exit Check]', { hasRole, hasGoal });
             }
@@ -65,16 +65,17 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         id: 'learner_dimensions',
         name: 'Learning Profile Analyst',
         ownedFields: [
-            // Dimension 1: SRL (Self-Regulated Learning)
-            'srl_goal_setting', 'srl_adaptability', 'srl_reflection',
-            // Dimension 2: Motivation
-            'motivation_type', 'vision_clarity', 'success_clarity_1yr',
-            // Dimension 3: Learning Preferences
-            'learner_type', 'vark_primary', 'vark_ranked',
-            // Dimension 4: Readiness / Confidence
-            'skill_stage', 'tech_confidence', 'resilience',
-            // Dimension 5: Time Barrier (partial, rest handled by tactician)
-            'time_barrier'
+            ownedFields: [
+                // Critical Exit Fields First (Fast Pass)
+                'skill_stage', 'learner_type', 'motivation_type', 'srl_goal_setting',
+
+                // Secondary Context (Optional / Deepening)
+                'srl_adaptability', 'srl_reflection',
+                'vision_clarity', 'success_clarity_1yr',
+                'vark_primary', 'vark_ranked',
+                'tech_confidence', 'resilience',
+                'time_barrier'
+            ],
         ],
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
@@ -84,7 +85,7 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasSRL = isFieldFilled(state, 'srl_goal_setting');
             const hasMotivation = isFieldFilled(state, 'motivation_type');
             const shouldExit = hasSkill && hasLearner && hasSRL && hasMotivation;
-            
+
             if (!shouldExit) {
                 console.log('[Learner Dimensions Exit Check]', { hasSkill, hasLearner, hasSRL, hasMotivation });
             }
@@ -115,7 +116,7 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             const hasTime = isFieldFilled(state, 'time_per_week_mins');
             const hasConstraint = isFieldFilled(state, 'constraints');
             const shouldExit = hasTime && hasConstraint;
-            
+
             if (!shouldExit) {
                 console.log('[Tactician Exit Check]', { hasTime, hasConstraint });
             }
