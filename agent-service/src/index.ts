@@ -19,6 +19,11 @@ app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/debug/logs', (req: Request, res: Response) => {
+    const { logger } = require('./utils/logger');
+    res.json(logger.getRecentLogs());
+});
+
 // Expose the quiz guide flow
 app.post('/quizGuide', async (req: Request, res: Response) => {
     try {

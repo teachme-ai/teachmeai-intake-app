@@ -44,6 +44,9 @@ function redact(obj: any): any {
     return obj;
 }
 
+const MAX_BUFFER_SIZE = 50;
+const LOG_BUFFER: any[] = [];
+
 class Logger {
     private base: Record<string, any>;
 
@@ -72,8 +75,16 @@ class Logger {
             ...payload
         };
 
+        // Add to buffer
+        LOG_BUFFER.unshift(entry);
+        if (LOG_BUFFER.length > MAX_BUFFER_SIZE) LOG_BUFFER.pop();
+
         // Use a prefix so it hits textPayload while remaining greaseable
         console.log(`[LOG-SEARCH-ME] ${JSON.stringify(entry)}`);
+    }
+
+    getRecentLogs() {
+        return LOG_BUFFER;
     }
 
     info(data: Record<string, any> | string, msg?: string) { this.log('info', data, msg); }
