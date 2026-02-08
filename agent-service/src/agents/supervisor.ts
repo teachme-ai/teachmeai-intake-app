@@ -35,8 +35,6 @@ export const supervisorFlow = ai.defineFlow(
         console.log("🕵️ [Supervisor] Phase 1: Profiling...");
         const profile = await runWithRetry(() => profilingAgentFlow(intake));
 
-        await delay(1000); // Stagger
-
         // Phase 2: Deep Research (NOW USES PROFILE)
         console.log("🔍 [Supervisor] Phase 2: Deep Research (with Profile)...");
         const research = await runWithRetry(() => deepResearchFlow({
@@ -53,8 +51,6 @@ export const supervisorFlow = ai.defineFlow(
             profile: profile // PASSED HERE
         }));
 
-        await delay(1000); // Stagger
-
         // Phase 3: Strategy
         console.log("🎯 [Supervisor] Phase 3: Strategy...");
         const strategy = await runWithRetry(() => strategistFlow({
@@ -69,8 +65,6 @@ export const supervisorFlow = ai.defineFlow(
             seniority: intake.seniority,
             application_context: intake.application_context
         }));
-
-        await delay(1000); // Stagger
 
         // Phase 4: Tactics (NOW CONTAINS STUDY RULES)
         console.log("🛠️ [Supervisor] Phase 4: Tactics...");
