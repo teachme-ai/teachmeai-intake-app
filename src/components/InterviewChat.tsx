@@ -118,7 +118,26 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
     const [analysis, setAnalysis] = useState<any>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [allSectionsExpanded, setAllSectionsExpanded] = useState(false);
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+        strategy: false,
+        opportunities: false,
+        plan: false,
+        priorities: false,
+        profile: false
+    });
+
+    const isAllExpanded = Object.values(expandedSections).every(Boolean);
+    const isAnyExpanded = Object.values(expandedSections).some(Boolean);
+
+    const toggleAllSections = (expand: boolean) => {
+        setExpandedSections({
+            strategy: expand,
+            opportunities: expand,
+            plan: expand,
+            priorities: expand,
+            profile: expand
+        });
+    };
 
     const triggerFinalAnalysis = useCallback(async () => {
         if (isAnalyzing || analysis || error) return;
@@ -169,16 +188,17 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ResultsHeader
                             userName={state.fields.name?.value || 'there'}
                             userRole={state.fields.role_raw?.value || 'Professional'}
-                            onExpandAll={() => setAllSectionsExpanded(true)}
-                            onCollapseAll={() => setAllSectionsExpanded(false)}
-                            allExpanded={allSectionsExpanded}
+                            onExpandAll={() => toggleAllSections(true)}
+                            onCollapseAll={() => toggleAllSections(false)}
+                            allExpanded={isAllExpanded}
                         />
 
                         {/* 1. Strategic Overview */}
                         <ExpandableSection
                             title="🎯 Your Targeted AI Strategy"
                             icon={<Target className="w-5 h-5 text-blue-600" />}
-                            isExpanded={allSectionsExpanded}
+                            isExpanded={expandedSections.strategy}
+                            onToggle={() => setExpandedSections(prev => ({ ...prev, strategy: !prev.strategy }))}
                         >
                             <p className="text-gray-700 leading-relaxed">{analysis.Identify}</p>
                         </ExpandableSection>
@@ -187,7 +207,8 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="💡 AI Opportunities for Your Role"
                             icon={<Lightbulb className="w-5 h-5 text-yellow-600" />}
-                            isExpanded={allSectionsExpanded}
+                            isExpanded={expandedSections.opportunities}
+                            onToggle={() => setExpandedSections(prev => ({ ...prev, opportunities: !prev.opportunities }))}
                         >
                             {analysis.research?.aiOpportunityMap && analysis.research.aiOpportunityMap.length > 0 ? (
                                 <ul className="space-y-4">
@@ -221,7 +242,8 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="🚀 Your IMPACT Action Plan"
                             icon={<TrendingUp className="w-5 h-5 text-indigo-600" />}
-                            isExpanded={allSectionsExpanded}
+                            isExpanded={expandedSections.plan}
+                            onToggle={() => setExpandedSections(prev => ({ ...prev, plan: !prev.plan }))}
                         >
                             <div className="space-y-6">
                                 {[
@@ -247,7 +269,8 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="✨ Your Top Priorities & Quick Wins"
                             icon={<Wrench className="w-5 h-5 text-emerald-600" />}
-                            isExpanded={allSectionsExpanded}
+                            isExpanded={expandedSections.priorities}
+                            onToggle={() => setExpandedSections(prev => ({ ...prev, priorities: !prev.priorities }))}
                         >
                             {analysis.research?.topPriorities && analysis.research.topPriorities.length > 0 ? (
                                 <ul className="space-y-4">
@@ -275,7 +298,8 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="👤 Your Learning Style & Psychological Profile"
                             icon={<User className="w-5 h-5 text-purple-600" />}
-                            isExpanded={allSectionsExpanded}
+                            isExpanded={expandedSections.profile}
+                            onToggle={() => setExpandedSections(prev => ({ ...prev, profile: !prev.profile }))}
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {(() => {
