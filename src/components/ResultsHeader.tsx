@@ -16,9 +16,7 @@ export default function ResultsHeader({
     onExpandAll,
     onCollapseAll,
     allExpanded
-}: Results
-
-HeaderProps) {
+}: ResultsHeaderProps) {
     return (
         <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-indigo-100 rounded-3xl p-8 mb-6 shadow-sm">
             {/* Completion Badge */}
