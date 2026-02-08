@@ -6,6 +6,7 @@ import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, Target, Lightbulb, Tr
 import ExpandableSection from './ExpandableSection';
 import ResultsHeader from './ResultsHeader';
 import ConsultationCTA from './ConsultationCTA';
+import VisualInsights from './VisualInsights';
 
 interface InterviewChatProps {
     initialState: IntakeState;
@@ -116,6 +117,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
     };
 
     const [analysis, setAnalysis] = useState<any>(null);
+    const [enrichedData, setEnrichedData] = useState<any>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -157,6 +159,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
             }
 
             setAnalysis(data.analysis);
+            setEnrichedData(data.enrichedData);
         } catch (err: any) {
             console.error('Final analysis error:', err);
             setError(err.message || 'Failed to generate your personalized report. Please try again or contact support.');
@@ -192,6 +195,9 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                             onCollapseAll={() => toggleAllSections(false)}
                             allExpanded={isAllExpanded}
                         />
+
+                        {/* Visual Diagnostic Insights */}
+                        <VisualInsights data={enrichedData} />
 
                         {/* 1. Strategic Overview */}
                         <ExpandableSection
