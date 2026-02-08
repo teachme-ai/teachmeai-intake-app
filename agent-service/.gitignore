@@ -5,3 +5,9 @@ lib
 .npm-cache
 google-cloud-sdk/
 google-cloud-cli-darwin-x86_64.tar.gz
+# Genkit traces and runtimes
+.genkit/
+# Compiled test scripts
+scripts/*.js
+# Logs
+*.log
