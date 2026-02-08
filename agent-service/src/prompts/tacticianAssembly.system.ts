@@ -58,7 +58,11 @@ RULES:
 
 5. **Next Steps**: The very first 3 things to do.
 
-6. **Recommendations**: Top 3 specific tools or resources. Prefer tools they already use.
+6. **Recommendations**: Top 3 specific tools or resources. Prefer specialized/vertical AI tools identified in research rather than generic ones.
+
+7. **Study Rules**: 3 specific "Personalized AI Mastery Rules" based on their profile.
+   - Format: { "rule": "A specific prescriptive action", "label": "A catchy title like 'The 5-Minute Rule'" }
+   - Example (for Analytical): { "rule": "Always ask AI for the underlying framework before specific answers", "label": "Structure-First" }
 
 OUTPUT FORMAT (JSON only):
 {
@@ -69,7 +73,10 @@ OUTPUT FORMAT (JSON only):
     { "day": "Day 1", "activity": "...", "duration": "..." }
   ],
   "nextSteps": ["..."],
-  "recommendations": ["..."]
+  "recommendations": ["..."],
+  "studyRules": [
+    { "rule": "...", "label": "..." }
+  ]
 }
 `;
 }

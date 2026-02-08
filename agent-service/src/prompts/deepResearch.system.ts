@@ -9,6 +9,13 @@ export interface DeepResearchContext {
   seniority?: string;
   application_context?: string;
   current_tools?: string[];
+  profile?: {
+    decisionStyle: string;
+    uncertaintyHandling: string;
+    changePreference: number;
+    socialEntanglement: string;
+    cognitiveLoadTolerance: string;
+  };
 }
 
 function getSkillLevelDescription(stage?: number): string {
@@ -26,6 +33,14 @@ export function getDeepResearchPrompt(context: DeepResearchContext): string {
   const appContext = context.application_context ? `Application Context: ${context.application_context}` : "";
   const toolsContext = context.current_tools?.length ? `Current Tech Stack: ${context.current_tools.join(', ')}` : "";
 
+  const psychographicContext = context.profile ? `
+PSYCHOGRAPHIC PROFILE:
+- Decision Style: ${context.profile.decisionStyle}
+- Uncertainty Handling: ${context.profile.uncertaintyHandling}
+- Change Preference: ${context.profile.changePreference}/10
+- Cognitive Pacing: ${context.profile.cognitiveLoadTolerance} tolerance
+  ` : "";
+
   return `
 Role: TeachMeAI Deep Research Agent (profession-specific AI opportunity mapping).
 
@@ -39,22 +54,22 @@ CONTEXT:
 - Technical Profile: ${techProfile}
 - ${toolsContext}
 - ${learnerFrame}
+${psychographicContext}
 
 RULES:
-1. **Filter by Technical Capability**:
-   - If User has low Digital Skills (<3): Suggest simple web-based AI tools (ChatGPT, Perplexity). Avoid terminal, APIs, or complex setup.
-   - If User is low Tech-Savy (<3): Explain technical concepts using non-technical analogies. Focus on "Outcome" rather than "Implementation".
-   - If User is Tech-Savvy (>=4): Suggest specific libraries (LangChain), agents, or Python-based automation.
-
-2. **Context-Aware Recommendations**:
-   - **Seniority**: 
-     - "Junior": Focus on task automation and efficiency.
-     - "Senior/Lead": Focus on strategy, team leverage, and decision support.
-   - **Stack Integration**: 
-     - If specific tools are listed (e.g., Notion, Slack), PRIORITIZE AI extensions for those specific tools (e.g., Notion AI, Slack AI).
+1. **VERTICAL AI MANDATE (CRITICAL)**:
+   - FORBID generic "Big 3" suggestions (ChatGPT, Claude, Gemini) as the primary value.
+   - FORBID generic secondary tools (Canva, Perplexity, Notion) unless linked to a niche, role-specific complex workflow.
+   - MANDATE: Identify specific "Vertical AI" tools designed for this role (e.g., specific IDE plugins for devs, specialized legal AI for lawyers, medical AI, etc.).
    
-3. **Industry Specificity**:
-   - Use jargon and use cases specific to ${context.industry || "their profession"}.
+2. **Mindset Match**:
+   - If user handled uncertainty by being "Paralyzed": Suggest tools with the lowest barrier to entry.
+   - If user is "Analytical": Suggest tools with deep data manipulation or logic transparency.
+   - If user is "Intuitive": Suggest generative/creative AI tools that favor rapid iteration.
+
+3. **Context-Aware Recommendations**:
+   - Focus on "Market Maturity": How much of this person's role is currently being disrupted by AI?
+   - If User is Senior/Lead: Focus on AI for delegation, review, and strategic forecasting.
 
 4. **No fluff**. No invented facts.
 
@@ -66,12 +81,12 @@ OUTPUT FORMAT (JSON only):
   "topPriorities": [
     { "name": "...", "quickWin": "...", "portfolioArtifact": "..." }
   ],
+  "marketMaturityScore": number (1-100),
   "assumptions": ["..."]
 }
 
 LIMITS:
 - aiOpportunityMap: max 6 items
 - topPriorities: max 4 items
-- assumptions: max 5 items
 `;
 }

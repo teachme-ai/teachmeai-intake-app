@@ -73,7 +73,11 @@ export const TacticsSchema = z.object({
         duration: z.string()
     })),
     nextSteps: z.array(z.string()),
-    recommendations: z.array(z.string())
+    recommendations: z.array(z.string()),
+    studyRules: z.array(z.object({
+        rule: z.string(),
+        label: z.string()
+    })).describe("Actionable prescriptive rules based on learner profile")
 });
 
 export type IntakeResponse = z.infer<typeof IntakeResponseSchema>;
@@ -119,7 +123,8 @@ export const DeepResearchInputSchema = z.object({
     tech_savviness: z.number().optional(),
     seniority: z.string().optional().describe("Junior, Mid-level, Senior, Lead"),
     application_context: z.string().optional().describe("Context where AI will be applied (e.g. Work, Personal)"),
-    current_tools: z.array(z.string()).optional().describe("Tools currently used by the learner")
+    current_tools: z.array(z.string()).optional().describe("Tools currently used by the learner"),
+    profile: PsychographicProfileSchema.optional()
 });
 
 export const DeepResearchOutputSchema = z.object({
@@ -132,6 +137,7 @@ export const DeepResearchOutputSchema = z.object({
         quickWin: z.string(),
         portfolioArtifact: z.string()
     })).max(4),
+    marketMaturityScore: z.number().min(1).max(100).describe("Percentage of AI adoption in this specific role/industry"),
     assumptions: z.array(z.string())
 });
 

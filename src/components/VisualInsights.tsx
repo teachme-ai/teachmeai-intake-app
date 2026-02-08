@@ -5,10 +5,13 @@ import { Shield, Target, Zap, Brain } from 'lucide-react';
 
 interface VisualInsightsProps {
     data: any; // EnrichedIntakeSchema
+    research?: any; // DeepResearchOutput
 }
 
-export default function VisualInsights({ data }: VisualInsightsProps) {
+export default function VisualInsights({ data, research }: VisualInsightsProps) {
     if (!data) return null;
+
+    const marketScore = research?.marketMaturityScore || 0;
 
     // 1. Radar Chart Calculation (VARK)
     const vark = data.varkPreferences || { visual: 3, audio: 3, readingWriting: 3, kinesthetic: 3 };
@@ -117,11 +120,18 @@ export default function VisualInsights({ data }: VisualInsightsProps) {
                     <Brain className="absolute -bottom-4 -right-4 w-24 h-24 opacity-10 rotate-12 transition-transform group-hover:scale-110 duration-500" />
                     <h4 className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Archetype</h4>
                     <p className="text-xl sm:text-2xl font-black capitalize mb-2">{data.learnerType || 'Dynamic Learner'}</p>
-                    <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
-                        {data.skillStage === 1 ? 'Novice' : data.skillStage === 2 ? 'Advanced Beginner' : data.skillStage === 3 ? 'Competent' : data.skillStage === 4 ? 'Proficient' : 'Expert'} Level
+                    <div className="flex flex-wrap gap-2">
+                        <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
+                            {data.skillStage === 1 ? 'Novice' : data.skillStage === 2 ? 'Advanced Beginner' : data.skillStage === 3 ? 'Competent' : data.skillStage === 4 ? 'Proficient' : 'Expert'} Level
+                        </div>
+                        {marketScore > 0 && (
+                            <div className="inline-block px-3 py-1 bg-emerald-400/30 text-emerald-100 border border-emerald-400/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
+                                {marketScore}% AI Maturity
+                            </div>
+                        )}
                     </div>
                     <p className="text-[11px] sm:text-xs opacity-80 mt-4 leading-relaxed font-medium">
-                        Your {data.learnerType} preference combined with a level {data.skillStage} skill stage suggests a {data.learnerType === 'pragmatist' ? 'practical, goal-oriented' : data.learnerType === 'theorist' ? 'conceptual, logical' : 'reflective'} approach to AI mastery.
+                        Your {data.learnerType} preference combined with {marketScore > 60 ? 'high community AI adoption' : 'your early mover status'} suggests a {data.learnerType === 'pragmatist' ? 'practical, goal-oriented' : data.learnerType === 'theorist' ? 'conceptual, logical' : 'reflective'} approach.
                     </p>
                 </div>
 

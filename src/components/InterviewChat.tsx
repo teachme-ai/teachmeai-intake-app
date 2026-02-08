@@ -197,7 +197,10 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         />
 
                         {/* Visual Diagnostic Insights */}
-                        <VisualInsights data={enrichedData} />
+                        <VisualInsights
+                            data={enrichedData}
+                            research={analysis?.research}
+                        />
 
                         {/* 1. Strategic Overview */}
                         <ExpandableSection
@@ -328,6 +331,28 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                                                     <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Psychological Capital</p>
                                                     <p className="text-purple-900 font-medium italic text-lg">&quot;{profile?.psyCap || 'Ready for transformation.'}&quot;</p>
                                                 </div>
+
+                                                {/* Hyper-Personalized Study Rules */}
+                                                {analysis.studyRules && analysis.studyRules.length > 0 && (
+                                                    <div className="col-span-1 sm:col-span-2 mt-4">
+                                                        <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                                            <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                                                            Your AI Mastery Rules
+                                                        </h5>
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {analysis.studyRules.map((rule: any, idx: number) => (
+                                                                <div key={idx} className="bg-white border border-slate-100 shadow-sm rounded-2xl p-4 flex gap-3 items-start">
+                                                                    <div className="bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap mt-0.5">
+                                                                        {rule.label}
+                                                                    </div>
+                                                                    <p className="text-slate-700 text-sm font-medium leading-relaxed">
+                                                                        {rule.rule}
+                                                                    </p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </>
                                         );
                                     } catch (e) {

@@ -17,6 +17,10 @@ export const IMPACTAnalysisSchema = z.object({
     nextSteps: z.array(z.string()),
     learnerProfile: PsychographicProfileSchema,
     recommendations: z.array(z.string()),
+    studyRules: z.array(z.object({
+        rule: z.string(),
+        label: z.string()
+    })),
     research: DeepResearchOutputSchema
 });
 
@@ -33,12 +37,11 @@ export const supervisorFlow = ai.defineFlow(
 
         await delay(1000); // Stagger
 
-        // Phase 2: Deep Research
-        console.log("🔍 [Supervisor] Phase 2: Deep Research...");
+        // Phase 2: Deep Research (NOW USES PROFILE)
+        console.log("🔍 [Supervisor] Phase 2: Deep Research (with Profile)...");
         const research = await runWithRetry(() => deepResearchFlow({
             role: intake.currentRoles[0] || "Professional",
             goal: intake.primaryGoal || "Upskilling",
-            // Industry is effectively optional (defaults to General if missing)
             industry: intake.industry_vertical || "General",
             skillStage: intake.skillStage,
             learnerType: intake.learnerType,
@@ -46,7 +49,8 @@ export const supervisorFlow = ai.defineFlow(
             tech_savviness: intake.tech_savviness,
             seniority: intake.seniority,
             application_context: intake.application_context,
-            current_tools: intake.current_tools
+            current_tools: intake.current_tools,
+            profile: profile // PASSED HERE
         }));
 
         await delay(1000); // Stagger
@@ -68,7 +72,7 @@ export const supervisorFlow = ai.defineFlow(
 
         await delay(1000); // Stagger
 
-        // Phase 4: Tactics
+        // Phase 4: Tactics (NOW CONTAINS STUDY RULES)
         console.log("🛠️ [Supervisor] Phase 4: Tactics...");
         const tactics = await runWithRetry(() => tacticianFlow({
             strategy,
@@ -96,6 +100,7 @@ export const supervisorFlow = ai.defineFlow(
             nextSteps: tactics.nextSteps,
             learnerProfile: profile,
             recommendations: tactics.recommendations,
+            studyRules: tactics.studyRules || [],
             research: research
         };
     }
