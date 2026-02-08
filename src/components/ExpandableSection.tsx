@@ -8,21 +8,36 @@ interface ExpandableSectionProps {
     icon?: ReactNode;
     children: ReactNode;
     defaultExpanded?: boolean;
+    isExpanded?: boolean;  // External control (optional)
+    onToggle?: () => void;  // External toggle handler (optional)
 }
 
 export default function ExpandableSection({
     title,
     icon,
     children,
-    defaultExpanded = false
+    defaultExpanded = false,
+    isExpanded: externalIsExpanded,
+    onToggle
 }: ExpandableSectionProps) {
-    const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+    const [internalIsExpanded, setInternalIsExpanded] = useState(defaultExpanded);
+
+    // Use external state if provided, otherwise use internal state
+    const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
+
+    const handleToggle = () => {
+        if (onToggle) {
+            onToggle();  // Use external handler if provided
+        } else {
+            setInternalIsExpanded(!internalIsExpanded);  // Fall back to internal state
+        }
+    };
 
     return (
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md">
             {/* Header (Always Visible) */}
             <button
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={handleToggle}
                 className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition-colors duration-150"
                 aria-expanded={isExpanded}
             >

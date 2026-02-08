@@ -181,7 +181,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="🎯 Your Targeted AI Strategy"
                             icon={<Target className="w-5 h-5 text-blue-600" />}
-                            defaultExpanded={allSectionsExpanded}
+                            isExpanded={allSectionsExpanded}
                         >
                             <p className="text-gray-700 leading-relaxed">{analysis.Identify}</p>
                         </ExpandableSection>
@@ -190,7 +190,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="💡 AI Opportunities for Your Role"
                             icon={<Lightbulb className="w-5 h-5 text-yellow-600" />}
-                            defaultExpanded={allSectionsExpanded}
+                            isExpanded={allSectionsExpanded}
                         >
                             {analysis.research?.aiOpportunityMap && analysis.research.aiOpportunityMap.length > 0 ? (
                                 <ul className="space-y-4">
@@ -224,7 +224,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="🚀 Your IMPACT Action Plan"
                             icon={<TrendingUp className="w-5 h-5 text-indigo-600" />}
-                            defaultExpanded={allSectionsExpanded}
+                            isExpanded={allSectionsExpanded}
                         >
                             <div className="space-y-6">
                                 {[
@@ -250,7 +250,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="✨ Your Top Priorities & Quick Wins"
                             icon={<Wrench className="w-5 h-5 text-emerald-600" />}
-                            defaultExpanded={allSectionsExpanded}
+                            isExpanded={allSectionsExpanded}
                         >
                             {analysis.research?.topPriorities && analysis.research.topPriorities.length > 0 ? (
                                 <ul className="space-y-4">
@@ -278,7 +278,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         <ExpandableSection
                             title="👤 Your Learning Style & Psychological Profile"
                             icon={<User className="w-5 h-5 text-purple-600" />}
-                            defaultExpanded={allSectionsExpanded}
+                            isExpanded={allSectionsExpanded}
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {(() => {
