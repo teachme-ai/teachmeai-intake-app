@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IntakeState, IntakeData } from '@/intake/schema';
-import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, Target, Lightbulb, TrendingUp, Wrench } from 'lucide-react';
+import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, Target, Lightbulb, TrendingUp, Wrench, Zap } from 'lucide-react';
 import ExpandableSection from './ExpandableSection';
 import ResultsHeader from './ResultsHeader';
 import ConsultationCTA from './ConsultationCTA';
