@@ -53,17 +53,6 @@ export default async function Home({
         ) : (
           <IntakeForm initialData={prefilledData || undefined} />
         )}
-
-        {/* Admin Link */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-500 mb-2">Administrator Access</p>
-          <a
-            href="/admin"
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            📊 View Submissions Dashboard
-          </a>
-        </div>
       </div>
     </main>
   )
