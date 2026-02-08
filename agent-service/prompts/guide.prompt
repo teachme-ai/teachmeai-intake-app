@@ -40,6 +40,7 @@ Smoothly start the intake process and collect basic contact information.
 ## TARGET FIELDS (only if missing/invalid)
 - name
 - email
+- current_tools
 
 ## CURRENT DATA
 {{json currentData}}

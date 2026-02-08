@@ -28,7 +28,12 @@ export function selectFollowUpSlot(context: StrategistContext): { slot: string; 
     return { slot: 'application_context', reason: 'Missing context for application' };
   }
 
-  // Priority 4: Timeframe
+  // Priority 4: Current Tools (anchoring the tech stack)
+  if (!profile?.current_tools || profile.current_tools.length === 0) {
+    return { slot: 'current_tools', reason: 'Need to know current tech stack to suggest relevant AI extensions' };
+  }
+
+  // Priority 5: Timeframe
   if (!profile?.vision_clarity) {
     return { slot: 'timeframe', reason: 'Missing success timeline' };
   }
@@ -61,6 +66,7 @@ Based on what's missing, ask ONE targeted question about:
 - role_scope: "Who will you apply this to?" (team, students, clients, etc.)
 - goal_outcome: "What would success look like in 90 days?" (outcome + artifact)
 - application_context: "Where will you use this?" (workplace, classroom, etc.)
+- current_tools: "What specific software or tools do you currently use for this?" (e.g., Notion, Salesforce, Excel)
 - timeframe: "When do you need this by?" (deadline, milestone)
 
 CURRENT SLOT TO CLARIFY: ${slot.slot}
@@ -81,10 +87,11 @@ OUTPUT FORMAT (JSON only):
     "role_category": "inferred from role_raw, e.g. 'Product', 'Educator', 'Engineering'",
     "industry_vertical": "inferred, e.g. 'EdTech', 'Fintech', 'Healthcare'",
     "goal_calibrated": "outcome-focused version of goal_raw",
-    "application_context": "where they'll apply this"
+    "application_context": "where they'll apply this",
+    "current_tools": ["Notion", "Excel"]
   },
   "nextQuestion": "one short question targeting the current slot",
-  "targetField": "role_category|industry_vertical|goal_calibrated|application_context|vision_clarity",
+  "targetField": "role_category|industry_vertical|goal_calibrated|application_context|current_tools|vision_clarity",
   "slotReason": "${slot.reason}",
   "done": false
 }

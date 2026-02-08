@@ -80,10 +80,11 @@ Match ONE of: BFSI, Manufacturing, Sales & Marketing, IT Consultancy, Healthcare
 ### For TIME
 Convert to minutes (Number). Example: "2 hours" → 120
 
-### For ENUMS
+### For ENUMS & LISTS
 - learner_type: theorist, activist, reflector, pragmatist
 - motivation_type: intrinsic, outcome, hybrid
 - vark_primary: visual, audio, read_write, kinesthetic
+- current_tools: Return as an ARRAY of strings. Extract specific platform names (e.g., "Notion", "Excel", "Jira").
 
 ### General Rules
 - If user implies a field (e.g., "I manage products" → role_category: "Product"), extract it

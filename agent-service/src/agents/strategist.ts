@@ -14,7 +14,8 @@ export const StrategistInputSchema = z.object({
     tech_savviness: z.number().optional(),
     time_per_week_mins: z.number().optional(),
     seniority: z.string().optional(),
-    application_context: z.string().optional()
+    application_context: z.string().optional(),
+    current_tools: z.array(z.string()).optional()
 });
 
 export const strategistFlow = ai.defineFlow(
@@ -43,6 +44,7 @@ LEARNER PROFILE:
 - Time Available: ${input.time_per_week_mins === -1 ? 'Flexible/Unspecified' : `${input.time_per_week_mins} mins/week`}
 - Seniority: ${input.seniority || 'Not specified'}
 - Application Context: ${input.application_context || 'Not specified'}
+- Current Tech Stack: ${(input.profile as any).current_tools?.join(', ') || 'Not specified'}
 
 RESEARCH INSIGHTS:
 ${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}

@@ -63,7 +63,8 @@ export const supervisorFlow = ai.defineFlow(
             tech_savviness: intake.tech_savviness,
             time_per_week_mins: intake.time_per_week_mins,
             seniority: intake.seniority,
-            application_context: intake.application_context
+            application_context: intake.application_context,
+            current_tools: intake.current_tools // ADD THIS
         }));
 
         // Phase 4: Tactics (NOW CONTAINS STUDY RULES)
