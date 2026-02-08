@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IntakeState, IntakeData } from '@/intake/schema';
-import { Loader2, Send, User, Bot, CheckCircle2, Sparkles } from 'lucide-react';
+import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, Target, Lightbulb, TrendingUp, Wrench } from 'lucide-react';
+import ExpandableSection from './ExpandableSection';
+import ResultsHeader from './ResultsHeader';
+import ConsultationCTA from './ConsultationCTA';
 
 interface InterviewChatProps {
     initialState: IntakeState;
@@ -110,6 +113,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
     const [analysis, setAnalysis] = useState<any>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [allSectionsExpanded, setAllSectionsExpanded] = useState(false);
 
     const triggerFinalAnalysis = useCallback(async () => {
         if (isAnalyzing || analysis || error) return;
@@ -145,12 +149,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
 
     if (state.isComplete) {
         return (
-            <div className="flex flex-col items-center justify-center p-8 text-left animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <CheckCircle2 className="w-8 h-8 text-green-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Intake Complete!</h2>
-
+            <div className="flex flex-col items-center justify-center p-8 text-left animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto">
                 {isAnalyzing ? (
                     <div className="flex flex-col items-center gap-4 py-8">
                         <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
@@ -160,90 +159,119 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         </div>
                     </div>
                 ) : analysis ? (
-                    <div className="space-y-8 mt-6 w-full max-w-2xl">
-                        {/* 1. Targeted Strategy */}
-                        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-r-2xl p-6 shadow-sm">
-                            <h3 className="flex items-center gap-2 font-bold text-blue-900 text-lg mb-3">
-                                <Sparkles className="w-5 h-5" /> Targeted AI Strategy
-                            </h3>
-                            <p className="text-blue-800 leading-relaxed font-medium">{analysis.Identify}</p>
-                        </div>
+                    <div className="space-y-6 w-full">
+                        {/* Results Header with Expand/Collapse Controls */}
+                        <ResultsHeader
+                            userName={state.fields.name?.value || 'there'}
+                            userRole={state.fields.role_raw?.value || 'Professional'}
+                            onExpandAll={() => setAllSectionsExpanded(true)}
+                            onCollapseAll={() => setAllSectionsExpanded(false)}
+                            allExpanded={allSectionsExpanded}
+                        />
 
-                        {/* 2. Opportunities (Deep Research) */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <Bot className="w-5 h-5 text-brand-primary" /> AI Opportunities
-                                </h3>
-                                <ul className="space-y-3">
-                                    {analysis.research?.aiOpportunityMap?.slice(0, 3).map((item: any, i: number) => (
-                                        <li key={i} className="flex gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        {/* 1. Strategic Overview */}
+                        <ExpandableSection
+                            title="🎯 Your Targeted AI Strategy"
+                            icon={<Target className="w-5 h-5 text-blue-600" />}
+                            defaultExpanded={allSectionsExpanded}
+                        >
+                            <p className="text-gray-700 leading-relaxed">{analysis.Identify}</p>
+                        </ExpandableSection>
+
+                        {/* 2. AI Opportunities (Full List) */}
+                        <ExpandableSection
+                            title="💡 AI Opportunities for Your Role"
+                            icon={<Lightbulb className="w-5 h-5 text-yellow-600" />}
+                            defaultExpanded={allSectionsExpanded}
+                        >
+                            {analysis.research?.aiOpportunityMap && analysis.research.aiOpportunityMap.length > 0 ? (
+                                <ul className="space-y-4">
+                                    {analysis.research.aiOpportunityMap.map((item: any, i: number) => (
+                                        <li key={i} className="flex gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                                <span className="text-xs font-bold text-blue-700">{i + 1}</span>
                                             </div>
                                             <div>
-                                                <span className="font-bold text-slate-700">{item.opportunity}:</span>
-                                                <span className="text-slate-600 ml-1">{item.impact}</span>
+                                                <p className="font-bold text-gray-800">{item.opportunity}</p>
+                                                <p className="text-gray-600 text-sm mt-1">{item.impact}</p>
+                                                {item.tools && item.tools.length > 0 && (
+                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                        {item.tools.map((tool: string, ti: number) => (
+                                                            <span key={ti} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                                                {tool}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </li>
                                     ))}
                                 </ul>
-                            </div>
+                            ) : (
+                                <p className="text-gray-500 italic">No AI opportunities data available.</p>
+                            )}
+                        </ExpandableSection>
 
-                            {/* 3. Top Priorities */}
-                            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Top Priorities
-                                </h3>
-                                <ul className="space-y-3">
-                                    {analysis.research?.topPriorities?.slice(0, 3).map((item: any, i: number) => (
-                                        <li key={i} className="flex gap-3 text-sm">
-                                            <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                            </div>
-                                            <div>
-                                                <span className="font-bold text-slate-700">{item.name}:</span>
-                                                <span className="text-slate-600 ml-1">{item.quickWin}</span>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-
-                        {/* 4. IMPACT Roadmap */}
-                        <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-                            <div className="absolute top-0 right-0 p-8 opacity-10">
-                                <Sparkles className="w-32 h-32" />
-                            </div>
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 relative z-10">
-                                <CheckCircle2 className="w-6 h-6 text-blue-400" /> Your IMPACT Roadmap
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
+                        {/* 3. IMPACT Action Plan (All Steps, Full Text) */}
+                        <ExpandableSection
+                            title="🚀 Your IMPACT Action Plan"
+                            icon={<TrendingUp className="w-5 h-5 text-indigo-600" />}
+                            defaultExpanded={allSectionsExpanded}
+                        >
+                            <div className="space-y-6">
                                 {[
-                                    { step: 'Identify', content: analysis.Identify, icon: '🔍' },
-                                    { step: 'Motivate', content: analysis.Motivate, icon: '🔥' },
-                                    { step: 'Plan', content: analysis.Plan, icon: '📅' },
-                                    { step: 'Act', content: analysis.Act, icon: '⚡' },
-                                    { step: 'Check', content: analysis.Check, icon: '✅' },
-                                    { step: 'Transform', content: analysis.Transform, icon: '🚀' }
+                                    { step: 'Identify', content: analysis.Identify, icon: '🔍', color: 'blue' },
+                                    { step: 'Motivate', content: analysis.Motivate, icon: '🔥', color: 'orange' },
+                                    { step: 'Plan', content: analysis.Plan, icon: '📅', color: 'purple' },
+                                    { step: 'Act', content: analysis.Act, icon: '⚡', color: 'yellow' },
+                                    { step: 'Check', content: analysis.Check, icon: '✅', color: 'green' },
+                                    { step: 'Transform', content: analysis.Transform, icon: '🚀', color: 'pink' }
                                 ].map((item, i) => (
-                                    <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors">
+                                    <div key={i} className={`bg-${item.color}-50 border-l-4 border-${item.color}-500 rounded-r-xl p-4`}>
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xl">{item.icon}</span>
-                                            <span className="font-bold text-blue-400 text-xs uppercase tracking-widest">{item.step}</span>
+                                            <span className="text-2xl">{item.icon}</span>
+                                            <h4 className="font-bold text-gray-800 uppercase text-sm tracking-wide">{item.step}</h4>
                                         </div>
-                                        <p className="text-sm text-slate-300 line-clamp-3">{item.content}</p>
+                                        <p className="text-gray-700 leading-relaxed">{item.content}</p>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </ExpandableSection>
+
+                        {/* 4. Top Priorities */}
+                        <ExpandableSection
+                            title="✨ Your Top Priorities & Quick Wins"
+                            icon={<Wrench className="w-5 h-5 text-emerald-600" />}
+                            defaultExpanded={allSectionsExpanded}
+                        >
+                            {analysis.research?.topPriorities && analysis.research.topPriorities.length > 0 ? (
+                                <ul className="space-y-4">
+                                    {analysis.research.topPriorities.map((item: any, i: number) => (
+                                        <li key={i} className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                                            <div className="flex gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-emerald-900">{item.name}</p>
+                                                    <p className="text-emerald-700 text-sm mt-1"><strong>Quick Win:</strong> {item.quickWin}</p>
+                                                    {item.impact && <p className="text-emerald-600 text-sm mt-1"><em>{item.impact}</em></p>}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-gray-500 italic">No priority data available.</p>
+                            )}
+                        </ExpandableSection>
 
                         {/* 5. Learner Profile */}
-                        <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-8 shadow-sm">
-                            <h3 className="font-bold text-emerald-900 text-lg mb-4 flex items-center gap-2">
-                                <User className="w-5 h-5" /> Learner Profile & Psychological Fit
-                            </h3>
+                        <ExpandableSection
+                            title="👤 Your Learning Style & Psychological Profile"
+                            icon={<User className="w-5 h-5 text-purple-600" />}
+                            defaultExpanded={allSectionsExpanded}
+                        >
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {(() => {
                                     try {
@@ -253,45 +281,29 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
 
                                         return (
                                             <>
-                                                <div className="bg-white/50 p-4 rounded-xl">
-                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Motivation Type</p>
-                                                    <p className="text-emerald-900 font-bold">{profile?.motivationType || 'Unified'}</p>
+                                                <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                                                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Motivation Type</p>
+                                                    <p className="text-purple-900 font-bold text-lg">{profile?.motivationType || 'Unified'}</p>
                                                 </div>
-                                                <div className="bg-white/50 p-4 rounded-xl">
-                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">SRL Readiness</p>
-                                                    <p className="text-emerald-900 font-bold">{profile?.srlLevel || 'Moderate'}</p>
+                                                <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                                                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">SRL Readiness</p>
+                                                    <p className="text-purple-900 font-bold text-lg">{profile?.srlLevel || 'Moderate'}</p>
                                                 </div>
-                                                <div className="col-span-1 sm:col-span-2 bg-white/50 p-4 rounded-xl">
-                                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Psychological Capital</p>
-                                                    <p className="text-emerald-900 font-medium italic">&quot;{profile?.psyCap || 'Ready for transformation.'}&quot;</p>
+                                                <div className="col-span-1 sm:col-span-2 bg-purple-50 p-4 rounded-xl border border-purple-200">
+                                                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Psychological Capital</p>
+                                                    <p className="text-purple-900 font-medium italic text-lg">&quot;{profile?.psyCap || 'Ready for transformation.'}&quot;</p>
                                                 </div>
                                             </>
                                         );
                                     } catch (e) {
-                                        return <p className="text-emerald-800">{analysis.learnerProfile}</p>;
+                                        return <p className="text-gray-700">{analysis.learnerProfile}</p>;
                                     }
                                 })()}
                             </div>
-                        </div>
+                        </ExpandableSection>
 
-                        {/* 6. CTA Section - PROMINENT */}
-                        <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 rounded-3xl p-10 text-white text-center shadow-2xl shadow-red-500/40 border-4 border-white animate-pulse-slow">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                                <h3 className="text-3xl font-black mb-4 text-white drop-shadow-lg">🎯 Unlock Your Full 15-Page Report</h3>
-                                <p className="text-white text-lg mb-8 max-w-lg mx-auto leading-relaxed font-semibold">
-                                    Get your complete AI Adoption Blueprint, including specific automation workflows and a 90-day execution plan.
-                                </p>
-                                <a
-                                    href="mailto:Irfan@teachmeai.in?subject=My AI Analysis Report&body=Hi Irfan, I just completed my diagnostic and would like to book a 1:1 session to discuss my full analysis."
-                                    className="inline-flex items-center gap-3 bg-white text-red-600 font-black text-lg px-10 py-5 rounded-2xl hover:bg-yellow-50 hover:scale-105 transition-all active:scale-95 shadow-2xl hover:shadow-yellow-500/50 border-4 border-yellow-400"
-                                >
-                                    📞 Book 1:1 Clarity Call with Irfan <Send className="w-5 h-5" />
-                                </a>
-                                <p className="text-white text-sm mt-6 font-bold uppercase tracking-wider bg-black/20 rounded-full px-6 py-2 inline-block">
-                                    ✨ Your personalized analysis will be presented in detail
-                                </p>
-                            </div>
-                        </div>
+                        {/* 6. Consultation CTA */}
+                        <ConsultationCTA />
                     </div>
                 ) : error ? (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-6 mt-8 w-full text-center">
