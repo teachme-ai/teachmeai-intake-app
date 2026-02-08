@@ -31,7 +31,9 @@ export default function ConsultationCTA({ onTrack }: ConsultationCTAProps) {
                     If you like what you see, let&apos;s build a tailored learning plan and pathways specifically for you to learn AI that&apos;s relevant for you now.
                 </p>
                 <a
-                    href="mailto:Irfan@teachmeai.in?subject=My AI Learning Profile Analysis&body=Hi Irfan, I just completed my AI learning profile analysis and would love to discuss creating a tailored learning plan with you. Let's book a 70-minute strategy call!"
+                    href="https://topmate.io/khalidirfan/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={handleClick}
                     className="inline-flex items-center gap-3 bg-white text-red-600 font-black text-lg px-10 py-5 rounded-2xl hover:bg-yellow-50 hover:scale-105 transition-all active:scale-95 shadow-2xl hover:shadow-yellow-500/50 border-4 border-yellow-400"
                 >
