@@ -30,10 +30,10 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
     guide: {
         id: 'guide',
         name: 'TeachMeAI Guide',
-        ownedFields: ['name', 'email'],
+        ownedFields: ['name', 'email', 'current_tools'],
         introMessage: "Hi, I'm the intake guide. Let's get you set up.",
         shouldExit: (state) => {
-            return isFieldFilled(state, 'email');
+            return isFieldFilled(state, 'email') && isFieldFilled(state, 'current_tools');
         }
     },
 
@@ -114,8 +114,9 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             // Require 2 fields: time and constraints
             const hasTime = isFieldFilled(state, 'time_per_week_mins');
             const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
+            const hasTools = isFieldFilled(state, 'current_tools');
 
-            return hasTime && hasConstraint;
+            return hasTime && hasConstraint && hasTools;
         }
     }
 };

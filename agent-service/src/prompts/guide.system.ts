@@ -23,12 +23,13 @@ RULES:
 YOUR TARGET FIELDS (only if missing/invalid):
 - name
 - email
+- current_tools (What specific software or tools do they use?)
 
 OUTPUT FORMAT (JSON only):
 {
-  "extractedData": { "name": "...", "email": "..." },
+  "extractedData": { "name": "...", "email": "...", "current_tools": ["Notion", "Slack"] },
   "nextQuestion": "one short question",
-  "targetField": "name|email|none",
+  "targetField": "name|email|current_tools|none",
   "isComplete": boolean
 }
 
