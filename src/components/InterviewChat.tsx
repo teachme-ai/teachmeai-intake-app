@@ -92,8 +92,16 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
             setMessages(prev => [...prev, botMsg]);
 
             if (nextState.isComplete) {
-                // Trigger report generation or redirect
-                // For now, just show completion state
+                // Add preparation message before triggering analysis
+                setTimeout(() => {
+                    const preparationMsg: Message = {
+                        id: (Date.now() + 2).toString(),
+                        role: 'assistant',
+                        content: "🎯 Excellent! Your report is now being prepared by our agentic-driven analysis system. You'll see your comprehensive AI learning profile in just a few seconds...",
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, preparationMsg]);
+                }, 800);
             }
 
         } catch (error) {
