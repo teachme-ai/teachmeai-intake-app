@@ -48,3 +48,10 @@ coverage/
 .vercel
 .npm-cache/
 
+# Agent Service - Massive Folders
+agent-service/node_modules/
+agent-service/lib/
+agent-service/google-cloud-sdk/
+agent-service/google-cloud-cli-darwin-x86_64.tar.gz
+agent-service/.genkit/
+agent-service/scripts/*.js
