@@ -72,36 +72,33 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
             const nextState: IntakeState = data.state || data.result?.state;
             const assistantMsgContent = data.message || data.result?.message;
 
-            setState(nextState);
-
-            // If analysis is included in response, set it immediately
-            // Check both data.analysis and data.result.analysis
-            const analysis = data.analysis || data.result?.analysis;
-            if (analysis) {
-                console.log('✅ Analysis received from /quizGuide:', analysis);
-                setAnalysis(analysis);
-            }
-
+            // 1. Add the regular bot response (e.g. "Great! Now tell me about...")
             const botMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
                 content: assistantMsgContent,
                 timestamp: new Date()
             };
-
             setMessages(prev => [...prev, botMsg]);
 
             if (nextState.isComplete) {
-                // Add preparation message before triggering analysis
+                // 2. Add the completion message after a small delay to make it feel like a follow-up
                 setTimeout(() => {
                     const preparationMsg: Message = {
                         id: (Date.now() + 2).toString(),
                         role: 'assistant',
-                        content: "🎯 Excellent! Your report is now being prepared by our agentic-driven analysis system. You'll see your comprehensive AI learning profile in just a few seconds...",
+                        content: "🎯 Analysis is done - your results are coming up in a few seconds - do not go away!",
                         timestamp: new Date()
                     };
                     setMessages(prev => [...prev, preparationMsg]);
-                }, 800);
+                }, 1000);
+
+                // 3. Delay setting the 'complete' state to let messages land before loader appears
+                setTimeout(() => {
+                    setState(nextState);
+                }, 2500);
+            } else {
+                setState(nextState);
             }
 
         } catch (error) {
@@ -155,7 +152,7 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
         }
     }, [state.isComplete, analysis, isAnalyzing, error, triggerFinalAnalysis]);
 
-    if (state.isComplete) {
+    if (state.isComplete && (analysis || error)) {
         return (
             <div className="flex flex-col items-center justify-center p-8 text-left animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto">
                 {isAnalyzing ? (
@@ -376,15 +373,30 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                     </div>
                 ))}
 
-                {isTyping && (
+                {(isTyping || isAnalyzing) && (
                     <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center">
-                            <Bot className="w-5 h-5 text-blue-600" />
+                        <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                            {isAnalyzing ? <Sparkles className="w-5 h-5 text-indigo-600 animate-pulse" /> : <Bot className="w-5 h-5 text-blue-600" />}
                         </div>
-                        <div className="bg-white border border-gray-100 rounded-2xl p-4 rounded-tl-none shadow-sm flex items-center gap-1">
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className={`
+                            bg-white border border-gray-100 rounded-2xl p-4 rounded-tl-none shadow-sm flex flex-col gap-2 
+                            ${isAnalyzing ? 'border-indigo-100 bg-indigo-50/30' : ''}
+                        `}>
+                            {isAnalyzing ? (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                                        <span className="font-bold text-indigo-900 text-xs uppercase tracking-wider">Orchestrating AI Agents</span>
+                                    </div>
+                                    <p className="text-xs text-indigo-700 leading-tight">Profiler, Strategist, and Tactician are building your plan...</p>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1">
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -402,16 +414,17 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="Type your answer..."
-                        className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400"
+                        placeholder={isAnalyzing ? "Preparing your results..." : "Type your answer..."}
+                        className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition-all placeholder:text-gray-400 disabled:bg-white disabled:cursor-not-allowed"
                         autoFocus
+                        disabled={isAnalyzing}
                     />
                     <button
                         type="submit"
-                        disabled={!inputValue.trim() || isTyping}
+                        disabled={!inputValue.trim() || isTyping || isAnalyzing}
                         className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 rounded-xl transition-all shadow-lg shadow-primary-600/20 flex items-center justify-center"
                     >
-                        {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        {isTyping || isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                     </button>
                 </form>
             </div>
