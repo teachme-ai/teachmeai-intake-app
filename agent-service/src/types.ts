@@ -113,6 +113,16 @@ export const QuizResponseSchema = z.object({
 export type QuizSession = z.infer<typeof QuizSessionSchema>;
 export type QuizResponse = z.infer<typeof QuizResponseSchema>;
 
+export const PsychographicProfileSchema = z.object({
+    decisionStyle: z.enum(['Intuitive', 'Analytical']),
+    uncertaintyHandling: z.enum(['Paralyzed', 'Checklist-Driven', 'Experimenter']),
+    changePreference: z.number().describe("1-10 Scale: 1=Resistant, 10=Seeker"),
+    socialEntanglement: z.enum(['Solitary', 'Social']),
+    cognitiveLoadTolerance: z.enum(['Low', 'Medium', 'High'])
+});
+
+export type PsychographicProfile = z.infer<typeof PsychographicProfileSchema>;
+
 export const DeepResearchInputSchema = z.object({
     role: z.string(),
     goal: z.string(),
@@ -142,13 +152,3 @@ export const DeepResearchOutputSchema = z.object({
 });
 
 export type DeepResearchOutput = z.infer<typeof DeepResearchOutputSchema>;
-
-export const PsychographicProfileSchema = z.object({
-    decisionStyle: z.enum(['Intuitive', 'Analytical']),
-    uncertaintyHandling: z.enum(['Paralyzed', 'Checklist-Driven', 'Experimenter']),
-    changePreference: z.number().describe("1-10 Scale: 1=Resistant, 10=Seeker"),
-    socialEntanglement: z.enum(['Solitary', 'Social']),
-    cognitiveLoadTolerance: z.enum(['Low', 'Medium', 'High'])
-});
-
-export type PsychographicProfile = z.infer<typeof PsychographicProfileSchema>;
