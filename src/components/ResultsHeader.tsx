@@ -34,7 +34,7 @@ export default function ResultsHeader({
                         <User className="w-5 h-5 text-indigo-600" />
                     </div>
                 </div>
-                <h1 className="text-3xl font-bold text-slate-900 mb-1">{userName}'s AI Learning Profile</h1>
+                <h1 className="text-3xl font-bold text-slate-900 mb-1">{userName}&apos;s AI Learning Profile</h1>
                 <p className="text-indigo-600 font-semibold">{userRole}</p>
             </div>
 

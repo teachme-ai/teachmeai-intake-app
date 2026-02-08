@@ -28,7 +28,7 @@ export default function ConsultationCTA({ onTrack }: ConsultationCTAProps) {
                     🎯 Ready to Turn This Into Action?
                 </h3>
                 <p className="text-white text-lg mb-8 max-w-lg mx-auto leading-relaxed font-semibold">
-                    If you like what you see, let's build a tailored learning plan and pathways specifically for you to learn AI that's relevant for you now.
+                    If you like what you see, let&apos;s build a tailored learning plan and pathways specifically for you to learn AI that&apos;s relevant for you now.
                 </p>
                 <a
                     href="mailto:Irfan@teachmeai.in?subject=My AI Learning Profile Analysis&body=Hi Irfan, I just completed my AI learning profile analysis and would love to discuss creating a tailored learning plan with you. Let's book a 70-minute strategy call!"
@@ -40,7 +40,7 @@ export default function ConsultationCTA({ onTrack }: ConsultationCTAProps) {
                     <Send className="w-5 h-5" />
                 </a>
                 <p className="text-white text-sm mt-6 font-bold uppercase tracking-wider bg-black/20 rounded-full px-6 py-2 inline-block">
-                    ✨ Let's create your personalized AI learning roadmap
+                    ✨ Let&apos;s create your personalized AI learning roadmap
                 </p>
             </div>
         </div>
