@@ -1,6 +1,6 @@
 {
   "name": "teachmeai-intake-app",
-  "version": "2.18.24",
+  "version": "2.18.25",
   "private": true,
   "scripts": {
     "dev": "next dev",
