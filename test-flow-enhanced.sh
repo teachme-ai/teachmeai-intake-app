@@ -152,6 +152,10 @@ echo "👤 LEARNER PROFILE:"
 jq -r '.result.learnerProfile // "N/A"' /tmp/supervisor_response.json | fold -w 70 -s
 echo ""
 
+echo "🧠 PSYCHOGRAPHIC REASONING:"
+jq -r '.result.profile.psychographics.analysisReasoning // "N/A"' /tmp/supervisor_response.json | fold -w 70 -s
+echo ""
+
 echo "🎯 IMPACT STRATEGY:"
 echo ""
 echo "Identify:"

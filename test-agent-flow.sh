@@ -161,6 +161,10 @@ if [ -n "$SUPERVISOR_RESPONSE" ]; then
     echo "$SUPERVISOR_RESPONSE" | jq -r '.result.profile.summary' | fold -w 70 -s
     echo ""
     
+    echo "🧠 PSYCHOGRAPHIC REASONING:"
+    echo "$SUPERVISOR_RESPONSE" | jq -r '.result.profile.psychographics.analysisReasoning // "N/A"' | fold -w 70 -s
+    echo ""
+    
     # Extract and display strategy
     echo "🎯 IMPACT STRATEGY:"
     echo ""

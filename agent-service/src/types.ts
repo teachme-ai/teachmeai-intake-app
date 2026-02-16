@@ -114,11 +114,12 @@ export type QuizSession = z.infer<typeof QuizSessionSchema>;
 export type QuizResponse = z.infer<typeof QuizResponseSchema>;
 
 export const PsychographicProfileSchema = z.object({
-    decisionStyle: z.enum(['Intuitive', 'Analytical']),
+    decisionStyle: z.enum(['Intuitive', 'Analytical', 'Hybrid']),
     uncertaintyHandling: z.enum(['Paralyzed', 'Checklist-Driven', 'Experimenter']),
     changePreference: z.number().describe("1-10 Scale: 1=Resistant, 10=Seeker"),
     socialEntanglement: z.enum(['Solitary', 'Social']),
-    cognitiveLoadTolerance: z.enum(['Low', 'Medium', 'High'])
+    cognitiveLoadTolerance: z.enum(['Low', 'Medium', 'High']),
+    analysisReasoning: z.string().describe("Brief explanation of why these psychographic scores were assigned")
 });
 
 export type PsychographicProfile = z.infer<typeof PsychographicProfileSchema>;
