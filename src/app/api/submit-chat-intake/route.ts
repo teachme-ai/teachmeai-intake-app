@@ -33,64 +33,20 @@ const EnrichedIntakeSchema = z.object({
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { state, messages } = body;
+        const { state } = body;
 
-        console.log('🧪 [Bridge API] Starting Diagnostic Mapping for:', state.sessionId);
+        console.log('🧪 [Bridge API] Forwarding state directly to Agent Service for:', state.sessionId);
 
-        const transcript = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
-
-        const systemPrompt = `
-        You are an Expert Educational Psychologist. 
-        Analyze the provided chat transcript and estimate the user's psychological and learning profile scores (1-5).
-        
-        FIELDS TO ESTIMATE:
-        - goalSettingConfidence: How confident they seem in setting learning goals.
-        - newApproachesFrequency: How often they try new learning methods.
-        - reflectionFrequency: How often they reflect on their progress.
-        - aiToolsConfidence: Their self-reported comfort with AI.
-        - resilienceLevel: How they handle setbacks or complex challenges.
-        - clearCareerVision: How clear their long-term career goals are.
-        - skillStage: 1 (Novice) to 5 (Expert).
-        - learnerType: Select one of 'theorist', 'activist', 'reflector', 'pragmatist'.
-        - varkPreferences: Rate 1-5 for Visual, Audio, Reading/Writing, Kinesthetic.
-        
-        If unsure, use 3 (neutral) as default.
-        `;
-
-        const { output: enrichedData } = await ai.generate({
-            model: DEFAULT_MODEL,
-            system: systemPrompt,
-            prompt: `TRANSCRIPT:\n${transcript}\n\nUSER DATA:\n${JSON.stringify(state.fields, null, 2)}`,
-            output: { schema: EnrichedIntakeSchema }
-        });
-
-        if (!enrichedData) throw new Error("Diagnostic Mapping failed to produce output");
-
-        console.log('✅ [Bridge API] Mapping complete. Triggering Agent Service...');
-
-        // Assemble the final IntakeResponse
-        const finalIntake: IntakeResponse = {
-            name: state.fields.name?.value,
-            email: state.fields.email?.value,
-            primaryGoal: state.fields.goal_raw?.value,
-            currentRoles: [state.fields.role_raw?.value],
-            ...enrichedData,
-            currentFrustrations: state.fields.constraints?.value ? String(state.fields.constraints.value) : "Not specified",
-            concreteBenefits: "Not specified",
-            shortTermApplication: "Not specified",
-            timestamp: new Date().toISOString(),
-            sessionId: state.sessionId
-        };
-
-        // Call the multi-agent system
-        const analysis: IMPACTAnalysis = await analyzeWithAI(finalIntake);
+        // We bypass the old Diagnostic Mapping and send the raw IntakeState to the Agent Service.
+        // The Agent Service will convert it into a LearnerDossier.
+        const analysis: IMPACTAnalysis = await analyzeWithAI(state as any);
 
         console.log('🎉 [Bridge API] IMPACT Analysis complete!');
 
         return NextResponse.json({
             success: true,
             analysis,
-            enrichedData
+            enrichedData: state.fields 
         });
 
     } catch (error: any) {
