@@ -79,15 +79,16 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
             const hasSkill = isFieldFilled(state, 'skill_stage');
-            const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
+            const hasLearner = isFieldFilled(state, 'learner_type');
+            const hasVark = isFieldFilled(state, 'vark_primary');
             const hasSRL = isFieldFilled(state, 'srl_goal_setting') || isFieldFilled(state, 'srl_reflection');
             const hasMotivation = isFieldFilled(state, 'motivation_type');
             
-            const coreCount = [hasSkill, hasLearner, hasSRL, hasMotivation].filter(Boolean).length;
+            const coreCount = [hasSkill, hasLearner, hasVark, hasSRL, hasMotivation].filter(Boolean).length;
             
-            const minTurnsMet = (state.turnCount >= 4);
+            const minTurnsMet = (state.turnCount >= 5);
 
-            return coreCount >= 2 && minTurnsMet;
+            return coreCount >= 4 && minTurnsMet;
         }
     },
 

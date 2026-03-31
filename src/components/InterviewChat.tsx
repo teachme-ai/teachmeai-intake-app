@@ -182,10 +182,13 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
         setIsAnalyzing(true);
         setError(null);
         try {
-            const response = await fetch('/api/submit-chat-intake', {
+            // Directly hit Cloud Run to avoid Vercel's 10-60s Serverless timeout limits.
+            // supervisorFlow takes ~68s which crashes Vercel API routes.
+            const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_SERVICE_URL || 'https://agent-service-584680412286.us-central1.run.app';
+            const response = await fetch(`${AGENT_URL}/supervisorFlow`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ state, messages })
+                body: JSON.stringify({ data: state, sessionId: state.sessionId, intakeState: state })
             });
 
             const data = await response.json();
@@ -194,8 +197,8 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                 throw new Error(data.error || 'Analysis failed');
             }
 
-            setAnalysis(data.analysis);
-            setEnrichedData(data.enrichedData);
+            setAnalysis(data.result);
+            setEnrichedData(state.fields);
         } catch (err: any) {
             console.error('Final analysis error:', err);
             setError(err.message || 'Failed to generate your personalized report. Please try again or contact support.');
