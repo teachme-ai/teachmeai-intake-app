@@ -45,13 +45,25 @@ export function buildLearnerDossier(state: IntakeState): LearnerDossier {
             reflection: numVal(state, 'srl_reflection'),
         },
         motivation: {
-            type: val(state, 'motivation_type'),
+            type: (() => {
+                const v = String(val(state, 'motivation_type') || '').toLowerCase();
+                const valid = ['intrinsic', 'outcome', 'hybrid'];
+                return valid.includes(v) ? (v as any) : undefined;
+            })(),
             visionClarity: numVal(state, 'vision_clarity'),
             successClarity1yr: numVal(state, 'success_clarity_1yr'),
         },
         preferences: {
-            learnerType: val(state, 'learner_type'),
-            varkPrimary: val(state, 'vark_primary'),
+            learnerType: (() => {
+                const v = String(val(state, 'learner_type') || '').toLowerCase();
+                const valid = ['theorist', 'activist', 'reflector', 'pragmatist'];
+                return valid.includes(v) ? (v as any) : undefined;
+            })(),
+            varkPrimary: (() => {
+                const v = String(val(state, 'vark_primary') || '').toLowerCase().replace('reading writing', 'read_write').replace('read/write', 'read_write');
+                const valid = ['visual', 'audio', 'read_write', 'kinesthetic'];
+                return valid.includes(v) ? (v as any) : undefined;
+            })(),
             varkRanked: arrVal(state, 'vark_ranked'),
         },
         readiness: {

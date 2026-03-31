@@ -103,10 +103,9 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             hasAnalysis: !!result.analysis,
             analysisKeys: result.analysis ? Object.keys(result.analysis) : []
         }));
-    } catch (error) {
         console.error('💥 [Backend] Quiz Error:', error);
         const msg = error instanceof Error ? error.message : 'Unknown Quiz Error';
-        res.status(500).send(`Error in Quiz Guide: ${msg}`);
+        res.status(500).json({ error: msg, details: 'Error in Quiz Guide' });
     }
 });
 
@@ -186,7 +185,7 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
     } catch (error) {
         console.error('💥 [Backend] AI ERROR:', error);
         const msg = error instanceof Error ? error.message : 'Unknown AI error';
-        res.status(500).send(`Agent Error: ${msg}`);
+        res.status(500).json({ error: msg, details: 'Agent Error' });
     }
 });
 
