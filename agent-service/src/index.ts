@@ -57,45 +57,25 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             turnCount: result.state?.turnCount
         }));
 
-        // If intake is complete, trigger IMPACT analysis
+        // If intake is complete, just persist the state directly so it's safely logged.
+        // We DO NOT run supervisorFlow here because it takes 20+ seconds and causes Vercel to timeout,
+        // which makes the frontend think the request failed and go into a retry loop.
+        // The frontend will explicitly call /api/submit-chat-intake -> /supervisorFlow next.
         if (result.state.isComplete && result.state.fields.email?.value) {
             console.log('🎯 [Backend] [LOG-SEARCH-ME] Intake complete for:', result.state.sessionId);
-            // No longer persisting twice (raw and analysis). We just do it once inside the analysis block or after.
-
-            console.log('🎯 [Backend] [LOG-SEARCH-ME] Generating IMPACT analysis...');
+            
             try {
-                const { supervisorFlow } = await import('./agents/supervisor');
-                const { buildLearnerDossier } = await import('./utils/dossier-builder');
-
-                const dossier = buildLearnerDossier(result.state);
-
-                console.log('📊 [Backend] [LOG-SEARCH-ME] Dossier built for session:', result.state.sessionId);
-                console.log('📊 [Backend] Dossier dimensions:', JSON.stringify({
-                    identity: !!dossier.identity.roleCategory,
-                    srl: !!dossier.srl.goalSetting,
-                    motivation: !!dossier.motivation.type,
-                    preferences: !!dossier.preferences.learnerType,
-                    readiness: !!dossier.readiness.skillStage,
-                    constraints: !!dossier.constraints.timePerWeekMins,
-                    profile: !!dossier.psychographicProfile
-                }));
-
-                const analysis = await supervisorFlow(dossier);
-                console.log('✅ [Backend] [LOG-SEARCH-ME] IMPACT analysis generated for:', result.state.sessionId);
-
-                await persistIntakeState(result.state, analysis);
-                console.log('💾 [Backend] [LOG-SEARCH-ME] FINAL state + analysis persisted');
-                result.analysis = analysis;
-            } catch (analysisError: any) {
-                console.error('❌ [Backend] [LOG-SEARCH-ME] IMPACT analysis failed:', analysisError);
-                console.error('❌ [Backend] [LOG-SEARCH-ME] Stack:', analysisError.stack?.split('\n').slice(0, 3));
+                // Persist just the state. The final analysis will be persisted when /supervisorFlow is called.
+                await persistIntakeState(result.state, undefined);
+                console.log('💾 [Backend] [LOG-SEARCH-ME] FINAL state persisted from quizGuide wrap-up');
+            } catch (err: any) {
+                console.error('❌ [Backend] [LOG-SEARCH-ME] Failed to persist state during wrap-up:', err);
             }
         } else {
             if (result.state.isComplete) {
-                console.warn('⚠️ [Backend] [LOG-SEARCH-ME] Intake complete but EMAIL IS MISSING. Skipping analysis.');
+                console.warn('⚠️ [Backend] [LOG-SEARCH-ME] Intake complete but EMAIL IS MISSING. State not persisted.');
             }
         }
-
 
         res.json({ result });
         console.log('📤 [Backend /quizGuide] Response:', JSON.stringify({
@@ -103,6 +83,7 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             hasAnalysis: !!result.analysis,
             analysisKeys: result.analysis ? Object.keys(result.analysis) : []
         }));
+    } catch (error: any) {
         console.error('💥 [Backend] Quiz Error:', error);
         const msg = error instanceof Error ? error.message : 'Unknown Quiz Error';
         res.status(500).json({ error: msg, details: 'Error in Quiz Guide' });

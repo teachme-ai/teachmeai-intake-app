@@ -58,6 +58,7 @@ const HEADERS = [
     'Timestamp', 'Session ID', 'Intake Mode', 'Status', 'Name', 'Email',
     'Role Raw', 'Role Category', 'Goal Short', 'Time/Week (mins)',
     'Skill Stage', 'Time Barrier', 'Digital Skills', 'Tech Savviness', 'Turns', 'Last Updated', 'Confidence Overall',
+    'Validation Notes', 'Personalized Summary',
     'Prefill Payload JSON', 'Intake State JSON', 'Transcript JSON', 'Deep Research JSON',
     'Learner Profile JSON', 'IMPACT Strategy JSON', 'Execution Plan JSON', 'Final Report JSON',
     'Errors/Warn JSON', 'Versions JSON'
@@ -149,6 +150,10 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
             state.turnCount,
             toIST(), // Last Updated
             'HIGH', // TODO: calc overall confidence
+
+            // NEW TEXT COLUMNS
+            Array.isArray(analysis?.validationNotes) ? analysis.validationNotes.join('\n') : '',
+            analysis?.personalizedSummary || '',
 
             // JSON BLOBS
             JSON.stringify({}), // Prefill Payload

@@ -78,17 +78,16 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ],
         introMessage: "I'm the Learning Profile Analyst. I'll help understand your learning style.",
         shouldExit: (state) => {
-            // Require 4 key fields: skill, learning style, SRL, motivation
             const hasSkill = isFieldFilled(state, 'skill_stage');
-            const hasLearner = isFieldFilled(state, 'learner_type');
-            const hasSRL = isFieldFilled(state, 'srl_goal_setting');
+            const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
+            const hasSRL = isFieldFilled(state, 'srl_goal_setting') || isFieldFilled(state, 'srl_reflection');
             const hasMotivation = isFieldFilled(state, 'motivation_type');
-            const hasTech = isFieldFilled(state, 'digital_skills') && isFieldFilled(state, 'tech_savviness');
-
-            // Force at least 1-2 turns session-wide by the time we hit here
+            
+            const coreCount = [hasSkill, hasLearner, hasSRL, hasMotivation].filter(Boolean).length;
+            
             const minTurnsMet = (state.turnCount >= 4);
 
-            return hasSkill && hasLearner && hasSRL && hasMotivation && hasTech && minTurnsMet;
+            return coreCount >= 2 && minTurnsMet;
         }
     },
 

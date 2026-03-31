@@ -86,14 +86,16 @@ export function isIntakeComplete(state: IntakeState): boolean {
     const hasRole = isFieldFilled(state, 'role_raw') || isFieldFilled(state, 'role_category');
     const hasGoal = isFieldFilled(state, 'goal_raw') || isFieldFilled(state, 'goal_calibrated');
     const hasSkill = isFieldFilled(state, 'skill_stage');
-    const hasTime = isFieldFilled(state, 'time_per_week_mins');
+    const hasTime = isFieldFilled(state, 'time_per_week_mins') || isFieldFilled(state, 'time_barrier');
     const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
-    const hasTech = isFieldFilled(state, 'digital_skills') && isFieldFilled(state, 'tech_savviness');
 
     // Total turns safeguard
     const hasMinTurns = state.turnCount >= 4;
 
-    return hasRole && hasGoal && hasSkill && hasTime && hasConstraint && hasTech && hasMinTurns;
+    // Graceful exit if they've chatted for 8+ turns and have at least role and goal
+    const gracefulExit = state.turnCount >= 8 && hasRole && hasGoal;
+
+    return (hasRole && hasGoal && hasSkill && hasTime && hasConstraint && hasMinTurns) || gracefulExit;
 }
 
 export function isFieldFilled(state: IntakeState, field: keyof IntakeData): boolean {
