@@ -191,8 +191,8 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
 });
 
 // Cloud Run provides the PORT environment variable
-const port = process.env.PORT || 3400;
-app.listen(port, () => {
+const port = Number(process.env.PORT) || 3400;
+app.listen(port, '0.0.0.0', () => {
     console.log(`Agent Service listening on port ${port}`);
     console.log(`Endpoint available at POST /supervisorFlow`);
 });
