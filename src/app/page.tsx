@@ -10,6 +10,7 @@ export default async function Home({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const token = typeof searchParams.token === 'string' ? searchParams.token : undefined;
+  const leadId = typeof searchParams.lead_id === 'string' ? searchParams.lead_id : undefined;
   const prefilledData = token ? await verifyIntakeToken(token) : null;
 
   // FEATURE FLAG: Switch to 'false' to rollback to static form
@@ -49,7 +50,7 @@ export default async function Home({
 
         {/* Content Area */}
         {INTAKE_MODE === 'chat' && initialState ? (
-          <InterviewChat initialState={initialState} />
+          <InterviewChat initialState={initialState} leadId={leadId} />
         ) : (
           <IntakeForm initialData={prefilledData || undefined} />
         )}

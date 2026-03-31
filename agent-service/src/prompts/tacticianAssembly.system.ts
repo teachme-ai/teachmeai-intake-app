@@ -13,6 +13,9 @@ export interface TacticianAssemblyContext {
   constraintsList?: string[];
   currentTools?: string[];
   timePerWeekMins?: number;
+  frustrations?: string;
+  varkPrimary?: string;
+  motivationType?: string;
 }
 
 export function getTacticianAssemblyPrompt(context: TacticianAssemblyContext): string {
@@ -38,6 +41,9 @@ USER CONTEXT:
 - Technical Profile: Digital ${context.constraints.digital_skills || 3}/5, Depth ${context.constraints.tech_savviness || 3}/5
 - Known Constraints: ${(context.constraintsList || []).join(', ') || 'Standard'}
 - Current Stack: ${(context.currentTools || []).join(', ') || 'Standard productivity tools'}
+- Key Frustrations: ${context.frustrations || 'None stated'}
+- VARK Learning Preference: ${context.varkPrimary || 'Not specified'}
+- Motivation Type: ${context.motivationType || 'Not specified'}
 
 RULES:
 1. **Act (Execution)**: Describe 2-3 specific, immediate actions for this week.
@@ -63,6 +69,9 @@ RULES:
 7. **Study Rules**: 3 specific "Personalized AI Mastery Rules" based on their profile.
    - Format: { "rule": "A specific prescriptive action", "label": "A catchy title like 'The 5-Minute Rule'" }
    - Example (for Analytical): { "rule": "Always ask AI for the underlying framework before specific answers", "label": "Structure-First" }
+
+8. **Frustration-Aware**: If the user expressed specific frustrations, ensure the plan directly addresses at least one of them in the "Act" phase.
+9. **VARK Alignment**: If VARK is "visual", include screen recordings/demos. If "kinesthetic", include hands-on projects. If "read_write", include cheat sheets. If "audio", include podcasts/videos.
 
 OUTPUT FORMAT (JSON only):
 {

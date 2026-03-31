@@ -153,3 +153,63 @@ export const DeepResearchOutputSchema = z.object({
 });
 
 export type DeepResearchOutput = z.infer<typeof DeepResearchOutputSchema>;
+
+// ────────────────────────────────────────────────────
+// LEARNER DOSSIER — Rich intermediate for analysis pipeline
+// Preserves all 30+ fields in their dimensional structure
+// ────────────────────────────────────────────────────
+
+export const LearnerDossierSchema = z.object({
+    identity: z.object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        roleRaw: z.string().optional(),
+        roleCategory: z.string().optional(),
+        industryVertical: z.string().optional(),
+        industry: z.string().optional(),
+        seniority: z.string().optional(),
+        goalRaw: z.string().optional(),
+        goalCalibrated: z.string().optional(),
+        primaryGoal: z.string().optional(),
+    }),
+    srl: z.object({
+        goalSetting: z.number().min(1).max(5).optional(),
+        adaptability: z.number().min(1).max(5).optional(),
+        reflection: z.number().min(1).max(5).optional(),
+    }),
+    motivation: z.object({
+        type: z.enum(['intrinsic', 'outcome', 'hybrid']).optional(),
+        visionClarity: z.number().min(1).max(5).optional(),
+        successClarity1yr: z.number().min(1).max(5).optional(),
+    }),
+    preferences: z.object({
+        learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']).optional(),
+        varkPrimary: z.enum(['visual', 'audio', 'read_write', 'kinesthetic']).optional(),
+        varkRanked: z.array(z.string()).optional(),
+    }),
+    readiness: z.object({
+        skillStage: z.number().min(1).max(5).optional(),
+        techConfidence: z.number().min(1).max(5).optional(),
+        resilience: z.number().min(1).max(5).optional(),
+        digitalSkills: z.number().min(1).max(5).optional(),
+        techSavviness: z.number().min(1).max(5).optional(),
+    }),
+    constraints: z.object({
+        timeBarrier: z.number().min(1).max(5).optional(),
+        timePerWeekMins: z.number().optional(),
+        blockers: z.array(z.string()).optional(),
+        frustrations: z.string().optional(),
+        currentTools: z.array(z.string()).optional(),
+    }),
+    context: z.object({
+        applicationContext: z.string().optional(),
+        benefits: z.string().optional(),
+        shortTermApplication: z.string().optional(),
+    }),
+    psychographicProfile: PsychographicProfileSchema.optional(),
+    sessionId: z.string().optional(),
+    turnCount: z.number().optional(),
+    interviewCompletedAt: z.string().optional(),
+});
+
+export type LearnerDossier = z.infer<typeof LearnerDossierSchema>;

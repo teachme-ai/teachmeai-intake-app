@@ -1,11 +1,11 @@
-import { IntakeResponseSchema, DeepResearchOutputSchema, PsychographicProfileSchema } from '../types';
+import { LearnerDossierSchema, DeepResearchOutputSchema, PsychographicProfileSchema, LearnerDossier } from '../types';
 import { deepResearchFlow } from './deep-research';
-import { profilingAgentFlow } from './profiler';
 import { strategistFlow } from './strategist';
 import { tacticianFlow } from './tactician';
 import { z } from 'zod';
 import { ai } from '../genkit';
-import { runWithRetry, delay } from '../utils/retry';
+import { withLLMResilience } from '../utils/llm-resilience';
+import { logger } from '../utils/logger';
 
 export const IMPACTAnalysisSchema = z.object({
     Identify: z.string(),
@@ -21,70 +21,150 @@ export const IMPACTAnalysisSchema = z.object({
         rule: z.string(),
         label: z.string()
     })),
-    research: DeepResearchOutputSchema
+    research: DeepResearchOutputSchema,
+    validationNotes: z.array(z.string()).optional(),
+    personalizedSummary: z.string().optional(),
 });
 
 export const supervisorFlow = ai.defineFlow(
     {
         name: 'supervisorFlow',
-        inputSchema: IntakeResponseSchema,
+        inputSchema: LearnerDossierSchema,
         outputSchema: IMPACTAnalysisSchema,
     },
-    async (intake) => {
-        // Phase 1: Profiling
-        console.log("🕵️ [Supervisor] Phase 1: Profiling...");
-        const profile = await runWithRetry(() => profilingAgentFlow(intake));
+    async (dossier: LearnerDossier) => {
+        const log = logger.child({ sessionId: dossier.sessionId });
 
-        // Phase 2: Deep Research (NOW USES PROFILE)
-        console.log("🔍 [Supervisor] Phase 2: Deep Research (with Profile)...");
-        const research = await runWithRetry(() => deepResearchFlow({
-            role: intake.currentRoles[0] || "Professional",
-            goal: intake.primaryGoal || "Upskilling",
-            industry: intake.industry_vertical || "General",
-            skillStage: intake.skillStage,
-            learnerType: intake.learnerType,
-            digital_skills: intake.digital_skills,
-            tech_savviness: intake.tech_savviness,
-            seniority: intake.seniority,
-            application_context: intake.application_context,
-            current_tools: intake.current_tools,
-            profile: profile // PASSED HERE
-        }));
+        // Phase 1: Profile — ALREADY DERIVED (rule-based, no LLM)
+        const profile = dossier.psychographicProfile!;
+        log.info({ event: 'supervisor.phase1', msg: 'Profile (rule-based) already derived' });
+
+        // Phase 2: Deep Research
+        log.info({ event: 'supervisor.phase2', msg: 'Starting Deep Research...' });
+        const research = await withLLMResilience(() => deepResearchFlow({
+            role: dossier.identity.roleCategory || dossier.identity.roleRaw || "Professional",
+            goal: dossier.identity.primaryGoal || "Upskilling",
+            industry: dossier.identity.industryVertical || dossier.identity.industry || "General",
+            skillStage: dossier.readiness.skillStage,
+            learnerType: dossier.preferences.learnerType,
+            digital_skills: dossier.readiness.digitalSkills,
+            tech_savviness: dossier.readiness.techSavviness,
+            seniority: dossier.identity.seniority,
+            application_context: dossier.context.applicationContext,
+            current_tools: dossier.constraints.currentTools,
+            profile: profile
+        }), { component: 'DeepResearch', sessionId: dossier.sessionId });
 
         // Phase 3: Strategy
-        console.log("🎯 [Supervisor] Phase 3: Strategy...");
-        const strategy = await runWithRetry(() => strategistFlow({
+        log.info({ event: 'supervisor.phase3', msg: 'Starting Strategy...' });
+        const strategy = await withLLMResilience(() => strategistFlow({
             profile,
-            professionalRoles: intake.currentRoles,
+            professionalRoles: [dossier.identity.roleCategory || dossier.identity.roleRaw || 'Professional'],
             careerVision: "Implicit based on intake",
-            primaryGoal: intake.primaryGoal,
+            primaryGoal: dossier.identity.primaryGoal,
             deepResearchResult: research,
-            digital_skills: intake.digital_skills,
-            tech_savviness: intake.tech_savviness,
-            time_per_week_mins: intake.time_per_week_mins,
-            seniority: intake.seniority,
-            application_context: intake.application_context,
-            current_tools: intake.current_tools // ADD THIS
-        }));
+            digital_skills: dossier.readiness.digitalSkills,
+            tech_savviness: dossier.readiness.techSavviness,
+            time_per_week_mins: dossier.constraints.timePerWeekMins,
+            seniority: dossier.identity.seniority,
+            application_context: dossier.context.applicationContext,
+            current_tools: dossier.constraints.currentTools,
+            srl_level: dossier.srl.goalSetting,
+            motivation_type: dossier.motivation.type,
+            frustrations: dossier.constraints.frustrations,
+            benefits: dossier.context.benefits,
+        }), { component: 'Strategist', sessionId: dossier.sessionId });
 
-        // Phase 4: Tactics (NOW CONTAINS STUDY RULES)
-        console.log("🛠️ [Supervisor] Phase 4: Tactics...");
-        const tactics = await runWithRetry(() => tacticianFlow({
+        // Phase 4: Tactics
+        log.info({ event: 'supervisor.phase4', msg: 'Starting Tactics...' });
+        const tactics = await withLLMResilience(() => tacticianFlow({
             strategy,
-            name: intake.name,
+            name: dossier.identity.name,
             constraints: {
-                timeBarrier: intake.timeBarrier,
-                skillStage: intake.skillStage,
-                digital_skills: intake.digital_skills,
-                tech_savviness: intake.tech_savviness
+                timeBarrier: dossier.constraints.timeBarrier || 3,
+                skillStage: dossier.readiness.skillStage || 3,
+                digital_skills: dossier.readiness.digitalSkills,
+                tech_savviness: dossier.readiness.techSavviness
             },
-            learnerType: intake.learnerType,
-            constraintsList: intake.constraints,
-            currentTools: intake.current_tools,
-            timePerWeekMins: intake.time_per_week_mins
-        }));
+            learnerType: dossier.preferences.learnerType,
+            constraintsList: dossier.constraints.blockers,
+            currentTools: dossier.constraints.currentTools,
+            timePerWeekMins: dossier.constraints.timePerWeekMins,
+            frustrations: dossier.constraints.frustrations,
+            varkPrimary: dossier.preferences.varkPrimary,
+            motivationType: dossier.motivation.type,
+        }), { component: 'Tactician', sessionId: dossier.sessionId });
 
-        // Phase 5: Assembly
+        // Phase 5 & 6: Validation & Personalization (Parallel)
+        log.info({ event: 'supervisor.phase5_6', msg: 'Starting Validation & Personalization in parallel...' });
+        
+        type ValidationResult = { isValid: boolean; validationNotes: string[]; corrections: any[] };
+        type PersonalizationResult = { personalizedSummary: string };
+
+        const [validationResult, personalizationResult]: [ValidationResult | null, PersonalizationResult | null] = await Promise.all([
+            // Validation task
+            (async () => {
+                try {
+                    const { validatorFlow } = await import('./validator');
+                    const result = await withLLMResilience(() => validatorFlow(
+                        {
+                            act: tactics.act,
+                            check: tactics.check,
+                            transform: tactics.transform,
+                            recommendations: tactics.recommendations,
+                            studyRules: tactics.studyRules,
+                            digitalSkills: dossier.readiness.digitalSkills,
+                            techSavviness: dossier.readiness.techSavviness,
+                            timePerWeekMins: dossier.constraints.timePerWeekMins,
+                            skillStage: dossier.readiness.skillStage,
+                            learnerType: dossier.preferences.learnerType,
+                            currentTools: dossier.constraints.currentTools,
+                            blockers: dossier.constraints.blockers,
+                        }
+                    ), { component: 'Validator', sessionId: dossier.sessionId });
+                    return result as ValidationResult;
+                } catch (e) {
+                    log.warn({ event: 'supervisor.validator.skip', error: String(e) });
+                    return null;
+                }
+            })(),
+            // Personalization task
+            (async () => {
+                try {
+                    const { personalizerFlow } = await import('./personalizer');
+                    const result = await withLLMResilience(() => personalizerFlow(
+                        {
+                            Identify: strategy.identify,
+                            Motivate: strategy.motivate,
+                            Plan: strategy.plan,
+                            Act: tactics.act,
+                            Check: tactics.check,
+                            Transform: tactics.transform,
+                            name: dossier.identity.name,
+                            roleCategory: dossier.identity.roleCategory,
+                            frustrations: dossier.constraints.frustrations,
+                            benefits: dossier.context.benefits,
+                            decisionStyle: profile.decisionStyle,
+                            learnerType: dossier.preferences.learnerType,
+                            currentTools: dossier.constraints.currentTools,
+                        }
+                    ), { component: 'Personalizer', sessionId: dossier.sessionId });
+                    return result as PersonalizationResult;
+                } catch (e) {
+                    log.warn({ event: 'supervisor.personalizer.skip', error: String(e) });
+                    return null;
+                }
+            })()
+        ]);
+
+        const validationNotes = validationResult?.validationNotes || [];
+        const personalizedSummary = personalizationResult?.personalizedSummary || '';
+
+        if (validationResult && !validationResult.isValid) {
+            log.warn({ event: 'supervisor.validation_issues', corrections: validationResult.corrections });
+        }
+
+        // Phase 7: Assembly
         return {
             Identify: strategy.identify,
             Motivate: strategy.motivate,
@@ -96,7 +176,9 @@ export const supervisorFlow = ai.defineFlow(
             learnerProfile: profile,
             recommendations: tactics.recommendations,
             studyRules: tactics.studyRules || [],
-            research: research
+            research,
+            validationNotes,
+            personalizedSummary,
         };
     }
 );

@@ -62,9 +62,21 @@ export function initializeState(
  * Heuristic to calculate completion percentage
  */
 export function calculateCompletion(state: IntakeState): number {
-    const coreFields: Array<keyof IntakeData> = ['name', 'email', 'role_raw', 'goal_raw', 'time_per_week_mins'];
-    const confirmedCount = coreFields.filter(k => state.fields[k]?.status === 'confirmed').length;
-    return Math.min(Math.round((confirmedCount / coreFields.length) * 100), 99);
+    const weights: Record<string, { fields: Array<keyof IntakeData>, weight: number }> = {
+        guide: { fields: ['name', 'email', 'current_tools'], weight: 0.20 },
+        strategist: { fields: ['role_raw', 'role_category', 'goal_raw', 'goal_calibrated'], weight: 0.25 },
+        profiler: { fields: ['skill_stage', 'learner_type', 'motivation_type', 'srl_goal_setting', 'digital_skills', 'tech_savviness'], weight: 0.35 },
+        tactician: { fields: ['time_per_week_mins', 'constraints', 'frustrations'], weight: 0.20 }
+    };
+
+    let totalWeight = 0;
+    for (const [, group] of Object.entries(weights)) {
+        const filled = group.fields.filter(f => isFieldFilled(state, f)).length;
+        const ratio = filled / group.fields.length;
+        totalWeight += ratio * group.weight;
+    }
+
+    return Math.min(Math.round(totalWeight * 100), 99); // Cap at 99 — only 100% when isComplete
 }
 
 /**

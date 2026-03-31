@@ -92,4 +92,5 @@ export interface IntakeState {
         source: string;
         mode: 'static_form' | 'interview';
     };
+    transcript?: Array<{turn: number, user: string, agent: string, field?: string}>;
 }

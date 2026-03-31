@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
         // 3. Generate Redirect URL
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
-        const redirectUrl = `${baseUrl}/intake?lead_id=${leadId}`;
+        const redirectUrl = `${baseUrl}/?lead_id=${leadId}`;
 
         return NextResponse.json({
             status: 'success',

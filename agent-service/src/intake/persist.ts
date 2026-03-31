@@ -151,7 +151,7 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
             // JSON BLOBS
             JSON.stringify({}), // Prefill Payload
             JSON.stringify(state),
-            JSON.stringify([]), // Transcript
+            JSON.stringify(state.transcript || []), // Transcript
             JSON.stringify(analysis?.research || {}), // Deep Research JSON
             JSON.stringify(analysis?.learnerProfile || {}),           // Learner Profile JSON
             JSON.stringify({

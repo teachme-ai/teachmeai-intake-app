@@ -1,6 +1,7 @@
 import { gemini20Flash } from '@genkit-ai/googleai';
 import { getTacticianAssemblyPrompt } from '../prompts/tacticianAssembly.system';
 import { StrategySchema, TacticsSchema } from '../types';
+import { logger } from '../utils/logger';
 import { z } from 'zod';
 import { DEFAULT_MODEL, ai } from '../genkit';
 
@@ -16,7 +17,10 @@ const TacticianInput = z.object({
     learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']).optional(),
     constraintsList: z.array(z.string()).optional(),
     currentTools: z.array(z.string()).optional(),
-    timePerWeekMins: z.number().optional()
+    timePerWeekMins: z.number().optional(),
+    frustrations: z.string().optional(),
+    varkPrimary: z.enum(['visual', 'audio', 'read_write', 'kinesthetic']).optional(),
+    motivationType: z.enum(['intrinsic', 'outcome', 'hybrid']).optional(),
 });
 
 export const tacticianFlow = ai.defineFlow(
@@ -26,10 +30,19 @@ export const tacticianFlow = ai.defineFlow(
         outputSchema: TacticsSchema,
     },
     async (input) => {
+        const log = logger.child({ component: 'Tactician' });
+        log.info({ event: 'tactician.start', msg: 'Assembling tactical learning steps...' });
         const prompt = getTacticianAssemblyPrompt({
             strategy: input.strategy,
             name: input.name,
-            constraints: input.constraints
+            constraints: input.constraints,
+            learnerType: input.learnerType,
+            constraintsList: input.constraintsList,
+            currentTools: input.currentTools,
+            timePerWeekMins: input.timePerWeekMins,
+            frustrations: input.frustrations,
+            varkPrimary: input.varkPrimary,
+            motivationType: input.motivationType,
         });
 
         const { output } = await ai.generate({

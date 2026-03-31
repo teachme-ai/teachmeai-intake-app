@@ -306,6 +306,14 @@ export async function processUserTurn(
         }
     }
 
+    state.transcript = state.transcript || [];
+    state.transcript.push({
+        turn: state.turnCount,
+        user: userMessage,
+        agent: assistantMessage,
+        field: state.lastQuestionField || state.nextField,
+    });
+
     state.lastAssistantMessage = assistantMessage;
     state.completionPercent = calculateCompletion(state);
 

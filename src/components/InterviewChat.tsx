@@ -10,6 +10,7 @@ import VisualInsights from './VisualInsights';
 
 interface InterviewChatProps {
     initialState: IntakeState;
+    leadId?: string;
 }
 
 interface Message {
@@ -19,7 +20,7 @@ interface Message {
     timestamp: Date;
 }
 
-export default function InterviewChat({ initialState }: InterviewChatProps) {
+export default function InterviewChat({ initialState, leadId }: InterviewChatProps) {
     const [state, setState] = useState<IntakeState>(initialState);
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -42,6 +43,41 @@ export default function InterviewChat({ initialState }: InterviewChatProps) {
     useEffect(() => {
         scrollToBottom();
     }, [messages, isTyping]);
+
+    // Handle Lead Resolution from Handover
+    useEffect(() => {
+        const resolveLead = async () => {
+            if (!leadId || state.fields.email?.value) return;
+
+            try {
+                const res = await fetch(`/api/leads/${leadId}`);
+                if (!res.ok) return;
+                const leadData = await res.json();
+
+                setState(prev => ({
+                    ...prev,
+                    fields: {
+                        ...prev.fields,
+                        name: { value: leadData.name, status: 'confirmed' },
+                        email: { value: leadData.email, status: 'confirmed' },
+                        role_raw: { value: leadData.persona_id, status: 'candidate' }
+                    }
+                }));
+
+                // Add a welcome message from the assistant
+                setMessages(prev => [...prev, {
+                    id: `handoff-${Date.now()}`,
+                    role: 'assistant',
+                    content: `Welcome back, ${leadData.name}! I've got your info from the quiz. Let's pick up where we left off to build your custom AI plan.`,
+                    timestamp: new Date()
+                }]);
+
+            } catch (e) {
+                console.error('Lead resolution failed', e);
+            }
+        };
+        resolveLead();
+    }, [leadId]); // Run once on mount if leadId exists
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isTyping) return;

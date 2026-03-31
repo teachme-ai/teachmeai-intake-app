@@ -1,8 +1,9 @@
 import { gemini20Flash } from '@genkit-ai/googleai';
 import { getStrategistPrompt } from '../prompts/strategist.system';
 import { PsychographicProfileSchema, StrategySchema, DeepResearchOutputSchema } from '../types';
+import { DEFAULT_MODEL, REPORT_MODEL, ai } from '../genkit';
+import { logger } from '../utils/logger';
 import { z } from 'zod';
-import { DEFAULT_MODEL, ai } from '../genkit';
 
 export const StrategistInputSchema = z.object({
     profile: PsychographicProfileSchema,
@@ -15,7 +16,11 @@ export const StrategistInputSchema = z.object({
     time_per_week_mins: z.number().optional(),
     seniority: z.string().optional(),
     application_context: z.string().optional(),
-    current_tools: z.array(z.string()).optional()
+    current_tools: z.array(z.string()).optional(),
+    srl_level: z.number().optional(),
+    motivation_type: z.enum(['intrinsic', 'outcome', 'hybrid']).optional(),
+    frustrations: z.string().optional(),
+    benefits: z.string().optional(),
 });
 
 export const strategistFlow = ai.defineFlow(
@@ -25,6 +30,8 @@ export const strategistFlow = ai.defineFlow(
         outputSchema: StrategySchema,
     },
     async (input) => {
+        const log = logger.child({ component: 'Strategist' });
+        log.info({ event: 'strategist.start', msg: 'Generating strategic IMPACT analysis...' });
         // Use direct prompt for IMPACT analysis generation
         const analysisPrompt = `
 You are a Strategic AI Adoption Advisor.
@@ -44,7 +51,11 @@ LEARNER PROFILE:
 - Time Available: ${input.time_per_week_mins === -1 ? 'Flexible/Unspecified' : `${input.time_per_week_mins} mins/week`}
 - Seniority: ${input.seniority || 'Not specified'}
 - Application Context: ${input.application_context || 'Not specified'}
-- Current Tech Stack: ${(input.profile as any).current_tools?.join(', ') || 'Not specified'}
+- Current Tech Stack: ${(input as any).current_tools?.join(', ') || 'Not specified'}
+- SRL Goal Setting: ${input.srl_level ?? 'Not assessed'}/5
+- Motivation Type: ${input.motivation_type || 'Not assessed'}
+- Key Frustrations: ${input.frustrations || 'None stated'}
+- Desired Benefits: ${input.benefits || 'Not stated'}
 
 RESEARCH INSIGHTS:
 ${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}
@@ -63,7 +74,7 @@ Be specific, actionable, and personalized to their context.
 `;
 
         const { output } = await ai.generate({
-            model: DEFAULT_MODEL,
+            model: REPORT_MODEL,
             prompt: analysisPrompt,
             output: { schema: StrategySchema },
         });

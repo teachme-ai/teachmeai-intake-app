@@ -125,6 +125,41 @@ export async function runFixtureC(): Promise<TestResult> {
 }
 
 /**
+ * Fixture D: Dossier Builder → Supervisor Integration
+ * Expected: buildLearnerDossier returns valid dossier with profile populated
+ */
+export async function runFixtureD(): Promise<TestResult> {
+    console.log('\n=== Fixture D: Dossier Builder Integration ===');
+
+    const state = initializeState('fixture-d', {
+        name: 'Test Dossier User',
+        email: 'dossier@test.com',
+        role: 'Engineer',
+        goal: 'Automate testing'
+    });
+
+    // Populate typical fields
+    state.fields.skill_stage = { value: 3, status: 'confirmed', confidence: 'high', evidence: 'test', updatedAt: new Date().toISOString() };
+    state.fields.learner_type = { value: 'pragmatist', status: 'confirmed', confidence: 'high', evidence: 'test', updatedAt: new Date().toISOString() };
+    state.fields.time_per_week_mins = { value: 120, status: 'confirmed', confidence: 'high', evidence: 'test', updatedAt: new Date().toISOString() };
+
+    const { buildLearnerDossier } = await import('../utils/dossier-builder');
+    const dossier = buildLearnerDossier(state);
+
+    const hasProfile = !!dossier.psychographicProfile;
+    const hasIdentity = !!dossier.identity.name && !!dossier.identity.email;
+    const hasPreferences = !!dossier.preferences.learnerType;
+    const hasSessionId = dossier.sessionId === 'fixture-d';
+
+    return {
+        fixture: 'D',
+        passed: hasProfile && hasIdentity && hasPreferences && hasSessionId,
+        details: `Profile: ${hasProfile}, Identity: ${hasIdentity}, Prefs: ${hasPreferences}, SessionId: ${hasSessionId}`,
+        turnsTaken: 0
+    };
+}
+
+/**
  * Run all fixtures and report results
  */
 export async function runAllFixtures(): Promise<void> {
@@ -150,6 +185,12 @@ export async function runAllFixtures(): Promise<void> {
         results.push(await runFixtureC());
     } catch (e: any) {
         results.push({ fixture: 'C', passed: false, details: `Error: ${e.message}` });
+    }
+
+    try {
+        results.push(await runFixtureD());
+    } catch (e: any) {
+        results.push({ fixture: 'D', passed: false, details: `Error: ${e.message}` });
     }
 
     console.log('\n========================================');

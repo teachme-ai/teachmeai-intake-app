@@ -16,7 +16,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 import { genkit } from 'genkit';
-import { googleAI, gemini20Flash, gemini15Pro } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/googleai';
 
 // --- ENV VALIDATION (fail fast) ---
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -50,11 +50,13 @@ export const ai = genkit({
 });
 
 // --- TYPED MODEL REFERENCES ---
-// Use these instead of string literals to prevent typos
-export const INTAKE_MODEL = gemini20Flash;
-export const DEFAULT_MODEL = INTAKE_MODEL;
-export const REPORT_MODEL = gemini15Pro;
+// Using strings directly as constants since imported references are deprecated/missing for these models
+export const INTAKE_MODEL_STRING = 'googleai/gemini-2.5-flash';
+export const REPORT_MODEL_STRING = 'googleai/gemini-2.5-pro';
 
-// String aliases (for cases where string is required)
-export const INTAKE_MODEL_STRING = 'googleai/gemini-2.0-flash';
-export const REPORT_MODEL_STRING = 'googleai/gemini-1.5-pro';
+// Use googleAI.model() to get typed references if the plugin supports it
+// @ts-ignore - reaching into the plugin to use futuristic models found in discovery
+export const INTAKE_MODEL = googleAI.model('gemini-2.5-flash');
+export const DEFAULT_MODEL = INTAKE_MODEL;
+// @ts-ignore
+export const REPORT_MODEL = googleAI.model('gemini-2.5-pro');

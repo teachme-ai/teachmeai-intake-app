@@ -65,77 +65,30 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             console.log('🎯 [Backend] [LOG-SEARCH-ME] Generating IMPACT analysis...');
             try {
                 const { supervisorFlow } = await import('./agents/supervisor');
-                const motivation = String(result.state.fields.motivation_type?.value || '').toLowerCase();
-                const learnerTypeVal = String(result.state.fields.learner_type?.value || 'pragmatist').toLowerCase();
-                const varkPrimary = String(result.state.fields.vark_primary?.value || '').toLowerCase();
+                const { buildLearnerDossier } = await import('./utils/dossier-builder');
 
-                const toNum = (val: any, fallback: number = 3) => {
-                    const parsed = Number(val);
-                    return isNaN(parsed) ? fallback : parsed;
-                };
+                const dossier = buildLearnerDossier(result.state);
 
-                const intakeData = {
-                    name: result.state.fields.name?.value || '',
-                    email: result.state.fields.email?.value || '',
-                    primaryGoal: result.state.fields.goal_calibrated?.value || result.state.fields.goal_raw?.value || '',
-                    currentRoles: [result.state.fields.role_category?.value || result.state.fields.role_raw?.value || 'Professional'],
-                    goalSettingConfidence: toNum(result.state.fields.srl_goal_setting?.value, 3),
-                    newApproachesFrequency: toNum(result.state.fields.srl_adaptability?.value, 3),
-                    reflectionFrequency: toNum(result.state.fields.srl_reflection?.value, 3),
-                    aiToolsConfidence: toNum(result.state.fields.tech_confidence?.value, 3),
-                    resilienceLevel: toNum(result.state.fields.resilience?.value, 3),
-                    clearCareerVision: toNum(result.state.fields.vision_clarity?.value, 3),
-                    successDescription: toNum(result.state.fields.success_clarity_1yr?.value, 3),
-                    learningForChallenge: motivation === 'intrinsic' ? 5 : 3,
-                    outcomeDrivenLearning: motivation === 'outcome' ? 5 : 3,
-                    timeBarrier: toNum(result.state.fields.time_barrier?.value, 3),
-                    currentFrustrations: result.state.fields.frustrations?.value || '',
-                    learnerType: (['theorist', 'activist', 'reflector', 'pragmatist'].includes(learnerTypeVal) ? learnerTypeVal : 'pragmatist') as any,
-                    varkPreferences: {
-                        visual: varkPrimary === 'visual' ? 5 : 2,
-                        audio: varkPrimary === 'audio' ? 5 : 2,
-                        readingWriting: varkPrimary === 'read_write' ? 5 : 2,
-                        kinesthetic: varkPrimary === 'kinesthetic' ? 5 : 2,
-                    },
-                    skillStage: toNum(result.state.fields.skill_stage?.value, 2),
-                    concreteBenefits: result.state.fields.benefits?.value || '',
-                    shortTermApplication: result.state.fields.application_context?.value || '',
-                    digital_skills: toNum(result.state.fields.digital_skills?.value, 3),
-                    tech_savviness: toNum(result.state.fields.tech_savviness?.value, 3),
-                    seniority: result.state.fields.seniority?.value || '',
-                    application_context: result.state.fields.application_context?.value || '',
-                    // Safely handle current_tools which should be an array
-                    current_tools: Array.isArray(result.state.fields.current_tools?.value)
-                        ? result.state.fields.current_tools?.value
-                        : (result.state.fields.current_tools?.value ? [result.state.fields.current_tools?.value] : []),
-                    time_per_week_mins: toNum(result.state.fields.time_per_week_mins?.value, -1),
-                    constraints: Array.isArray(result.state.fields.constraints?.value)
-                        ? result.state.fields.constraints?.value
-                        : []
-                };
-
-                console.log('📊 [Backend] [LOG-SEARCH-ME] Calling supervisorFlow with session:', result.state.sessionId);
-                const analysis = await supervisorFlow(intakeData);
-                console.log('✅ [Backend] [LOG-SEARCH-ME] IMPACT analysis generated for:', result.state.sessionId);
-                console.log('🔍 [Backend] [LOG-SEARCH-ME] Analysis Structure:', JSON.stringify({
-                    keys: Object.keys(analysis || {}),
-                    researchType: typeof analysis?.research,
-                    profileType: typeof analysis?.learnerProfile,
-                    hasResearchEntries: Array.isArray(analysis?.research?.aiOpportunityMap)
+                console.log('📊 [Backend] [LOG-SEARCH-ME] Dossier built for session:', result.state.sessionId);
+                console.log('📊 [Backend] Dossier dimensions:', JSON.stringify({
+                    identity: !!dossier.identity.roleCategory,
+                    srl: !!dossier.srl.goalSetting,
+                    motivation: !!dossier.motivation.type,
+                    preferences: !!dossier.preferences.learnerType,
+                    readiness: !!dossier.readiness.skillStage,
+                    constraints: !!dossier.constraints.timePerWeekMins,
+                    profile: !!dossier.psychographicProfile
                 }));
 
-                // Persist combined result
+                const analysis = await supervisorFlow(dossier);
+                console.log('✅ [Backend] [LOG-SEARCH-ME] IMPACT analysis generated for:', result.state.sessionId);
+
                 await persistIntakeState(result.state, analysis);
                 console.log('💾 [Backend] [LOG-SEARCH-ME] FINAL state + analysis persisted');
-
                 result.analysis = analysis;
             } catch (analysisError: any) {
                 console.error('❌ [Backend] [LOG-SEARCH-ME] IMPACT analysis failed:', analysisError);
-                console.error('❌ [Backend] [LOG-SEARCH-ME] Error details:', JSON.stringify({
-                    message: analysisError.message,
-                    stack: analysisError.stack?.split('\n').slice(0, 3),
-                    cause: analysisError.cause
-                }));
+                console.error('❌ [Backend] [LOG-SEARCH-ME] Stack:', analysisError.stack?.split('\n').slice(0, 3));
             }
         } else {
             if (result.state.isComplete) {
@@ -164,7 +117,7 @@ app.post('/handoff', async (req: Request, res: Response) => {
         const leadId = await saveLeadToSheet(req.body);
 
         const baseUrl = process.env.INTAKE_APP_URL || 'https://teachmeai-intake-app.vercel.app';
-        const redirectUrl = `${baseUrl}/intake?lead_id=${leadId}`;
+        const redirectUrl = `${baseUrl}/?lead_id=${leadId}`;
 
         console.log('✅ [Backend] Lead persisted:', leadId);
         res.json({
@@ -183,39 +136,49 @@ app.post('/handoff', async (req: Request, res: Response) => {
 app.post('/supervisorFlow', async (req: Request, res: Response) => {
     try {
         console.log('🚀 [Backend] Received request for supervisorFlow');
-        if (!req.body || !req.body.data) {
+        if (!req.body || (!req.body.data && !req.body.intakeResponse)) {
             console.error('❌ [Backend] Missing data in request body');
             return res.status(400).send('Missing data in request');
         }
 
-        console.log('🧠 [Backend] Starting AI Agents...');
-        const result = await supervisorFlow(req.body.data);
+        const inputData = req.body.data || req.body.intakeResponse;
+        let dossier;
+
+        // Backward compatibility: If we receive a raw IntakeResponse (Old Bridge API), build the dossier
+        // We detect this by checking for fields that exist in IntakeResponse but not in Dossier
+        if (inputData.primaryGoal || inputData.currentRoles) {
+            console.log('🔄 [Backend] Received raw IntakeResponse. Converting to LearnerDossier...');
+            const { buildLearnerDossierFromIntakeResponse } = await import('./utils/dossier-builder');
+            dossier = buildLearnerDossierFromIntakeResponse(inputData);
+        } else {
+            dossier = inputData;
+        }
+
+        console.log('🧠 [Backend] Starting AI Agents with Dossier...');
+        const result = await supervisorFlow(dossier);
         console.log('✅ [Backend] AI Agents finished successfully');
 
         // PERSIST the results if a sessionId is provided
-        const sessionId = req.body.sessionId || req.body.data.sessionId;
+        const sessionId = req.body.sessionId || dossier.sessionId || (inputData as any).sessionId;
         if (sessionId) {
             console.log(`💾 [Backend] Persisting analysis for session: ${sessionId}`);
 
-            // Use full intake state if provided, otherwise construct minimal
-            const intakeState = req.body.intakeState || {
-                sessionId,
-                metadata: { startTime: new Date().toISOString(), mode: 'interview' },
-                fields: {
-                    name: { value: req.body.data.name || '' },
-                    email: { value: req.body.data.email || '' },
-                    role_raw: { value: (req.body.data.currentRoles || [])[0] || '' },
-                    goal_raw: { value: req.body.data.primaryGoal || '' },
-                    // Map additional fields from IntakeResponse
-                    skill_stage: req.body.data.skillStage ? { value: req.body.data.skillStage } : undefined,
-                    time_barrier: req.body.data.timeBarrier ? { value: req.body.data.timeBarrier } : undefined,
-                    role_category: req.body.data.roleCategory ? { value: req.body.data.roleCategory } : undefined,
-                    goal_calibrated: { value: req.body.data.primaryGoal || '' },
-                    time_per_week_mins: req.body.data.timePerWeekMins ? { value: req.body.data.timePerWeekMins } : undefined
-                },
-                isComplete: true,
-                turnCount: 99
-            };
+            let intakeState = req.body.intakeState;
+            if (!intakeState) {
+                // Construct a minimal state for persistence if it's a legacy call
+                intakeState = {
+                    sessionId,
+                    metadata: { startTime: new Date().toISOString(), mode: 'interview' },
+                    fields: {
+                        name: { value: dossier.identity?.name || (inputData as any).name || '' },
+                        email: { value: dossier.identity?.email || (inputData as any).email || '' },
+                        role_raw: { value: dossier.identity?.roleRaw || ((inputData as any).currentRoles || [])[0] || '' },
+                        goal_raw: { value: dossier.identity?.goalRaw || (inputData as any).primaryGoal || '' },
+                    },
+                    isComplete: true,
+                    turnCount: 99
+                };
+            }
             await persistIntakeState(intakeState, result);
         }
 
