@@ -5,30 +5,7 @@ import { IntakeResponse, IMPACTAnalysis } from '@/types';
 import { analyzeWithAI } from '@/lib/ai-analysis';
 
 export const runtime = 'nodejs';
-
-/**
- * This schema matches the final IntakeResponse expected by the Supervisor Agent
- */
-const EnrichedIntakeSchema = z.object({
-    goalSettingConfidence: z.number().min(1).max(5),
-    newApproachesFrequency: z.number().min(1).max(5),
-    reflectionFrequency: z.number().min(1).max(5),
-    aiToolsConfidence: z.number().min(1).max(5),
-    resilienceLevel: z.number().min(1).max(5),
-    clearCareerVision: z.number().min(1).max(5),
-    successDescription: z.number().min(1).max(5),
-    learningForChallenge: z.number().min(1).max(5),
-    outcomeDrivenLearning: z.number().min(1).max(5),
-    timeBarrier: z.number().min(1).max(5),
-    skillStage: z.number().min(1).max(5),
-    learnerType: z.enum(['theorist', 'activist', 'reflector', 'pragmatist']),
-    varkPreferences: z.object({
-        visual: z.number().min(1).max(5),
-        audio: z.number().min(1).max(5),
-        readingWriting: z.number().min(1).max(5),
-        kinesthetic: z.number().min(1).max(5),
-    }),
-});
+export const maxDuration = 60; // 60 seconds to allow the multi-agent system to complete
 
 export async function POST(req: NextRequest) {
     try {
