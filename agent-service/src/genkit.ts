@@ -21,7 +21,7 @@ import { googleAI } from '@genkit-ai/googleai';
 // --- ENV VALIDATION (fail fast) ---
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_API_KEY) {
-    throw new Error('Missing GEMINI_API_KEY in environment. Cannot start agent service.');
+    console.error('❌ [Genkit] CRITICAL: Missing GEMINI_API_KEY in environment. Agents will fail at runtime.');
 }
 
 // --- TELEMETRY (conditional) ---
