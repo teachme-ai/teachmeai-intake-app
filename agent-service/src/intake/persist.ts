@@ -51,7 +51,7 @@ const getAuth = () => {
     });
 };
 
-const sheets = google.sheets({ version: 'v4', auth: getAuth() });
+const getSheets = () => google.sheets({ version: 'v4', auth: getAuth() });
 
 export const SHEET_TITLE = 'Intake_v2';
 const HEADERS = [
@@ -65,6 +65,7 @@ const HEADERS = [
 
 async function ensureSheetExists(spreadsheetId: string) {
     try {
+        const sheets = getSheets();
         const meta = await sheets.spreadsheets.get({ spreadsheetId });
         const exists = meta.data.sheets?.some((s: any) => s.properties?.title === SHEET_TITLE);
 
@@ -121,6 +122,7 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
         await ensureSheetExists(spreadsheetId);
 
         // UPSERT LOGIC: Find existing row for this Session ID
+        const sheets = getSheets();
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
             range: `${SHEET_TITLE}!B:B`, // Column B is Session ID
