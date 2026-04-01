@@ -58,9 +58,9 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                     ...prev,
                     fields: {
                         ...prev.fields,
-                        name: { value: leadData.name, status: 'confirmed' },
-                        email: { value: leadData.email, status: 'confirmed' },
-                        role_raw: { value: leadData.persona_id, status: 'candidate' }
+                        name: { value: leadData.name, status: 'confirmed', confidence: 'high', updatedAt: new Date().toISOString(), evidence: 'lead_handover' },
+                        email: { value: leadData.email, status: 'confirmed', confidence: 'high', updatedAt: new Date().toISOString(), evidence: 'lead_handover' },
+                        role_raw: { value: leadData.persona_id, status: 'candidate', confidence: 'medium', updatedAt: new Date().toISOString(), evidence: 'lead_handover' }
                     }
                 }));
 
@@ -77,7 +77,8 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
             }
         };
         resolveLead();
-    }, [leadId]); // Run once on mount if leadId exists
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [leadId]); // Exclude state.fields.email?.value otherwise it cycles on update
 
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isTyping) return;
@@ -205,7 +206,7 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
         } finally {
             setIsAnalyzing(false);
         }
-    }, [state, messages, analysis, isAnalyzing, error]);
+    }, [state, analysis, isAnalyzing, error]);
 
     useEffect(() => {
         if (state.isComplete && !analysis && !isAnalyzing && !error) {
