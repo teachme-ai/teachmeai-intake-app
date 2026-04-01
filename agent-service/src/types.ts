@@ -135,7 +135,9 @@ export const DeepResearchInputSchema = z.object({
     seniority: z.string().optional().describe("Junior, Mid-level, Senior, Lead"),
     application_context: z.string().optional().describe("Context where AI will be applied (e.g. Work, Personal)"),
     current_tools: z.array(z.string()).optional().describe("Tools currently used by the learner"),
-    profile: PsychographicProfileSchema.optional()
+    profile: PsychographicProfileSchema.optional(),
+    varkPrimary: z.string().optional(),
+    motivationType: z.string().optional()
 });
 
 export const DeepResearchOutputSchema = z.object({
@@ -207,6 +209,12 @@ export const LearnerDossierSchema = z.object({
         shortTermApplication: z.string().optional(),
     }),
     psychographicProfile: PsychographicProfileSchema.optional(),
+    conversationTranscript: z.array(z.object({
+        turn: z.number(),
+        user: z.string(),
+        agent: z.string(),
+        field: z.string()
+    })).optional(),
     sessionId: z.string().optional(),
     turnCount: z.number().optional(),
     interviewCompletedAt: z.string().optional(),

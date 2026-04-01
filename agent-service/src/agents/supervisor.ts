@@ -54,7 +54,9 @@ export const supervisorFlow = ai.defineFlow(
             seniority: dossier.identity.seniority,
             application_context: dossier.context.applicationContext,
             current_tools: dossier.constraints.currentTools,
-            profile: profile
+            profile: profile,
+            varkPrimary: dossier.preferences.varkPrimary,
+            motivationType: dossier.motivation.type
         }), { component: 'DeepResearch', sessionId: dossier.sessionId });
         console.log(`  ├─ ✅ Phase 2/6: Deep Research complete`);
 

@@ -16,6 +16,12 @@ const PersonalizerInputSchema = z.object({
     decisionStyle: z.string().optional(),
     learnerType: z.string().optional(),
     currentTools: z.array(z.string()).optional(),
+    conversationTranscript: z.array(z.object({
+        turn: z.number(),
+        user: z.string(),
+        agent: z.string(),
+        field: z.string()
+    })).optional()
 });
 
 const PersonalizerOutputSchema = z.object({
@@ -61,6 +67,12 @@ RULES:
    - Hybrid: Balanced approach.
 5. NO markdown headings (###). Use paragraphs or bullet points only.
 6. Make it feel highly tailored, empathetic, and premium.
+
+## User's Own Words (Interview Transcript)
+Here is the verbatim transcript of the user's interview. Directly reference and quote their answers to make them feel deeply heard and understood.
+${input.conversationTranscript && input.conversationTranscript.length > 0 
+    ? input.conversationTranscript.map(t => "Q: " + t.agent + "\\nA: " + t.user).join("\\n\\n") 
+    : 'No transcript available.'}
 `;
         const { output } = await ai.generate({
             model: REPORT_MODEL,

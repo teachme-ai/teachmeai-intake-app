@@ -21,6 +21,12 @@ export const StrategistInputSchema = z.object({
     motivation_type: z.enum(['intrinsic', 'outcome', 'hybrid']).optional(),
     frustrations: z.string().optional(),
     benefits: z.string().optional(),
+    conversationTranscript: z.array(z.object({
+        turn: z.number(),
+        user: z.string(),
+        agent: z.string(),
+        field: z.string()
+    })).optional()
 });
 
 export const strategistFlow = ai.defineFlow(
@@ -71,6 +77,12 @@ RULES for IMPACT Framework:
 5. recommendedWorkflows: 2-3 specific AI workflows they should implement.
 
 Be specific, actionable, and personalized to their context.
+
+## User's Own Words (Interview Transcript)
+Here is the verbatim transcript of the user's interview. Use their exact phrasing (e.g., specific frustrations, specific goals) to make your strategy highly relatable and empathetic:
+${input.conversationTranscript && input.conversationTranscript.length > 0 
+    ? input.conversationTranscript.map(t => "Q: " + t.agent + "\\nA: " + t.user).join("\\n\\n") 
+    : 'No transcript available.'}
 `;
 
         const { output } = await ai.generate({

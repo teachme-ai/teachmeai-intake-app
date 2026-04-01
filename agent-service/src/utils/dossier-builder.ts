@@ -85,6 +85,12 @@ export function buildLearnerDossier(state: IntakeState): LearnerDossier {
             benefits: val(state, 'benefits'),
             shortTermApplication: val(state, 'application_context'),
         },
+        conversationTranscript: state.transcript?.map(t => ({
+            turn: t.turn,
+            user: t.user,
+            agent: t.agent,
+            field: t.field || 'unknown'
+        })) || [],
         sessionId: state.sessionId,
         turnCount: state.turnCount,
         interviewCompletedAt: new Date().toISOString(),

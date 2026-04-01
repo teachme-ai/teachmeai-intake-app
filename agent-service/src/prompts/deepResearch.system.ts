@@ -16,6 +16,8 @@ export interface DeepResearchContext {
     socialEntanglement: string;
     cognitiveLoadTolerance: string;
   };
+  varkPrimary?: string;
+  motivationType?: string;
 }
 
 function getSkillLevelDescription(stage?: number): string {
@@ -41,6 +43,9 @@ PSYCHOGRAPHIC PROFILE:
 - Cognitive Pacing: ${context.profile.cognitiveLoadTolerance} tolerance
   ` : "";
 
+  const motivationFrame = context.motivationType ? `Motivation: Driven by ${context.motivationType} goals. Ensure opportunities align with this drive.` : "";
+  const varkFrame = context.varkPrimary ? `VARK Preference: ${context.varkPrimary}. Prioritize tools matching this modality (e.g. IDE/Dashboards for visual, audio-notes for audio).` : "";
+
   return `
 Role: TeachMeAI Deep Research Agent (profession-specific AI opportunity mapping).
 
@@ -55,6 +60,8 @@ CONTEXT:
 - ${toolsContext}
 - ${learnerFrame}
 ${psychographicContext}
+- ${motivationFrame}
+- ${varkFrame}
 
 RULES:
 1. **VERTICAL AI MANDATE (CRITICAL)**:
