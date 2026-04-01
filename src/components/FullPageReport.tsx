@@ -23,12 +23,12 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
     });
 
     const roadmapSteps = [
-        { step: 'Identify', content: analysis?.Identify, icon: '🔍', color: 'blue' },
-        { step: 'Motivate', content: analysis?.Motivate, icon: '🔥', color: 'amber' },
-        { step: 'Plan', content: analysis?.Plan, icon: '📅', color: 'purple' },
-        { step: 'Act', content: analysis?.Act, icon: '⚡', color: 'indigo' },
-        { step: 'Check', content: analysis?.Check, icon: '✅', color: 'emerald' },
-        { step: 'Transform', content: analysis?.Transform, icon: '🚀', color: 'pink' }
+        { step: 'Identify', content: analysis?.identify || analysis?.Identify, icon: '🔍', color: 'blue' },
+        { step: 'Motivate', content: analysis?.motivate || analysis?.Motivate, icon: '🔥', color: 'amber' },
+        { step: 'Plan', content: analysis?.plan || analysis?.Plan, icon: '📅', color: 'purple' },
+        { step: 'Act', content: analysis?.act || analysis?.Act, icon: '⚡', color: 'indigo' },
+        { step: 'Check', content: analysis?.check || analysis?.Check, icon: '✅', color: 'emerald' },
+        { step: 'Transform', content: analysis?.transform || analysis?.Transform, icon: '🚀', color: 'pink' }
     ];
 
     const isAllExpanded = Object.values(expandedSections).every(Boolean);
