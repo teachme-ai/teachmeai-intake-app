@@ -122,10 +122,15 @@ export async function extractFields(
                 // Only force-assign RAW TEXT for specific text fields.
                 // Do NOT force-assign Enums, Scales, or Numbers (let Guardrails handle repetition/MCQ).
 
-                const safeTextFields = ['role_raw', 'goal_raw', 'goal_calibrated', 'industry', 'seniority', 'frustrations', 'benefits', 'application_context', 'role_category', 'industry_vertical', 'digital_skills', 'tech_savviness'];
+                const safeTextFields = [
+                    'role_raw', 'goal_raw', 'goal_calibrated', 
+                    'industry', 'seniority', 'frustrations', 
+                    'benefits', 'application_context'
+                ];
 
                 const cleanMsg = userMessage.trim();
-                const isJunk = cleanMsg.length < 1 || /^(no|nah|idk|pass)/i.test(cleanMsg);
+                // If it's too short, or just a generic word like "ok", don't force it into a field
+                const isJunk = cleanMsg.length < 3 || /^(ok|yes|ready|sure|go|yep|yeah|fine|done|next|pass|idk|no|nah)$/i.test(cleanMsg);
 
                 if (safeTextFields.includes(targetField as string) && !isJunk) {
                     (merged as any)[targetField] = cleanMsg;

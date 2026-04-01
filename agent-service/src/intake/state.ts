@@ -101,5 +101,34 @@ export function isIntakeComplete(state: IntakeState): boolean {
 
 export function isFieldFilled(state: IntakeState, field: keyof IntakeData): boolean {
     const f = state.fields[field];
-    return f !== undefined && f.value !== undefined && f.value !== null && f.value !== '';
+    if (!f || f.value === undefined || f.value === null || f.value === '') return false;
+
+    // Type-specific validation
+    const val = f.value;
+    
+    // 1. Strings must have substantive content (at least 2 chars, not just "ok")
+    if (typeof val === 'string') {
+        const clean = val.trim().toLowerCase();
+        if (clean.length < 2) return false;
+        if (['ok', 'yes', 'no', 'up'].includes(clean)) {
+            // "ok" is not a valid answer for most text fields (Role, Goal, Industry, etc.)
+            // Exception: name (maybe?) No, even name should be > 2 chars usually.
+            return false;
+        }
+    }
+
+    // 2. Numbers must be within valid range (usually 1-5 for scales, >0 for mins)
+    if (typeof val === 'number') {
+        if (isNaN(val)) return false;
+        // Specific check for time_per_week_mins
+        if (field === 'time_per_week_mins' && val <= 0) return false;
+    }
+
+    // 3. Arrays must not be empty and must contain non-junk
+    if (Array.isArray(val)) {
+        if (val.length === 0) return false;
+        if (val[0] === 'ok' || val[0] === '') return false;
+    }
+
+    return true;
 }

@@ -57,6 +57,7 @@ Extract specific fields from the USER MESSAGE into JSON.
 - **ALWAYS try to extract the target field from the user's response**
 - If user says "use AI for game design" when asked about goal → goal_calibrated: "Use AI for game design"
 - If user says "game design" when asked about benefits → benefits: "Game design applications"
+- **GENERIC CONFIRMATIONS**: If the user message is just "ok", "yes", "ready", "sure", "go ahead" or similar generic confirmation to a transition/check-in question, do NOT extract ANY data. Return an empty object or null for all fields. Only extract if they provide NEW specific information.
 - If user gives a vague answer, capture it as-is rather than returning null
 - Only return null if the response is completely unrelated or junk ("idk", "no", "pass")
 

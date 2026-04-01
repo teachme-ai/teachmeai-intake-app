@@ -33,7 +33,10 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
         ownedFields: ['name', 'email', 'current_tools'],
         introMessage: "Hi, I'm the intake guide. Let's get you set up.",
         shouldExit: (state) => {
-            return isFieldFilled(state, 'email') && isFieldFilled(state, 'current_tools');
+            const hasEmail = isFieldFilled(state, 'email');
+            const hasTools = isFieldFilled(state, 'current_tools') && state.fields['current_tools']?.value?.[0]?.length > 2;
+            const minTurns = state.turnCount >= 2;
+            return hasEmail && hasTools && minTurns;
         }
     },
 
