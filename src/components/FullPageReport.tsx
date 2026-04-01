@@ -6,6 +6,7 @@ import ResultsHeader from './ResultsHeader';
 import VisualInsights from './VisualInsights';
 import ExpandableSection from './ExpandableSection';
 import ConsultationCTA from './ConsultationCTA';
+import { ImpactRoadmap, OpportunityMatrix, StrategyBlueprint } from './ReportVisuals';
 
 interface FullPageReportProps {
     data: any;
@@ -20,6 +21,15 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
         priorities: true,
         profile: true
     });
+
+    const roadmapSteps = [
+        { step: 'Identify', content: analysis?.Identify, icon: '🔍', color: 'blue' },
+        { step: 'Motivate', content: analysis?.Motivate, icon: '🔥', color: 'amber' },
+        { step: 'Plan', content: analysis?.Plan, icon: '📅', color: 'purple' },
+        { step: 'Act', content: analysis?.Act, icon: '⚡', color: 'indigo' },
+        { step: 'Check', content: analysis?.Check, icon: '✅', color: 'emerald' },
+        { step: 'Transform', content: analysis?.Transform, icon: '🚀', color: 'pink' }
+    ];
 
     const isAllExpanded = Object.values(expandedSections).every(Boolean);
 
@@ -87,23 +97,26 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                             isExpanded={expandedSections.strategy}
                             onToggle={() => setExpandedSections(prev => ({ ...prev, strategy: !prev.strategy }))}
                         >
-                            {analysis?.personalizedSummary && (
-                                <div className="mb-6 bg-blue-50/70 p-6 rounded-2xl border border-blue-100 shadow-sm">
-                                    <p className="text-slate-800 text-lg leading-relaxed font-medium">{analysis.personalizedSummary}</p>
-                                </div>
-                            )}
-                            <p className="text-gray-700 leading-relaxed text-lg">{analysis?.Identify}</p>
+                            <StrategyBlueprint 
+                                summary={analysis?.personalizedSummary || 'Strategic roadmap for AI mastery.'} 
+                                industry={data?.industry?.value}
+                            />
+                            <p className="text-gray-700 leading-relaxed text-lg bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">{analysis?.Identify}</p>
                         </ExpandableSection>
 
-                        {/* 2. AI Opportunities (Full List) */}
+                        {/* 2. AI Opportunities Matrix */}
                         <ExpandableSection
                             title="💡 High-Impact AI Opportunities"
                             icon={<Lightbulb className="w-6 h-6 text-amber-500" />}
                             isExpanded={expandedSections.opportunities}
                             onToggle={() => setExpandedSections(prev => ({ ...prev, opportunities: !prev.opportunities }))}
                         >
+                            {analysis?.research?.aiOpportunityMap && (
+                                <OpportunityMatrix opportunities={analysis.research.aiOpportunityMap} />
+                            )}
+                            
                             {analysis?.research?.aiOpportunityMap && analysis.research.aiOpportunityMap.length > 0 ? (
-                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                                     {analysis.research.aiOpportunityMap.map((item: any, i: number) => (
                                         <li key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
                                             <div className="flex gap-4">
@@ -132,22 +145,17 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                             )}
                         </ExpandableSection>
 
-                        {/* 3. IMPACT Action Plan (All Steps, Full Text) */}
+                        {/* 3. IMPACT Action Plan (Roadmap) */}
                         <ExpandableSection
                             title="🚀 The Execution Plan"
                             icon={<TrendingUp className="w-6 h-6 text-indigo-600" />}
                             isExpanded={expandedSections.plan}
                             onToggle={() => setExpandedSections(prev => ({ ...prev, plan: !prev.plan }))}
                         >
-                            <div className="space-y-4">
-                                {[
-                                    { step: 'Identify', content: analysis?.Identify, icon: '🔍', color: 'blue' },
-                                    { step: 'Motivate', content: analysis?.Motivate, icon: '🔥', color: 'amber' },
-                                    { step: 'Plan', content: analysis?.Plan, icon: '📅', color: 'purple' },
-                                    { step: 'Act', content: analysis?.Act, icon: '⚡', color: 'indigo' },
-                                    { step: 'Check', content: analysis?.Check, icon: '✅', color: 'emerald' },
-                                    { step: 'Transform', content: analysis?.Transform, icon: '🚀', color: 'pink' }
-                                ].map((item, i) => (
+                            <ImpactRoadmap steps={roadmapSteps} />
+
+                            <div className="space-y-4 mt-8">
+                                {roadmapSteps.map((item, i) => (
                                     <div key={i} className={`bg-white border border-slate-200 border-l-4 border-l-${item.color}-500 rounded-xl rounded-l-none p-6 shadow-sm`}>
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className={`w-10 h-10 rounded-full bg-${item.color}-50 flex items-center justify-center text-xl`}>

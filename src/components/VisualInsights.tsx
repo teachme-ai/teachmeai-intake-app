@@ -64,7 +64,7 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
                         <p className="text-xl font-black text-slate-900">Learning Identity</p>
                     </div>
 
-                    <svg width="240" height="240" viewBox="0 0 200 200" className="mt-6 drop-shadow-xl overflow-visible">
+                    <svg width="280" height="280" viewBox="-40 -20 280 240" className="mt-6 drop-shadow-xl overflow-visible">
                         {/* Grid Circles */}
                         {[0.2, 0.4, 0.6, 0.8, 1].map((step) => (
                             <circle
@@ -101,10 +101,10 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
                                 <circle cx={p.x} cy={p.y} r="5" fill="#4f46e5" className="filter drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
                                 <text
                                     x={p.x}
-                                    y={i === 0 ? p.y - 14 : i === 2 ? p.y + 20 : p.y + 4}
+                                    y={i === 0 ? p.y - 14 : i === 2 ? p.y + 24 : p.y + 4}
                                     textAnchor={i === 1 ? 'start' : i === 3 ? 'end' : 'middle'}
-                                    className="text-[10px] font-black fill-slate-400 uppercase tracking-widest"
-                                    dx={i === 1 ? 10 : i === 3 ? -10 : 0}
+                                    className="text-[11px] font-black fill-slate-500 uppercase tracking-widest"
+                                    dx={i === 1 ? 12 : i === 3 ? -12 : 0}
                                 >
                                     {p.label}
                                 </text>
@@ -175,14 +175,14 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 {/* Archetype Card */}
                 <div
-                    className="md:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden min-h-[200px]"
+                    className="md:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden min-h-[220px]"
                 >
                     <Brain className="absolute -bottom-8 -right-8 w-40 h-40 opacity-10 rotate-12" />
                     <div className="relative z-10">
                         <h4 className="text-[10px] font-black opacity-60 uppercase tracking-[0.3em] mb-2">Primary Archetype</h4>
-                        <div className="flex items-end gap-3 mb-4">
-                            <p className="text-4xl font-black capitalize tracking-tight">{data.learner_type?.value || 'Dynamic'}</p>
-                            <div className="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-1 backdrop-blur-md">
+                        <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
+                            <p className="text-3xl sm:text-4xl font-black capitalize tracking-tight leading-tight">{data.learner_type?.value || 'Dynamic'}</p>
+                            <div className="bg-white/20 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider mb-1 backdrop-blur-md w-fit">
                                 {data.skill_stage?.value === 1 ? 'Novice' : data.skill_stage?.value === 5 ? 'Expert' : 'Practitioner'}
                             </div>
                         </div>
@@ -194,34 +194,28 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
                 </div>
 
                 {/* Mindset Mini Gauges */}
-                <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm grid grid-cols-3 gap-4">
+                <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex items-center justify-between gap-2 overflow-x-auto">
                     {gauges.map((g, i) => (
-                        <div key={i} className="flex flex-col items-center justify-center">
-                            <div className="relative w-16 h-16 flex items-center justify-center mb-3">
+                        <div key={i} className="flex flex-col items-center justify-center flex-1 min-w-[70px]">
+                            <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-3">
                                 <svg className="w-full h-full transform -rotate-90 overflow-visible">
-                                    <circle cx="32" cy="32" r="28" fill="none" stroke="#f1f5f9" strokeWidth="6" />
+                                    <circle cx="32" cy="32" r="26" fill="none" stroke="#f1f5f9" strokeWidth="6" />
                                     <circle
-                                        cx="32" cy="32" r="28" fill="none"
+                                        cx="32" cy="32" r="26" fill="none"
                                         stroke={g.color === 'blue' ? '#3b82f6' : g.color === 'emerald' ? '#10b981' : '#f59e0b'}
                                         strokeWidth="8"
                                         strokeLinecap="round"
-                                        strokeDasharray={2 * Math.PI * 28}
-                                        strokeDashoffset={2 * Math.PI * 28 * (1 - g.val / 5)}
+                                        strokeDasharray={2 * Math.PI * 26}
+                                        strokeDashoffset={2 * Math.PI * 26 * (1 - g.val / 5)}
                                         className="transition-all duration-[1500ms] ease-out"
                                     />
-                                    <filter id="glow">
-                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                                        <feMerge>
-                                            <feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/>
-                                        </feMerge>
-                                    </filter>
                                 </svg>
                                 <div className="absolute flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
                                     {g.icon}
                                 </div>
                             </div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{g.label.split(' ')[0]}</span>
-                            <span className="text-sm font-black text-slate-900 mt-1">{g.val}/5</span>
+                            <span className="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest text-center h-4 overflow-hidden">{g.label.split(' ')[0]}</span>
+                            <span className="text-xs font-black text-slate-900 mt-0.5">{g.val}/5</span>
                         </div>
                     ))}
                 </div>
