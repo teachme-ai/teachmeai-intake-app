@@ -57,62 +57,64 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 {/* VARK Radar Card */}
                 <div
-                    className="md:col-span-3 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-center relative overflow-hidden h-[340px]"
+                    className="md:col-span-3 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-center relative min-h-[380px]"
                 >
                     <div className="absolute top-6 left-8">
                         <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Dimensions</h4>
                         <p className="text-xl font-black text-slate-900">Learning Identity</p>
                     </div>
 
-                    <svg width="280" height="280" viewBox="-40 -20 280 240" className="mt-6 drop-shadow-xl overflow-visible">
-                        {/* Grid Circles */}
-                        {[0.2, 0.4, 0.6, 0.8, 1].map((step) => (
-                            <circle
-                                key={step}
-                                cx={center}
-                                cy={center}
-                                r={radius * step}
-                                fill="none"
-                                stroke="#f1f5f9"
-                                strokeWidth="1"
-                                strokeDasharray={step === 1 ? "0" : "4 4"}
+                    <div className="w-full h-full flex items-center justify-center mt-8 py-4">
+                        <svg width="100%" height="240" viewBox="-60 -30 320 260" className="drop-shadow-xl overflow-visible max-w-[300px]">
+                            {/* Grid Circles */}
+                            {[0.2, 0.4, 0.6, 0.8, 1].map((step) => (
+                                <circle
+                                    key={step}
+                                    cx={center}
+                                    cy={center}
+                                    r={radius * step}
+                                    fill="none"
+                                    stroke="#f1f5f9"
+                                    strokeWidth="1"
+                                    strokeDasharray={step === 1 ? "0" : "4 4"}
+                                />
+                            ))}
+
+                            {/* Data Polygon */}
+                            <path
+                                d={radarPath}
+                                fill="url(#radarGradient)"
+                                stroke="#4f46e5"
+                                strokeWidth="3"
+                                strokeLinejoin="round"
+                                className="transition-all duration-1000 ease-in-out"
                             />
-                        ))}
+                            <defs>
+                                <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.4" />
+                                    <stop offset="100%" stopColor="#9333ea" stopOpacity="0.2" />
+                                </linearGradient>
+                            </defs>
 
-                        {/* Data Polygon */}
-                        <path
-                            d={radarPath}
-                            fill="url(#radarGradient)"
-                            stroke="#4f46e5"
-                            strokeWidth="3"
-                            strokeLinejoin="round"
-                            className="transition-all duration-1000 ease-in-out"
-                        />
-                        <defs>
-                            <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.4" />
-                                <stop offset="100%" stopColor="#9333ea" stopOpacity="0.2" />
-                            </linearGradient>
-                        </defs>
+                            {/* Points & Labels */}
+                            {points.map((p, i) => (
+                                <g key={i}>
+                                    <circle cx={p.x} cy={p.y} r="5" fill="#4f46e5" className="filter drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                                    <text
+                                        x={p.x}
+                                        y={i === 0 ? p.y - 18 : i === 2 ? p.y + 28 : p.y + 4}
+                                        textAnchor={i === 1 ? 'start' : i === 3 ? 'end' : 'middle'}
+                                        className="text-[10px] font-black fill-slate-500 uppercase tracking-widest"
+                                        dx={i === 1 ? 14 : i === 3 ? -14 : 0}
+                                    >
+                                        {p.label}
+                                    </text>
+                                </g>
+                            ))}
+                        </svg>
+                    </div>
 
-                        {/* Points & Labels */}
-                        {points.map((p, i) => (
-                            <g key={i}>
-                                <circle cx={p.x} cy={p.y} r="5" fill="#4f46e5" className="filter drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
-                                <text
-                                    x={p.x}
-                                    y={i === 0 ? p.y - 14 : i === 2 ? p.y + 24 : p.y + 4}
-                                    textAnchor={i === 1 ? 'start' : i === 3 ? 'end' : 'middle'}
-                                    className="text-[11px] font-black fill-slate-500 uppercase tracking-widest"
-                                    dx={i === 1 ? 12 : i === 3 ? -12 : 0}
-                                >
-                                    {p.label}
-                                </text>
-                            </g>
-                        ))}
-                    </svg>
-
-                    <div className="absolute bottom-6 inset-x-8 flex justify-between px-4 border-t border-slate-100 pt-4">
+                    <div className="w-full flex justify-between px-4 border-t border-slate-100 pt-6 mt-2">
                         {Object.entries(vark).map(([key, val]) => (
                             <div key={key} className="text-center">
                                 <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">{key.substring(0, 3)}</p>
@@ -123,7 +125,8 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
                 </div>
 
                 {/* Market Maturity Gauge Card */}
-                <div className="md:col-span-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-between h-[340px] relative overflow-hidden">
+                <div className="md:col-span-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-between min-h-[380px] relative overflow-hidden">
+
                     <div className="w-full">
                         <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1 text-center">Market Pulse</h4>
                         <p className="text-lg font-black text-slate-900 text-center">AI Maturity Arc</p>
@@ -175,18 +178,18 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 {/* Archetype Card */}
                 <div
-                    className="md:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden min-h-[220px]"
+                    className="md:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden min-h-[200px] flex flex-col justify-center"
                 >
                     <Brain className="absolute -bottom-8 -right-8 w-40 h-40 opacity-10 rotate-12" />
                     <div className="relative z-10">
                         <h4 className="text-[10px] font-black opacity-60 uppercase tracking-[0.3em] mb-2">Primary Archetype</h4>
-                        <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
+                        <div className="flex flex-wrap items-baseline gap-3 mb-4">
                             <p className="text-3xl sm:text-4xl font-black capitalize tracking-tight leading-tight">{data.learner_type?.value || 'Dynamic'}</p>
-                            <div className="bg-white/20 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider mb-1 backdrop-blur-md w-fit">
+                            <div className="bg-white/20 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md whitespace-nowrap">
                                 {data.skill_stage?.value === 1 ? 'Novice' : data.skill_stage?.value === 5 ? 'Expert' : 'Practitioner'}
                             </div>
                         </div>
-                        <p className="text-indigo-100 text-sm leading-relaxed max-w-md font-medium">
+                        <p className="text-indigo-100 text-sm leading-relaxed max-w-lg font-medium">
                             Synthesizing your <span className="text-white font-bold">{vPrimary}</span> preference with a <span className="text-white font-bold">{data.learner_type?.value}</span> mindset... 
                             this plan prioritizes {vPrimary === 'kinesthetic' ? 'hands-on labs' : 'deep conceptual frameworks'} aligned with your goal.
                         </p>
@@ -194,9 +197,9 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
                 </div>
 
                 {/* Mindset Mini Gauges */}
-                <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex items-center justify-between gap-2 overflow-x-auto">
+                <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-wrap items-center justify-around gap-4 min-h-[200px]">
                     {gauges.map((g, i) => (
-                        <div key={i} className="flex flex-col items-center justify-center flex-1 min-w-[70px]">
+                        <div key={i} className="flex flex-col items-center justify-center min-w-[80px]">
                             <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-3">
                                 <svg className="w-full h-full transform -rotate-90 overflow-visible">
                                     <circle cx="32" cy="32" r="26" fill="none" stroke="#f1f5f9" strokeWidth="6" />
@@ -210,12 +213,12 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
                                         className="transition-all duration-[1500ms] ease-out"
                                     />
                                 </svg>
-                                <div className="absolute flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                <div className="absolute flex items-center justify-center text-slate-400">
                                     {g.icon}
                                 </div>
                             </div>
-                            <span className="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest text-center h-4 overflow-hidden">{g.label.split(' ')[0]}</span>
-                            <span className="text-xs font-black text-slate-900 mt-0.5">{g.val}/5</span>
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center whitespace-nowrap">{g.label.split(' ')[0]}</span>
+                            <span className="text-sm font-black text-slate-900 mt-1">{g.val}/5</span>
                         </div>
                     ))}
                 </div>
@@ -223,3 +226,4 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
         </div>
     );
 }
+
