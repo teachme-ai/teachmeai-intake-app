@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IntakeState, IntakeData } from '@/intake/schema';
-import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, Target, Lightbulb, TrendingUp, Wrench, Zap } from 'lucide-react';
+import { Loader2, Send, User, Bot, CheckCircle2, Sparkles, Target, Lightbulb, TrendingUp, Wrench, Zap, Brain, Shield } from 'lucide-react';
 import ExpandableSection from './ExpandableSection';
 import ResultsHeader from './ResultsHeader';
 import ConsultationCTA from './ConsultationCTA';
@@ -249,6 +249,11 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                             isExpanded={expandedSections.strategy}
                             onToggle={() => setExpandedSections(prev => ({ ...prev, strategy: !prev.strategy }))}
                         >
+                            {analysis.personalizedSummary && (
+                                <div className="mb-4 bg-blue-50/50 p-5 rounded-2xl border border-blue-100 shadow-sm">
+                                    <p className="text-slate-800 leading-relaxed font-medium">{analysis.personalizedSummary}</p>
+                                </div>
+                            )}
                             <p className="text-gray-700 leading-relaxed">{analysis.Identify}</p>
                         </ExpandableSection>
 
@@ -391,6 +396,35 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                )}
+
+                                                {/* AI Assessor Notes (Assumptions & Validations) */}
+                                                {(analysis.validationNotes?.length > 0 || analysis.research?.assumptions?.length > 0) && (
+                                                    <div className="col-span-1 sm:col-span-2 mt-4 space-y-3">
+                                                        {analysis.research?.assumptions && analysis.research.assumptions.length > 0 && (
+                                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                                                <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                                                    <Brain className="w-4 h-4" /> Profiling Assumptions
+                                                                </h5>
+                                                                <ul className="text-sm text-slate-600 list-disc list-inside space-y-1">
+                                                                    {analysis.research.assumptions.map((note: string, idx: number) => (
+                                                                        <li key={idx}>{note}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                        {analysis.validationNotes && analysis.validationNotes.length > 0 && (
+                                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                                                <h5 className="text-xs font-bold text-amber-600 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                                                    <Shield className="w-4 h-4" /> Validation Audits
+                                                                </h5>
+                                                                <ul className="text-sm text-amber-800 list-disc list-inside space-y-1">
+                                                                    {analysis.validationNotes.map((note: string, idx: number) => (
+                                                                        <li key={idx}>{note}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </>

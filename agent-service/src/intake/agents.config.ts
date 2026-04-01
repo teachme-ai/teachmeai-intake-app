@@ -88,7 +88,7 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
             
             const minTurnsMet = (state.turnCount >= 5);
 
-            return coreCount >= 4 && minTurnsMet;
+            return coreCount >= 4 && hasVark && minTurnsMet;
         }
     },
 

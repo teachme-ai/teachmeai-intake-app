@@ -86,7 +86,7 @@ export function isIntakeComplete(state: IntakeState): boolean {
     const hasRole = isFieldFilled(state, 'role_raw') || isFieldFilled(state, 'role_category');
     const hasGoal = isFieldFilled(state, 'goal_raw') || isFieldFilled(state, 'goal_calibrated');
     const hasSkill = isFieldFilled(state, 'skill_stage');
-    const hasLearner = isFieldFilled(state, 'learner_type') || isFieldFilled(state, 'vark_primary');
+    const hasLearner = isFieldFilled(state, 'learner_type') && isFieldFilled(state, 'vark_primary');
     const hasTime = isFieldFilled(state, 'time_per_week_mins') || isFieldFilled(state, 'time_barrier');
     const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
 
