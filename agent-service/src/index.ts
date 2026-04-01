@@ -130,6 +130,10 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
             console.log('🔄 [Backend] Received raw IntakeResponse. Converting to LearnerDossier...');
             const { buildLearnerDossierFromIntakeResponse } = await import('./utils/dossier-builder');
             dossier = buildLearnerDossierFromIntakeResponse(inputData);
+        } else if (inputData.fields || req.body.intakeState) {
+            console.log('🔄 [Backend] Received IntakeState. Converting to LearnerDossier...');
+            const { buildLearnerDossier } = await import('./utils/dossier-builder');
+            dossier = buildLearnerDossier(req.body.intakeState || inputData);
         } else {
             dossier = inputData;
         }
