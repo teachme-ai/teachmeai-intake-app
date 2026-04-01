@@ -34,7 +34,12 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto w-screen h-screen">
+        <div className="fixed inset-0 z-[9999] bg-slate-50 overflow-y-auto w-screen h-screen select-none print:hidden">
+            <style jsx global>{`
+                @media print {
+                    body { display: none !important; }
+                }
+            `}</style>
             {/* Edge-to-Edge Promo Header */}
             <div className="w-full bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white shadow-xl">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6 flex items-center justify-between">
