@@ -14,7 +14,17 @@ export default function VisualInsights({ data, research }: VisualInsightsProps) 
     const marketScore = research?.marketMaturityScore || 0;
 
     // 1. Radar Chart Calculation (VARK)
-    const vark = data.varkPreferences || { visual: 3, audio: 3, readingWriting: 3, kinesthetic: 3 };
+    // The new interview state uses vark_primary instead of the legacy 4-value scale
+    const vPrimary = data.vark_primary?.value || 'visual';
+    const vRanked: string[] = Array.isArray(data.vark_ranked?.value) ? data.vark_ranked.value : [];
+    
+    // Auto-balance the radar if we only know their primary
+    const vark = { 
+        visual: vPrimary === 'visual' ? 5 : (vRanked.includes('visual') ? 4 : 2), 
+        audio: vPrimary === 'audio' ? 5 : (vRanked.includes('audio') ? 4 : 2), 
+        readingWriting: (vPrimary === 'read_write' || vPrimary === 'readingWriting') ? 5 : (vRanked.includes('read_write') ? 4 : 2), 
+        kinesthetic: vPrimary === 'kinesthetic' ? 5 : (vRanked.includes('kinesthetic') ? 4 : 2) 
+    };
     const maxVal = 5;
     const center = 100;
     const radius = 70;
@@ -22,7 +32,7 @@ export default function VisualInsights({ data, research }: VisualInsightsProps) 
     const points = [
         { label: 'Visual', val: vark.visual, x: center, y: center - (vark.visual / maxVal) * radius },
         { label: 'Audio', val: vark.audio, x: center + (vark.audio / maxVal) * radius, y: center },
-        { label: 'Read/Write', val: vark.readingWriting || vark.reading, x: center, y: center + (vark.readingWriting / maxVal) * radius },
+        { label: 'Read/Write', val: vark.readingWriting, x: center, y: center + (vark.readingWriting / maxVal) * radius },
         { label: 'Kinesthetic', val: vark.kinesthetic, x: center - (vark.kinesthetic / maxVal) * radius, y: center },
     ];
 
@@ -30,9 +40,9 @@ export default function VisualInsights({ data, research }: VisualInsightsProps) 
 
     // 2. Mindset Gauges
     const gauges = [
-        { label: 'Confidence', val: data.goalSettingConfidence || 3, icon: <Target className="w-4 h-4" />, color: 'blue' },
-        { label: 'Resilience', val: data.resilienceLevel || 3, icon: <Shield className="w-4 h-4" />, color: 'emerald' },
-        { label: 'AI Comfort', val: data.aiToolsConfidence || 3, icon: <Zap className="w-4 h-4" />, color: 'amber' },
+        { label: 'Goal Setting', val: data.srl_goal_setting?.value || 3, icon: <Target className="w-4 h-4" />, color: 'blue' },
+        { label: 'Resilience', val: data.resilience?.value || 3, icon: <Shield className="w-4 h-4" />, color: 'emerald' },
+        { label: 'Tech Comfort', val: data.tech_confidence?.value || 3, icon: <Zap className="w-4 h-4" />, color: 'amber' },
     ];
 
     return (
@@ -101,7 +111,7 @@ export default function VisualInsights({ data, research }: VisualInsightsProps) 
                         <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold text-nowrap">Audio</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-indigo-600 font-bold text-sm sm:text-base">{vark.readingWriting || vark.reading}/5</div>
+                        <div className="text-indigo-600 font-bold text-sm sm:text-base">{vark.readingWriting}/5</div>
                         <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold text-nowrap">R/W</div>
                     </div>
                     <div className="text-center">
@@ -119,10 +129,10 @@ export default function VisualInsights({ data, research }: VisualInsightsProps) 
                 >
                     <Brain className="absolute -bottom-4 -right-4 w-24 h-24 opacity-10 rotate-12 transition-transform group-hover:scale-110 duration-500" />
                     <h4 className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Archetype</h4>
-                    <p className="text-xl sm:text-2xl font-black capitalize mb-2">{data.learnerType || 'Dynamic Learner'}</p>
+                    <p className="text-xl sm:text-2xl font-black capitalize mb-2">{data.learner_type?.value || 'Dynamic Learner'}</p>
                     <div className="flex flex-wrap gap-2">
                         <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
-                            {data.skillStage === 1 ? 'Novice' : data.skillStage === 2 ? 'Advanced Beginner' : data.skillStage === 3 ? 'Competent' : data.skillStage === 4 ? 'Proficient' : 'Expert'} Level
+                            {data.skill_stage?.value === 1 ? 'Novice' : data.skill_stage?.value === 2 ? 'Advanced Beginner' : data.skill_stage?.value === 3 ? 'Competent' : data.skill_stage?.value === 4 ? 'Proficient' : data.skill_stage?.value === 5 ? 'Expert' : 'Competent'} Level
                         </div>
                         {marketScore > 0 && (
                             <div className="inline-block px-3 py-1 bg-emerald-400/30 text-emerald-100 border border-emerald-400/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
@@ -131,7 +141,7 @@ export default function VisualInsights({ data, research }: VisualInsightsProps) 
                         )}
                     </div>
                     <p className="text-[11px] sm:text-xs opacity-80 mt-4 leading-relaxed font-medium">
-                        Your {data.learnerType} preference combined with {marketScore > 60 ? 'high community AI adoption' : 'your early mover status'} suggests a {data.learnerType === 'pragmatist' ? 'practical, goal-oriented' : data.learnerType === 'theorist' ? 'conceptual, logical' : 'reflective'} approach.
+                        Your {data.learner_type?.value || 'dynamic'} preference combined with {marketScore > 60 ? 'high community AI adoption' : 'your early mover status'} suggests a {data.learner_type?.value === 'pragmatist' ? 'practical, goal-oriented' : data.learner_type?.value === 'theorist' ? 'conceptual, logical' : 'reflective'} approach.
                     </p>
                 </div>
 
