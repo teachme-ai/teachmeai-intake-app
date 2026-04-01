@@ -396,6 +396,7 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                    </div>
                                                 )}
 
                                                 {/* AI Assessor Notes (Assumptions & Validations) */}
