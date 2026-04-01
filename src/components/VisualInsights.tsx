@@ -46,128 +46,182 @@ export default function VisualInsights({ data, research, isFullscreen = false }:
         { label: 'Tech Comfort', val: data.tech_confidence?.value || 3, icon: <Zap className="w-4 h-4" />, color: 'amber' },
     ];
 
+    // 3. Market Maturity Gauge Calculation
+    const gaugeRadius = 45;
+    const gaugeCircumference = Math.PI * gaugeRadius; // Half circle
+    const gaugeOffset = gaugeCircumference * (1 - marketScore / 100);
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 w-full">
-            {/* VARK Radar Card */}
-            <div
-                className="col-span-1 md:col-span-2 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700"
-            >
-                <div className="absolute top-4 left-6">
-                    <h4 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">Learning Identity</h4>
-                    <p className="text-lg sm:text-xl font-extrabold text-slate-800">Your VARK Profile</p>
+        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-1000">
+            {/* Top Row: VARK Radar & Market Maturity Gauge */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                {/* VARK Radar Card */}
+                <div
+                    className="md:col-span-3 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-center relative overflow-hidden h-[340px]"
+                >
+                    <div className="absolute top-6 left-8">
+                        <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Dimensions</h4>
+                        <p className="text-xl font-black text-slate-900">Learning Identity</p>
+                    </div>
+
+                    <svg width="240" height="240" viewBox="0 0 200 200" className="mt-6 drop-shadow-xl overflow-visible">
+                        {/* Grid Circles */}
+                        {[0.2, 0.4, 0.6, 0.8, 1].map((step) => (
+                            <circle
+                                key={step}
+                                cx={center}
+                                cy={center}
+                                r={radius * step}
+                                fill="none"
+                                stroke="#f1f5f9"
+                                strokeWidth="1"
+                                strokeDasharray={step === 1 ? "0" : "4 4"}
+                            />
+                        ))}
+
+                        {/* Data Polygon */}
+                        <path
+                            d={radarPath}
+                            fill="url(#radarGradient)"
+                            stroke="#4f46e5"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                            className="transition-all duration-1000 ease-in-out"
+                        />
+                        <defs>
+                            <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.4" />
+                                <stop offset="100%" stopColor="#9333ea" stopOpacity="0.2" />
+                            </linearGradient>
+                        </defs>
+
+                        {/* Points & Labels */}
+                        {points.map((p, i) => (
+                            <g key={i}>
+                                <circle cx={p.x} cy={p.y} r="5" fill="#4f46e5" className="filter drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                                <text
+                                    x={p.x}
+                                    y={i === 0 ? p.y - 14 : i === 2 ? p.y + 20 : p.y + 4}
+                                    textAnchor={i === 1 ? 'start' : i === 3 ? 'end' : 'middle'}
+                                    className="text-[10px] font-black fill-slate-400 uppercase tracking-widest"
+                                    dx={i === 1 ? 10 : i === 3 ? -10 : 0}
+                                >
+                                    {p.label}
+                                </text>
+                            </g>
+                        ))}
+                    </svg>
+
+                    <div className="absolute bottom-6 inset-x-8 flex justify-between px-4 border-t border-slate-100 pt-4">
+                        {Object.entries(vark).map(([key, val]) => (
+                            <div key={key} className="text-center">
+                                <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">{key.substring(0, 3)}</p>
+                                <p className="text-sm font-black text-indigo-600">{val}/5</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
-                <svg width="240" height="240" viewBox="0 0 200 200" className="mt-8 drop-shadow-sm">
-                    {/* Grid Circles */}
-                    {[0.2, 0.4, 0.6, 0.8, 1].map((step) => (
-                        <circle
-                            key={step}
-                            cx={center}
-                            cy={center}
-                            r={radius * step}
-                            fill="none"
-                            stroke="#e2e8f0"
-                            strokeDasharray="4 4"
-                        />
-                    ))}
-
-                    {/* Axes */}
-                    <line x1={center} y1={center - radius} x2={center} y2={center + radius} stroke="#f1f5f9" />
-                    <line x1={center - radius} y1={center} x2={center + radius} y2={center} stroke="#f1f5f9" />
-
-                    {/* Data Polygon */}
-                    <path
-                        d={radarPath}
-                        fill="rgba(79, 70, 229, 0.15)"
-                        stroke="#4f46e5"
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                        className="transition-all duration-1000 ease-in-out"
-                    />
-
-                    {/* Points & Labels */}
-                    {points.map((p, i) => (
-                        <g key={i}>
-                            <circle cx={p.x} cy={p.y} r="4" fill="#4f46e5" className="transition-all duration-1000 ease-in-out" />
-                            <text
-                                x={p.x}
-                                y={i === 0 ? p.y - 12 : i === 2 ? p.y + 18 : p.y + 4}
-                                textAnchor={i === 1 ? 'start' : i === 3 ? 'end' : 'middle'}
-                                className="text-[10px] font-bold fill-slate-500 uppercase tracking-tighter"
-                                dx={i === 1 ? 8 : i === 3 ? -8 : 0}
-                            >
-                                {p.label}
-                            </text>
-                        </g>
-                    ))}
-                </svg>
-
-                <div className="mt-4 grid grid-cols-4 gap-4 w-full px-4">
-                    <div className="text-center">
-                        <div className="text-indigo-600 font-bold text-sm sm:text-base">{vark.visual}/5</div>
-                        <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold text-nowrap">Visual</div>
+                {/* Market Maturity Gauge Card */}
+                <div className="md:col-span-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-between h-[340px] relative overflow-hidden">
+                    <div className="w-full">
+                        <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1 text-center">Market Pulse</h4>
+                        <p className="text-lg font-black text-slate-900 text-center">AI Maturity Arc</p>
                     </div>
-                    <div className="text-center">
-                        <div className="text-indigo-600 font-bold text-sm sm:text-base">{vark.audio}/5</div>
-                        <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold text-nowrap">Audio</div>
+
+                    <div className="relative flex items-center justify-center mt-4">
+                        <svg width="180" height="100" viewBox="0 0 100 60" className="overflow-visible">
+                            {/* Background Arc */}
+                            <path
+                                d="M 5 55 A 45 45 0 0 1 95 55"
+                                fill="none"
+                                stroke="#f1f5f9"
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                            />
+                            {/* Percentage Arc */}
+                            <path
+                                d="M 5 55 A 45 45 0 0 1 95 55"
+                                fill="none"
+                                stroke="url(#gaugeGradient)"
+                                strokeWidth="10"
+                                strokeLinecap="round"
+                                strokeDasharray={gaugeCircumference}
+                                strokeDashoffset={gaugeOffset}
+                                className="transition-all duration-1000 ease-out delay-300"
+                            />
+                            <defs>
+                                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="#10b981" />
+                                    <stop offset="100%" stopColor="#3b82f6" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div className="absolute top-[50px] text-center">
+                            <span className="text-4xl font-black text-slate-900 tracking-tighter">{marketScore}%</span>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Community Use</p>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <div className="text-indigo-600 font-bold text-sm sm:text-base">{vark.readingWriting}/5</div>
-                        <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold text-nowrap">R/W</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-indigo-600 font-bold text-sm sm:text-base">{vark.kinesthetic}/5</div>
-                        <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold text-nowrap">Kinest.</div>
+
+                    <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 w-full">
+                        <p className="text-emerald-950 text-xs leading-relaxed font-medium text-center italic">
+                            Your industry shows <span className="font-bold underline">{marketScore > 50 ? 'high adoption' : 'emerging growth'}</span> in AI solutions for {research?.topPriorities?.[0]?.name || 'this role'}.
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {/* Side Gauges & Archetype */}
-            <div className="flex flex-col gap-4">
+            {/* Bottom Row: Archetype & Mindset */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 {/* Archetype Card */}
                 <div
-                    className="group bg-gradient-to-br from-indigo-600 to-purple-700 text-white rounded-3xl p-6 shadow-lg relative overflow-hidden flex-1 animate-in fade-in slide-in-from-right-4 duration-700"
+                    className="md:col-span-3 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white rounded-3xl p-8 shadow-xl relative overflow-hidden min-h-[200px]"
                 >
-                    <Brain className="absolute -bottom-4 -right-4 w-24 h-24 opacity-10 rotate-12 transition-transform group-hover:scale-110 duration-500" />
-                    <h4 className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Archetype</h4>
-                    <p className="text-xl sm:text-2xl font-black capitalize mb-2">{data.learner_type?.value || 'Dynamic Learner'}</p>
-                    <div className="flex flex-wrap gap-2">
-                        <div className="inline-block px-3 py-1 bg-white/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
-                            {data.skill_stage?.value === 1 ? 'Novice' : data.skill_stage?.value === 2 ? 'Advanced Beginner' : data.skill_stage?.value === 3 ? 'Competent' : data.skill_stage?.value === 4 ? 'Proficient' : data.skill_stage?.value === 5 ? 'Expert' : 'Competent'} Level
-                        </div>
-                        {marketScore > 0 && (
-                            <div className="inline-block px-3 py-1 bg-emerald-400/30 text-emerald-100 border border-emerald-400/20 rounded-full text-[9px] sm:text-[10px] font-bold uppercase backdrop-blur-md">
-                                {marketScore}% AI Maturity
+                    <Brain className="absolute -bottom-8 -right-8 w-40 h-40 opacity-10 rotate-12" />
+                    <div className="relative z-10">
+                        <h4 className="text-[10px] font-black opacity-60 uppercase tracking-[0.3em] mb-2">Primary Archetype</h4>
+                        <div className="flex items-end gap-3 mb-4">
+                            <p className="text-4xl font-black capitalize tracking-tight">{data.learner_type?.value || 'Dynamic'}</p>
+                            <div className="bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-1 backdrop-blur-md">
+                                {data.skill_stage?.value === 1 ? 'Novice' : data.skill_stage?.value === 5 ? 'Expert' : 'Practitioner'}
                             </div>
-                        )}
+                        </div>
+                        <p className="text-indigo-100 text-sm leading-relaxed max-w-md font-medium">
+                            Synthesizing your <span className="text-white font-bold">{vPrimary}</span> preference with a <span className="text-white font-bold">{data.learner_type?.value}</span> mindset... 
+                            this plan prioritizes {vPrimary === 'kinesthetic' ? 'hands-on labs' : 'deep conceptual frameworks'} aligned with your goal.
+                        </p>
                     </div>
-                    <p className="text-[11px] sm:text-xs opacity-80 mt-4 leading-relaxed font-medium">
-                        Your {data.learner_type?.value || 'dynamic'} preference combined with {marketScore > 60 ? 'high community AI adoption' : 'your early mover status'} suggests a {data.learner_type?.value === 'pragmatist' ? 'practical, goal-oriented' : data.learner_type?.value === 'theorist' ? 'conceptual, logical' : 'reflective'} approach.
-                    </p>
                 </div>
 
                 {/* Mindset Mini Gauges */}
-                <div className="bg-white/80 border border-slate-200 rounded-3xl p-6 shadow-sm grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm grid grid-cols-3 gap-4">
                     {gauges.map((g, i) => (
-                        <div key={i} className="flex flex-col items-center">
-                            <div className="relative w-12 h-12 flex items-center justify-center mb-2">
-                                <svg className="w-full h-full transform -rotate-90">
-                                    <circle cx="24" cy="24" r="20" fill="none" stroke="#f1f5f9" strokeWidth="4" />
+                        <div key={i} className="flex flex-col items-center justify-center">
+                            <div className="relative w-16 h-16 flex items-center justify-center mb-3">
+                                <svg className="w-full h-full transform -rotate-90 overflow-visible">
+                                    <circle cx="32" cy="32" r="28" fill="none" stroke="#f1f5f9" strokeWidth="6" />
                                     <circle
-                                        cx="24" cy="24" r="20" fill="none"
+                                        cx="32" cy="32" r="28" fill="none"
                                         stroke={g.color === 'blue' ? '#3b82f6' : g.color === 'emerald' ? '#10b981' : '#f59e0b'}
-                                        strokeWidth="4"
-                                        strokeDasharray={2 * Math.PI * 20}
-                                        strokeDashoffset={2 * Math.PI * 20 * (1 - g.val / 5)}
-                                        className="transition-all duration-1000 ease-out delay-500"
+                                        strokeWidth="8"
+                                        strokeLinecap="round"
+                                        strokeDasharray={2 * Math.PI * 28}
+                                        strokeDashoffset={2 * Math.PI * 28 * (1 - g.val / 5)}
+                                        className="transition-all duration-[1500ms] ease-out"
                                     />
+                                    <filter id="glow">
+                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                        <feMerge>
+                                            <feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
                                 </svg>
-                                <div className="absolute flex items-center justify-center text-slate-600">
+                                <div className="absolute flex items-center justify-center text-slate-400 group-hover:text-indigo-600 transition-colors">
                                     {g.icon}
                                 </div>
                             </div>
-                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-tighter text-nowrap">{g.label}</span>
-                            <span className="text-xs font-black text-slate-800">{g.val}/5</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">{g.label.split(' ')[0]}</span>
+                            <span className="text-sm font-black text-slate-900 mt-1">{g.val}/5</span>
                         </div>
                     ))}
                 </div>
