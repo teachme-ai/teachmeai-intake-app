@@ -4,6 +4,7 @@ import { PsychographicProfileSchema, StrategySchema, DeepResearchOutputSchema } 
 import { DEFAULT_MODEL, REPORT_MODEL, ai } from '../genkit';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
+import { costTracker } from '../utils/costTracker';
 
 export const StrategistInputSchema = z.object({
     profile: PsychographicProfileSchema,
@@ -85,12 +86,20 @@ ${input.conversationTranscript && input.conversationTranscript.length > 0
     : 'No transcript available.'}
 `;
 
-        const { output } = await ai.generate({
+        const response = await ai.generate({
             model: REPORT_MODEL,
             prompt: analysisPrompt,
             output: { schema: StrategySchema },
         });
 
+        const { output, usage } = response;
+        if (usage) {
+            costTracker.addCall('Strategist', 'gemini-2.5-pro', {
+                promptTokens: usage.inputTokens || 0,
+                completionTokens: usage.outputTokens || 0,
+                totalTokens: usage.totalTokens || 0
+            });
+        }
 
         if (!output) {
             throw new Error("Strategist Agent failed to generate output");

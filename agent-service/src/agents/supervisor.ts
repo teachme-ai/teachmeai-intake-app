@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ai } from '../genkit';
 import { withLLMResilience } from '../utils/llm-resilience';
 import { logger } from '../utils/logger';
+import { trimTranscript } from '../utils/context';
 
 export const IMPACTAnalysisSchema = z.object({
     Identify: z.string(),
@@ -39,6 +40,10 @@ export const supervisorFlow = ai.defineFlow(
         const profile = dossier.psychographicProfile!;
         console.log(`  ├─ ✅ Phase 1/6: Profile derived (rule-based, 0ms)`);
         log.info({ event: 'supervisor.phase1', msg: 'Profile (rule-based) already derived' });
+
+        // Trim context to protect token guardrails (max ~2000 tokens for context)
+        const trimmedTranscript = trimTranscript(dossier.conversationTranscript || [], 2000);
+        log.info({ event: 'supervisor.trim', original: dossier.conversationTranscript?.length || 0, trimmed: trimmedTranscript.length });
 
         // Phase 2: Deep Research
         console.log(`  ├─ ⭐ Phase 2/6: Deep Research starting...`);
@@ -79,6 +84,7 @@ export const supervisorFlow = ai.defineFlow(
             motivation_type: dossier.motivation.type,
             frustrations: dossier.constraints.frustrations,
             benefits: dossier.context.benefits,
+            conversationTranscript: trimmedTranscript,
         }), { component: 'Strategist', sessionId: dossier.sessionId });
         console.log(`  ├─ ✅ Phase 3/6: Strategist complete`);
 
@@ -157,6 +163,7 @@ export const supervisorFlow = ai.defineFlow(
                             decisionStyle: profile.decisionStyle,
                             learnerType: dossier.preferences.learnerType,
                             currentTools: dossier.constraints.currentTools,
+                            conversationTranscript: trimmedTranscript,
                         }
                     ), { component: 'Personalizer', sessionId: dossier.sessionId });
                     return result as PersonalizationResult;

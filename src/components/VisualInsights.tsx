@@ -6,9 +6,10 @@ import { Shield, Target, Zap, Brain } from 'lucide-react';
 interface VisualInsightsProps {
     data: any; // EnrichedIntakeSchema
     research?: any; // DeepResearchOutput
+    isFullscreen?: boolean;
 }
 
-export default function VisualInsights({ data, research }: VisualInsightsProps) {
+export default function VisualInsights({ data, research, isFullscreen = false }: VisualInsightsProps) {
     if (!data) return null;
 
     const marketScore = research?.marketMaturityScore || 0;

@@ -5,6 +5,7 @@ import { supervisorFlow } from './agents/supervisor';
 import { quizGuideFlow } from './agents/guide';
 import { saveLeadToSheet } from './intake/leads';
 import { persistIntakeState } from './intake/persist';
+import { costTracker } from './utils/costTracker';
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,7 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
         console.log(`║  🟢 TRANSACTION START — quizGuide [${txnId}]`);
         console.log(`║  ⏰ ${new Date().toISOString()}`);
         console.log(`╚══════════════════════════════════════════════════════════════╝`);
+        costTracker.reset();
 
         // Payload Contract Log (keys + flags, no PII)
         const keys = Object.keys(req.body);
@@ -93,6 +95,7 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             hasAnalysis: !!result.analysis,
             analysisKeys: result.analysis ? Object.keys(result.analysis) : []
         }));
+        costTracker.printLogSummary(txnId);
         console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
         console.log(`║  🏁 TRANSACTION END — quizGuide [${txnId}]`);
         console.log(`║  ⏰ ${new Date().toISOString()}`);
@@ -134,6 +137,8 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
         console.log(`║  🟢 TRANSACTION START — supervisorFlow [${txnId}]`);
         console.log(`║  ⏰ ${new Date().toISOString()}`);
         console.log(`╚══════════════════════════════════════════════════════════════╝`);
+        costTracker.reset();
+        
         if (!req.body || (!req.body.data && !req.body.intakeResponse)) {
             console.error('❌ [Backend] Missing data in request body');
             return res.status(400).send('Missing data in request');
@@ -194,6 +199,9 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
         }
 
         res.json({ result });
+        
+        costTracker.printLogSummary(txnId);
+        
         console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
         console.log(`║  🏁 TRANSACTION END — supervisorFlow [${txnId}]`);
         console.log(`║  ⏰ ${new Date().toISOString()}`);

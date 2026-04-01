@@ -1,6 +1,7 @@
 import { ai, DEFAULT_MODEL } from '../genkit';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
+import { costTracker } from '../utils/costTracker';
 
 const ValidatorInputSchema = z.object({
     act: z.string(),
@@ -70,11 +71,20 @@ OUTPUT (JSON only):
   "corrections": [{ "field": "...", "issue": "...", "suggestion": "..." }]
 }
 `;
-        const { output } = await ai.generate({
+        const response = await ai.generate({
             model: DEFAULT_MODEL,
             prompt,
             output: { schema: ValidatorOutputSchema },
         });
+
+        const { output, usage } = response;
+        if (usage) {
+            costTracker.addCall('Validator', 'gemini-2.5-flash', {
+                promptTokens: usage.inputTokens || 0,
+                completionTokens: usage.outputTokens || 0,
+                totalTokens: usage.totalTokens || 0
+            });
+        }
 
         if (!output) {
             throw new Error("Validator Agent failed to generate output");

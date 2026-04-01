@@ -4,6 +4,7 @@ import { StrategySchema, TacticsSchema } from '../types';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
 import { DEFAULT_MODEL, ai } from '../genkit';
+import { costTracker } from '../utils/costTracker';
 
 const TacticianInput = z.object({
     strategy: StrategySchema,
@@ -45,12 +46,21 @@ export const tacticianFlow = ai.defineFlow(
             motivationType: input.motivationType,
         });
 
-        const { output } = await ai.generate({
+        const response = await ai.generate({
             model: DEFAULT_MODEL,
             prompt: prompt,
             output: { schema: TacticsSchema },
         });
 
+
+        const { output, usage } = response;
+        if (usage) {
+            costTracker.addCall('Tactician', 'gemini-2.5-flash', {
+                promptTokens: usage.inputTokens || 0,
+                completionTokens: usage.outputTokens || 0,
+                totalTokens: usage.totalTokens || 0
+            });
+        }
 
         if (!output) {
             throw new Error("Tactician Agent failed to generate output");

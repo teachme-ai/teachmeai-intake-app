@@ -7,6 +7,7 @@ import ExpandableSection from './ExpandableSection';
 import ResultsHeader from './ResultsHeader';
 import ConsultationCTA from './ConsultationCTA';
 import VisualInsights from './VisualInsights';
+import FullPageReport from './FullPageReport';
 
 interface InterviewChatProps {
     initialState: IntakeState;
@@ -215,9 +216,9 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
     }, [state.isComplete, analysis, isAnalyzing, error, triggerFinalAnalysis]);
 
     if (state.isComplete && (analysis || error)) {
-        return (
-            <div className="flex flex-col items-center justify-center p-8 text-left animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto">
-                {isAnalyzing ? (
+        if (isAnalyzing) {
+            return (
+                <div className="flex flex-col items-center justify-center p-8 text-left animate-in fade-in zoom-in duration-500 max-w-4xl mx-auto h-[600px]">
                     <div className="flex flex-col items-center gap-4 py-8">
                         <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
                         <div className="text-center">
@@ -225,222 +226,12 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                             <p className="text-sm text-gray-500">Profiler, Strategist, and Tactician are building your plan.</p>
                         </div>
                     </div>
-                ) : analysis ? (
-                    <div className="space-y-6 w-full">
-                        {/* Results Header with Expand/Collapse Controls */}
-                        <ResultsHeader
-                            userName={state.fields.name?.value || 'there'}
-                            userRole={state.fields.role_raw?.value || 'Professional'}
-                            onExpandAll={() => toggleAllSections(true)}
-                            onCollapseAll={() => toggleAllSections(false)}
-                            allExpanded={isAllExpanded}
-                        />
-
-                        {/* Visual Diagnostic Insights */}
-                        <VisualInsights
-                            data={enrichedData}
-                            research={analysis?.research}
-                        />
-
-                        {/* 1. Strategic Overview */}
-                        <ExpandableSection
-                            title="🎯 Your Targeted AI Strategy"
-                            icon={<Target className="w-5 h-5 text-blue-600" />}
-                            isExpanded={expandedSections.strategy}
-                            onToggle={() => setExpandedSections(prev => ({ ...prev, strategy: !prev.strategy }))}
-                        >
-                            {analysis.personalizedSummary && (
-                                <div className="mb-4 bg-blue-50/50 p-5 rounded-2xl border border-blue-100 shadow-sm">
-                                    <p className="text-slate-800 leading-relaxed font-medium">{analysis.personalizedSummary}</p>
-                                </div>
-                            )}
-                            <p className="text-gray-700 leading-relaxed">{analysis.Identify}</p>
-                        </ExpandableSection>
-
-                        {/* 2. AI Opportunities (Full List) */}
-                        <ExpandableSection
-                            title="💡 AI Opportunities for Your Role"
-                            icon={<Lightbulb className="w-5 h-5 text-yellow-600" />}
-                            isExpanded={expandedSections.opportunities}
-                            onToggle={() => setExpandedSections(prev => ({ ...prev, opportunities: !prev.opportunities }))}
-                        >
-                            {analysis.research?.aiOpportunityMap && analysis.research.aiOpportunityMap.length > 0 ? (
-                                <ul className="space-y-4">
-                                    {analysis.research.aiOpportunityMap.map((item: any, i: number) => (
-                                        <li key={i} className="flex gap-3">
-                                            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
-                                                <span className="text-xs font-bold text-blue-700">{i + 1}</span>
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-gray-800">{item.opportunity}</p>
-                                                <p className="text-gray-600 text-sm mt-1">{item.impact}</p>
-                                                {item.tools && item.tools.length > 0 && (
-                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                        {item.tools.map((tool: string, ti: number) => (
-                                                            <span key={ti} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium">
-                                                                {tool}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-gray-500 italic">No AI opportunities data available.</p>
-                            )}
-                        </ExpandableSection>
-
-                        {/* 3. IMPACT Action Plan (All Steps, Full Text) */}
-                        <ExpandableSection
-                            title="🚀 Your IMPACT Action Plan"
-                            icon={<TrendingUp className="w-5 h-5 text-indigo-600" />}
-                            isExpanded={expandedSections.plan}
-                            onToggle={() => setExpandedSections(prev => ({ ...prev, plan: !prev.plan }))}
-                        >
-                            <div className="space-y-6">
-                                {[
-                                    { step: 'Identify', content: analysis.Identify, icon: '🔍', color: 'blue' },
-                                    { step: 'Motivate', content: analysis.Motivate, icon: '🔥', color: 'orange' },
-                                    { step: 'Plan', content: analysis.Plan, icon: '📅', color: 'purple' },
-                                    { step: 'Act', content: analysis.Act, icon: '⚡', color: 'yellow' },
-                                    { step: 'Check', content: analysis.Check, icon: '✅', color: 'green' },
-                                    { step: 'Transform', content: analysis.Transform, icon: '🚀', color: 'pink' }
-                                ].map((item, i) => (
-                                    <div key={i} className={`bg-${item.color}-50 border-l-4 border-${item.color}-500 rounded-r-xl p-4`}>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-2xl">{item.icon}</span>
-                                            <h4 className="font-bold text-gray-800 uppercase text-sm tracking-wide">{item.step}</h4>
-                                        </div>
-                                        <p className="text-gray-700 leading-relaxed">{item.content}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </ExpandableSection>
-
-                        {/* 4. Top Priorities */}
-                        <ExpandableSection
-                            title="✨ Your Top Priorities & Quick Wins"
-                            icon={<Wrench className="w-5 h-5 text-emerald-600" />}
-                            isExpanded={expandedSections.priorities}
-                            onToggle={() => setExpandedSections(prev => ({ ...prev, priorities: !prev.priorities }))}
-                        >
-                            {analysis.research?.topPriorities && analysis.research.topPriorities.length > 0 ? (
-                                <ul className="space-y-4">
-                                    {analysis.research.topPriorities.map((item: any, i: number) => (
-                                        <li key={i} className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                                            <div className="flex gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-emerald-900">{item.name}</p>
-                                                    <p className="text-emerald-700 text-sm mt-1"><strong>Quick Win:</strong> {item.quickWin}</p>
-                                                    {item.impact && <p className="text-emerald-600 text-sm mt-1"><em>{item.impact}</em></p>}
-                                                </div>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-gray-500 italic">No priority data available.</p>
-                            )}
-                        </ExpandableSection>
-
-                        {/* 5. Learner Profile */}
-                        <ExpandableSection
-                            title="👤 Your Learning Style & Psychological Profile"
-                            icon={<User className="w-5 h-5 text-purple-600" />}
-                            isExpanded={expandedSections.profile}
-                            onToggle={() => setExpandedSections(prev => ({ ...prev, profile: !prev.profile }))}
-                        >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {(() => {
-                                    try {
-                                        const profile = typeof analysis.learnerProfile === 'string'
-                                            ? JSON.parse(analysis.learnerProfile)
-                                            : analysis.learnerProfile;
-
-                                        return (
-                                            <>
-                                                <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                                                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Motivation Type</p>
-                                                    <p className="text-purple-900 font-bold text-lg">{profile?.motivationType || 'Unified'}</p>
-                                                </div>
-                                                <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                                                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">SRL Readiness</p>
-                                                    <p className="text-purple-900 font-bold text-lg">{profile?.srlLevel || 'Moderate'}</p>
-                                                </div>
-                                                <div className="col-span-1 sm:col-span-2 bg-purple-50 p-4 rounded-xl border border-purple-200">
-                                                    <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-2">Psychological Capital</p>
-                                                    <p className="text-purple-900 font-medium italic text-lg">&quot;{profile?.psyCap || 'Ready for transformation.'}&quot;</p>
-                                                </div>
-
-                                                {/* Hyper-Personalized Study Rules */}
-                                                {analysis.studyRules && analysis.studyRules.length > 0 && (
-                                                    <div className="col-span-1 sm:col-span-2 mt-4">
-                                                        <h5 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                                            <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                                            Your AI Mastery Rules
-                                                        </h5>
-                                                        <div className="grid grid-cols-1 gap-3">
-                                                            {analysis.studyRules.map((rule: any, idx: number) => (
-                                                                <div key={idx} className="bg-white border border-slate-100 shadow-sm rounded-2xl p-4 flex gap-3 items-start">
-                                                                    <div className="bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase whitespace-nowrap mt-0.5">
-                                                                        {rule.label}
-                                                                    </div>
-                                                                    <p className="text-slate-700 text-sm font-medium leading-relaxed">
-                                                                        {rule.rule}
-                                                                    </p>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* AI Assessor Notes (Assumptions & Validations) */}
-                                                {(analysis.validationNotes?.length > 0 || analysis.research?.assumptions?.length > 0) && (
-                                                    <div className="col-span-1 sm:col-span-2 mt-4 space-y-3">
-                                                        {analysis.research?.assumptions && analysis.research.assumptions.length > 0 && (
-                                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                                                                <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                                                                    <Brain className="w-4 h-4" /> Profiling Assumptions
-                                                                </h5>
-                                                                <ul className="text-sm text-slate-600 list-disc list-inside space-y-1">
-                                                                    {analysis.research.assumptions.map((note: string, idx: number) => (
-                                                                        <li key={idx}>{note}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                        {analysis.validationNotes && analysis.validationNotes.length > 0 && (
-                                                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                                                                <h5 className="text-xs font-bold text-amber-600 uppercase tracking-wide mb-2 flex items-center gap-2">
-                                                                    <Shield className="w-4 h-4" /> Validation Audits
-                                                                </h5>
-                                                                <ul className="text-sm text-amber-800 list-disc list-inside space-y-1">
-                                                                    {analysis.validationNotes.map((note: string, idx: number) => (
-                                                                        <li key={idx}>{note}</li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </>
-                                        );
-                                    } catch (e) {
-                                        return <p className="text-gray-700">{analysis.learnerProfile}</p>;
-                                    }
-                                })()}
-                            </div>
-                        </ExpandableSection>
-
-                        {/* 6. Consultation CTA */}
-                        <ConsultationCTA />
-                    </div>
-                ) : error ? (
+                </div>
+            )
+        }
+        if (error) {
+            return (
+               <div className="flex flex-col items-center justify-center p-8 text-left max-w-4xl mx-auto h-[600px]">
                     <div className="bg-red-50 border border-red-100 rounded-xl p-6 mt-8 w-full text-center">
                         <p className="text-red-700 font-medium mb-4">{error}</p>
                         <button
@@ -450,9 +241,10 @@ export default function InterviewChat({ initialState, leadId }: InterviewChatPro
                             Retry Analysis
                         </button>
                     </div>
-                ) : null}
-            </div>
-        );
+                </div>
+            )
+        }
+        return <FullPageReport data={enrichedData} analysis={analysis} />;
     }
 
 

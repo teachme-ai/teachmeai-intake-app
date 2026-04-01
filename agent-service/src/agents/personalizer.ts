@@ -1,6 +1,7 @@
 import { ai, REPORT_MODEL } from '../genkit';
 import { logger } from '../utils/logger';
 import { z } from 'zod';
+import { costTracker } from '../utils/costTracker';
 
 const PersonalizerInputSchema = z.object({
     Identify: z.string(),
@@ -74,11 +75,20 @@ ${input.conversationTranscript && input.conversationTranscript.length > 0
     ? input.conversationTranscript.map(t => "Q: " + t.agent + "\\nA: " + t.user).join("\\n\\n") 
     : 'No transcript available.'}
 `;
-        const { output } = await ai.generate({
+        const response = await ai.generate({
             model: REPORT_MODEL,
             prompt,
             output: { schema: PersonalizerOutputSchema },
         });
+
+        const { output, usage } = response;
+        if (usage) {
+            costTracker.addCall('Personalizer', 'gemini-2.5-pro', {
+                promptTokens: usage.inputTokens || 0,
+                completionTokens: usage.outputTokens || 0,
+                totalTokens: usage.totalTokens || 0
+            });
+        }
 
         if (!output) {
             throw new Error("Personalizer Agent failed to generate output");
