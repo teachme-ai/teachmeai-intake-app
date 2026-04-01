@@ -26,8 +26,12 @@ app.get('/debug/logs', (req: Request, res: Response) => {
 
 // Expose the quiz guide flow
 app.post('/quizGuide', async (req: Request, res: Response) => {
+    const txnId = `QG-${Date.now()}`;
     try {
-        console.log('🚀 [Backend] Received request for quizGuide');
+        console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
+        console.log(`║  🟢 TRANSACTION START — quizGuide [${txnId}]`);
+        console.log(`║  ⏰ ${new Date().toISOString()}`);
+        console.log(`╚══════════════════════════════════════════════════════════════╝`);
 
         // Payload Contract Log (keys + flags, no PII)
         const keys = Object.keys(req.body);
@@ -62,12 +66,18 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
         // which makes the frontend think the request failed and go into a retry loop.
         // The frontend will explicitly call /api/submit-chat-intake -> /supervisorFlow next.
         if (result.state.isComplete && result.state.fields.email?.value) {
+            console.log(`\n┌──────────────────────────────────────────────────────────────┐`);
+            console.log(`│  📊 PERSISTENCE START — quizGuide state [${txnId}]`);
+            console.log(`└──────────────────────────────────────────────────────────────┘`);
             console.log('🎯 [Backend] [LOG-SEARCH-ME] Intake complete for:', result.state.sessionId);
             
             try {
                 // Persist just the state. The final analysis will be persisted when /supervisorFlow is called.
                 await persistIntakeState(result.state, undefined);
                 console.log('💾 [Backend] [LOG-SEARCH-ME] FINAL state persisted from quizGuide wrap-up');
+                console.log(`┌──────────────────────────────────────────────────────────────┐`);
+                console.log(`│  ✅ PERSISTENCE END — quizGuide state [${txnId}]`);
+                console.log(`└──────────────────────────────────────────────────────────────┘`);
             } catch (err: any) {
                 console.error('❌ [Backend] [LOG-SEARCH-ME] Failed to persist state during wrap-up:', err);
             }
@@ -83,6 +93,10 @@ app.post('/quizGuide', async (req: Request, res: Response) => {
             hasAnalysis: !!result.analysis,
             analysisKeys: result.analysis ? Object.keys(result.analysis) : []
         }));
+        console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
+        console.log(`║  🏁 TRANSACTION END — quizGuide [${txnId}]`);
+        console.log(`║  ⏰ ${new Date().toISOString()}`);
+        console.log(`╚══════════════════════════════════════════════════════════════╝\n`);
     } catch (error: any) {
         console.error('💥 [Backend] Quiz Error:', error);
         const msg = error instanceof Error ? error.message : 'Unknown Quiz Error';
@@ -114,8 +128,12 @@ app.post('/handoff', async (req: Request, res: Response) => {
 
 // Expose the flow via Express
 app.post('/supervisorFlow', async (req: Request, res: Response) => {
+    const txnId = `SF-${Date.now()}`;
     try {
-        console.log('🚀 [Backend] Received request for supervisorFlow');
+        console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
+        console.log(`║  🟢 TRANSACTION START — supervisorFlow [${txnId}]`);
+        console.log(`║  ⏰ ${new Date().toISOString()}`);
+        console.log(`╚══════════════════════════════════════════════════════════════╝`);
         if (!req.body || (!req.body.data && !req.body.intakeResponse)) {
             console.error('❌ [Backend] Missing data in request body');
             return res.status(400).send('Missing data in request');
@@ -138,14 +156,20 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
             dossier = inputData;
         }
 
-        console.log('🧠 [Backend] Starting AI Agents with Dossier...');
+        console.log(`\n┌──────────────────────────────────────────────────────────────┐`);
+        console.log(`│  🧠 AI PIPELINE START — 6-phase supervisor [${txnId}]`);
+        console.log(`└──────────────────────────────────────────────────────────────┘`);
         const result = await supervisorFlow(dossier);
-        console.log('✅ [Backend] AI Agents finished successfully');
+        console.log(`\n┌──────────────────────────────────────────────────────────────┐`);
+        console.log(`│  ✅ AI PIPELINE END — all agents complete [${txnId}]`);
+        console.log(`└──────────────────────────────────────────────────────────────┘`);
 
         // PERSIST the results if a sessionId is provided
         const sessionId = req.body.sessionId || dossier.sessionId || (inputData as any).sessionId;
         if (sessionId) {
-            console.log(`💾 [Backend] Persisting analysis for session: ${sessionId}`);
+            console.log(`\n┌──────────────────────────────────────────────────────────────┐`);
+            console.log(`│  📊 PERSISTENCE START — analysis + state [${txnId}]`);
+            console.log(`└──────────────────────────────────────────────────────────────┘`);
 
             let intakeState = req.body.intakeState;
             if (!intakeState) {
@@ -164,9 +188,16 @@ app.post('/supervisorFlow', async (req: Request, res: Response) => {
                 };
             }
             await persistIntakeState(intakeState, result);
+            console.log(`┌──────────────────────────────────────────────────────────────┐`);
+            console.log(`│  ✅ PERSISTENCE END — sheet updated [${txnId}]`);
+            console.log(`└──────────────────────────────────────────────────────────────┘`);
         }
 
         res.json({ result });
+        console.log(`\n╔══════════════════════════════════════════════════════════════╗`);
+        console.log(`║  🏁 TRANSACTION END — supervisorFlow [${txnId}]`);
+        console.log(`║  ⏰ ${new Date().toISOString()}`);
+        console.log(`╚══════════════════════════════════════════════════════════════╝\n`);
     } catch (error) {
         console.error('💥 [Backend] AI ERROR:', error);
         const msg = error instanceof Error ? error.message : 'Unknown AI error';

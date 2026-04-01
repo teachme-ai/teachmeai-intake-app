@@ -273,65 +273,120 @@ Benefits:
 
 ### Priority 1: Pass Full Conversation Transcript to Analysis Agents
 
-**Effort**: Low | **Impact**: High
+**Effort**: Low | **Impact**: High | **Cost**: $0 (no additional LLM calls)
 
 Right now, the dossier builder extracts field values but discards the conversation. Add a `conversationTranscript` field to `LearnerDossier` containing the raw Q&A pairs. Feed this to the Strategist and Personalizer — they'll generate dramatically richer, more empathetic output because they can reference the user's own words.
 
-**Implementation**:
-- Accumulate `{ agent, question, answer }` tuples in `IntakeState`
-- Add `conversationTranscript` to `LearnerDossier`
-- Inject into Strategist and Personalizer prompts as additional context
+**Implementation Details**:
 
-### Priority 2: Implement Validator → Strategy Feedback Loop
-
-**Effort**: Medium | **Impact**: High
-
-Using ADK's LoopAgent pattern (or just a `while` loop in current Genkit code), let the validator's corrections feed back into a second strategist pass. Cap at 2 iterations. This catches the "suggests CLI tools for a non-technical user" class of errors automatically.
-
-**Implementation**:
+#### Step 1: Extend `LearnerDossier` type (`agent-service/src/types.ts`)
+Add a new top-level field:
 ```typescript
-let isValid = false;
-let iterations = 0;
-let corrections: any[] = [];
-
-while (!isValid && iterations < 2) {
-    const strategy = await strategistFlow({ ...input, corrections });
-    const tactics = await tacticianFlow({ strategy, ...constraints });
-    const validation = await validatorFlow({ ...tactics, ...constraints });
-
-    isValid = validation.isValid;
-    corrections = validation.corrections;
-    iterations++;
-}
+conversationTranscript: z.array(z.object({
+    turn: z.number(),
+    agent: z.string(),
+    question: z.string(),
+    answer: z.string(),
+    field: z.string()
+})).optional()
 ```
+
+#### Step 2: Wire transcript in `dossier-builder.ts`
+The `buildLearnerDossier()` function already receives the full `IntakeState`, which now contains `state.transcript` (an array of `{ turn, user, agent, field }` tuples — confirmed in the live logs). Map this directly:
+```typescript
+conversationTranscript: state.transcript?.map(t => ({
+    turn: t.turn,
+    agent: t.field, // the agent that asked
+    question: t.agent, // the question text
+    answer: t.user,   // the user's raw answer
+    field: t.field
+})) || []
+```
+
+#### Step 3: Inject into Strategist and Personalizer prompts
+In `strategist.ts` and `personalizer.ts`, append the transcript as additional context:
+```
+## User's Own Words (Interview Transcript)
+${dossier.conversationTranscript.map(t => `Q: ${t.question}\nA: ${t.answer}`).join('\n\n')}
+```
+
+**Expected Outcome**: The Personalizer will quote the user's exact phrases (e.g., "you mentioned your biggest concern is *client data privacy*") rather than using generic phrasing. The Strategist can tailor IMPACT sections based on the emotional weight the user placed on specific answers.
+
+---
 
 ### Priority 3: Fix Cross-Agent Context in Interview Phase
 
-**Effort**: Low | **Impact**: Medium
+**Effort**: Low | **Impact**: Medium | **Cost**: $0 (bug fix)
 
 The Strategist in `composer.ts:58-59` receives hardcoded placeholder data instead of actual profiler results. Wire the real `state.fields` data (skill_stage, learner_type, VARK) into the Strategist and Tactician prompts. **This is a bug, not a feature request.**
 
-**Fix**:
+**Implementation Details**:
+
+#### Step 1: Locate the bug (`agent-service/src/intake/composer.ts`)
+Find the section where the Strategist system prompt is constructed. Currently:
+```typescript
+// BUG: Hardcoded values instead of actual profiler data
+systemPrompt = getStrategistPrompt({
+    profile: { psychologicalProfile: { motivationType: 'growth' }, learningGlobal: {} },
+    professionalRoles: [state.fields.role_raw?.value || 'Professional'],
+    primaryGoal: state.fields.goal_raw?.value,
+});
+```
+
+#### Step 2: Wire real profiler data
+Replace with:
 ```typescript
 systemPrompt = getStrategistPrompt({
     profile: {
         skillStage: state.fields.skill_stage?.value,
         learnerType: state.fields.learner_type?.value,
         varkPrimary: state.fields.vark_primary?.value,
-        timeBarrier: state.fields.time_barrier?.value,
+        motivationType: state.fields.motivation_type?.value,
+        srlGoalSetting: state.fields.srl_goal_setting?.value,
     },
-    professionalRoles: [state.fields.role_raw?.value || 'Professional'],
-    primaryGoal: state.fields.goal_raw?.value,
+    professionalRoles: [state.fields.role_category?.value || state.fields.role_raw?.value || 'Professional'],
+    primaryGoal: state.fields.goal_calibrated?.value || state.fields.goal_raw?.value,
 });
 ```
 
+#### Step 3: Apply same fix to Tactician prompt
+Wire `state.fields.time_per_week_mins`, `state.fields.constraints`, and `state.fields.current_tools` into the Tactician's system prompt instead of the current minimal `{ focus: "Immediate Implementation" }`.
+
+**Expected Outcome**: During the interview, later agents will ask smarter follow-up questions because they know what the earlier agents already learned. E.g., the Tactician will already know the user is a "pragmatist" and tailor time-management questions accordingly.
+
+---
+
 ### Priority 4: Enrich Deep Research with Psychographic Context
 
-**Effort**: Low | **Impact**: Medium
+**Effort**: Low | **Impact**: Medium | **Cost**: $0 (same LLM calls, richer prompt)
 
 Pass the derived psychographic profile (decision style, cognitive load tolerance, VARK) to the Deep Research agent. A visual learner with low cognitive load tolerance should get research emphasizing GUI tools and dashboards, not CLI pipelines and API integrations.
 
-**Implementation**: Extend `DeepResearchInputSchema` to include `cognitiveLoadTolerance`, `varkPrimary`, and `decisionStyle`. Update the prompt to use these signals for filtering recommendations.
+**Implementation Details**:
+
+#### Step 1: Extend `DeepResearchInputSchema` (`agent-service/src/agents/deep-research.ts`)
+Add these fields to the input schema:
+```typescript
+cognitiveLoadTolerance: z.string().optional(),  // "Low" | "Medium" | "High"
+varkPrimary: z.string().optional(),             // "visual" | "auditory" | "reading" | "kinesthetic"
+decisionStyle: z.string().optional(),           // "Intuitive" | "Analytical" | "Hybrid"
+motivationType: z.string().optional(),          // "outcome" | "growth" | "social" | "challenge"
+```
+
+#### Step 2: Pass from supervisor (`agent-service/src/agents/supervisor.ts`)
+The supervisor already has `dossier.preferences.varkPrimary` and `profile.cognitiveLoadTolerance`. Simply add them to the `deepResearchFlow()` input call (lines 44-56).
+
+#### Step 3: Update the Deep Research prompt
+Add a filtering instruction to the system prompt:
+```
+## Learner Context (use to filter recommendations)
+- VARK Primary: ${varkPrimary || 'unknown'} — prefer tools matching this modality
+- Cognitive Load: ${cognitiveLoadTolerance || 'Medium'} — if Low, avoid CLI/API tools; prefer GUI
+- Decision Style: ${decisionStyle || 'Hybrid'} — if Intuitive, prefer quick-start tools; if Analytical, include comparison matrices
+- Motivation: ${motivationType || 'growth'} — align opportunity framing to this drive
+```
+
+**Expected Outcome**: A visual learner with low cognitive load tolerance will get recommendations like "Canva AI for presentation design" instead of "Python scripts for data visualization". The research output becomes psychographically personalized rather than role-generic.
 
 ### Priority 5: Migrate to ADK for Observability
 
@@ -378,6 +433,39 @@ Current (Genkit + Manual Orchestration)
         ├── Implement Gemini Live voice-based intake
         └── Agent Cards for dynamic discovery and composition
 ```
+
+---
+
+## Appendix A: Stabilized MVP Execution Profile (Baseline)
+
+Before beginning the ADK Upgrade, the following end-to-end trace sequence was established as the baseline for a functionally complete session (verified via logs and frontend report).
+
+### 1. Interview Orchestration (Turns 1-9)
+The `quizGuideFlow` successfully iterates 9 times, demonstrating strict field enforcement and conversational transitions between the 4 intake agents:
+- **Strategist (Turns 1-2):** Extracts `current_tools` and `role_category`.
+- **Profiler (Turns 3-6):** Extracts `skill_stage`, `learner_type`, `motivation_type`, `srl_goal_setting`. (Note: The `vark_primary` dimension requirement was successfully triggered and enforced behind the scenes).
+- **Tactician (Turns 7-9):** Extracts `time_per_week_mins` and `constraints` (e.g., "client data privacy concerns").
+
+At Turn 9, the Tactician registers `shouldExit: true` and the `quizGuideFlow` terminates gracefully.
+
+### 2. Supervisor Flow Orchestration
+The resulting `IntakeState` is passed to the `supervisorFlow` backend which executes the 6-phase analysis:
+- **Phase 1: Profile (0ms)**: Synchronous deterministic rules map the parsed dimensions to a derived profile: `Intuitive / Checklist-Driven / Solitary / Medium Cognitive Load`.
+- **Phase 2: Deep Research (19s)**: The research agent pulls the user's role ("Business strategy") and generates customized AI Opportunities (e.g., "Automated Market & Competitor Intelligence" and "Scenario Planning").
+- **Phase 3: Strategist (24s)**: Generates the core IMPACT strategy tailored to a "pragmatist" learner type.
+- **Phase 4: Tactician (19s)**: Creates actionable `Act/Check/Transform` phases.
+- **Phase 5+6: Validator & Personalizer (15s, Parallel)**: 
+  - The **Personalizer** crafts a rich, empathetic introductory summary based on the exact user details.
+  - The **Validator** audits the strategy and correctly notes: _"The plan effectively addresses the 'client data privacy concerns' blocker with the 'Pilot with Public Data First' study rule."_
+
+### 3. Frontend Rendering
+The Next.js UI successfully unpacks the complex `IMPACTAnalysis` JSON into distinct, visually compelling components:
+- **Radar Charts**: accurately reflect 60% AI Maturity and profile bounds.
+- **Introductory Summary**: displayed elegantly at the top of the "Targeted AI Strategy".
+- **Mastery Rules**: visually separated with contextual icons.
+- **AI Assessor Notes**: The Deep Research "Profiling Assumptions" and the Validator's "Validation Audits" are displayed at the bottom of the profile section to provide transparency into the AI's reasoning.
+
+**Conclusion**: The Genkit-based manual orchestration is currently highly stable and accurate. Any ADK upgrades must guarantee this exact level of data fidelity and pipeline execution logic, while introducing cross-agent context sharing and iterative looping.
 
 ---
 

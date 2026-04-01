@@ -37,9 +37,11 @@ export const supervisorFlow = ai.defineFlow(
 
         // Phase 1: Profile — ALREADY DERIVED (rule-based, no LLM)
         const profile = dossier.psychographicProfile!;
+        console.log(`  ├─ ✅ Phase 1/6: Profile derived (rule-based, 0ms)`);
         log.info({ event: 'supervisor.phase1', msg: 'Profile (rule-based) already derived' });
 
         // Phase 2: Deep Research
+        console.log(`  ├─ ⭐ Phase 2/6: Deep Research starting...`);
         log.info({ event: 'supervisor.phase2', msg: 'Starting Deep Research...' });
         const research = await withLLMResilience(() => deepResearchFlow({
             role: dossier.identity.roleCategory || dossier.identity.roleRaw || "Professional",
@@ -54,8 +56,10 @@ export const supervisorFlow = ai.defineFlow(
             current_tools: dossier.constraints.currentTools,
             profile: profile
         }), { component: 'DeepResearch', sessionId: dossier.sessionId });
+        console.log(`  ├─ ✅ Phase 2/6: Deep Research complete`);
 
         // Phase 3: Strategy
+        console.log(`  ├─ ⭐ Phase 3/6: Strategist starting...`);
         log.info({ event: 'supervisor.phase3', msg: 'Starting Strategy...' });
         const strategy = await withLLMResilience(() => strategistFlow({
             profile,
@@ -74,8 +78,10 @@ export const supervisorFlow = ai.defineFlow(
             frustrations: dossier.constraints.frustrations,
             benefits: dossier.context.benefits,
         }), { component: 'Strategist', sessionId: dossier.sessionId });
+        console.log(`  ├─ ✅ Phase 3/6: Strategist complete`);
 
         // Phase 4: Tactics
+        console.log(`  ├─ ⭐ Phase 4/6: Tactician starting...`);
         log.info({ event: 'supervisor.phase4', msg: 'Starting Tactics...' });
         const tactics = await withLLMResilience(() => tacticianFlow({
             strategy,
@@ -94,8 +100,10 @@ export const supervisorFlow = ai.defineFlow(
             varkPrimary: dossier.preferences.varkPrimary,
             motivationType: dossier.motivation.type,
         }), { component: 'Tactician', sessionId: dossier.sessionId });
+        console.log(`  ├─ ✅ Phase 4/6: Tactician complete`);
 
         // Phase 5 & 6: Validation & Personalization (Parallel)
+        console.log(`  ├─ ⭐ Phase 5+6/6: Validator & Personalizer starting (parallel)...`);
         log.info({ event: 'supervisor.phase5_6', msg: 'Starting Validation & Personalization in parallel...' });
         
         type ValidationResult = { isValid: boolean; validationNotes: string[]; corrections: any[] };
@@ -165,6 +173,7 @@ export const supervisorFlow = ai.defineFlow(
         }
 
         // Phase 7: Assembly
+        console.log(`  └─ ✅ Phase 7/7: Assembly complete — returning IMPACT analysis`);
         return {
             Identify: strategy.identify,
             Motivate: strategy.motivate,
