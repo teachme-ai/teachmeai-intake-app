@@ -6,7 +6,7 @@ import { withLLMResilience } from '../utils/llm-resilience';
 import { withConcurrencyLimit } from '../utils/concurrency';
 
 export type ExtractResult =
-    | { ok: true; data: Partial<IntakeData>; probe?: string }
+    | { ok: true; data: Partial<IntakeData> }
     | { ok: false; error: { message: string; code?: string } };
 
 const ExtractionSchema = z.object({
@@ -112,12 +112,8 @@ export async function extractFields(
             )
         );
 
-        let data: any = llmOutput ? JSON.parse(JSON.stringify(llmOutput)) : {};
+        let data: Partial<IntakeData> = llmOutput ? JSON.parse(JSON.stringify(llmOutput)) : {};
         if (Object.keys(data).length === 0) data = {};
-        
-        // Extract the suggested probe if present, then remove it so it's not saved as a state field
-        const probe = data.suggested_probe;
-        delete data.suggested_probe;
 
         // Merge strategies: Quick extract overrides LLM for time if present (deterministic is safer)
         const merged = { ...data, ...quickExtract };
@@ -152,7 +148,7 @@ export async function extractFields(
             }
         }
 
-        return { ok: true, data: merged, probe };
+        return { ok: true, data: merged };
 
     } catch (e: any) {
         log.error({ event: 'extract.fail', error: String(e) });

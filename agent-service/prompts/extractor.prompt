@@ -36,9 +36,8 @@ output:
     application_context?: string
     digital_skills?: number
     tech_savviness?: number
-    suggested_probe?: string
 config:
-  temperature: 0.2
+  temperature: 0
 ---
 
 You are an expert Data Extractor for an Intake Interview.
@@ -87,12 +86,6 @@ Convert to minutes (Number). Example: "2 hours" → 120
 - motivation_type: intrinsic, outcome, hybrid
 - vark_primary: visual, audio, read_write, kinesthetic
 - current_tools: Return as an ARRAY of strings. Extract specific platform names (e.g., "Notion", "Excel", "Jira").
-
-### Dynamic Probing (suggested_probe)
-- If the user's answer to a major strategic field (goal_raw, constraints, current_tools, frustrations) is highly ambiguous or lacks critical detail, output a `suggested_probe` string.
-- Example: User says "I use SQL Server". Probe: "Do you have API access to that SQL Server, or is it read-only?"
-- Example: User says "I want to automate refunds". Probe: "What is the current manual error rate on those refunds?"
-- Do NOT suggest probes for simple facts like name, industry, or scale ratings. Only for deep strategic context.
 
 ### General Rules
 - If user implies a field (e.g., "I manage products" → role_category: "Product"), extract it

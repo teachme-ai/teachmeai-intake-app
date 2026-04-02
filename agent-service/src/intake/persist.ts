@@ -61,7 +61,7 @@ const HEADERS = [
     'Validation Notes', 'Personalized Summary',
     'Prefill Payload JSON', 'Intake State JSON', 'Transcript JSON', 'Deep Research JSON',
     'Learner Profile JSON', 'IMPACT Strategy JSON', 'Execution Plan JSON', 'Final Report JSON',
-    'Errors/Warn JSON', 'Versions JSON', 'Unasked Probes'
+    'Errors/Warn JSON', 'Versions JSON'
 ];
 
 async function ensureSheetExists(spreadsheetId: string) {
@@ -172,8 +172,7 @@ export async function persistIntakeState(state: IntakeState, analysis?: any): Pr
                 Transform: analysis?.Transform
             }), // Execution Plan JSON
             JSON.stringify({ nextSteps: analysis?.nextSteps, recommendations: analysis?.recommendations }), // Final Report JSON
-            '', '', // Errors/Warn, Versions
-            (state.unasked_probes || []).join('\n') // Unasked Probes
+            '', '' // Errors/Warn, Versions
         ];
 
         if (rowIndex !== -1) {

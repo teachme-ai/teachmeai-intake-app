@@ -61,46 +61,6 @@ export function coerceAndSetField(
         if (typeof rawValue === 'string') {
             finalValue = rawValue.toLowerCase().trim();
         }
-
-        // LEARNER TYPE: Map free-text responses to Honey-Mumford enum
-        if (field === 'learner_type' && typeof finalValue === 'string') {
-            const lt = finalValue;
-            const learnerTypeMap: Record<string, string> = {
-                // Direct matches
-                'theorist': 'theorist', 'activist': 'activist', 'reflector': 'reflector', 'pragmatist': 'pragmatist',
-                // Common MCQ text answers
-                'self-paced online courses and tutorials': 'theorist',
-                'self-paced': 'theorist',
-                'hands-on projects and experimentation': 'activist',
-                'hands-on': 'activist',
-                'collaborative group projects and discussions': 'reflector',
-                'collaborative': 'reflector',
-                'structured mentorship or coaching': 'pragmatist',
-                'mentorship': 'pragmatist',
-                'coaching': 'pragmatist',
-                'structured': 'pragmatist',
-            };
-            // Try direct map first
-            if (learnerTypeMap[lt]) {
-                finalValue = learnerTypeMap[lt];
-            } else {
-                // Fuzzy keyword match
-                if (lt.includes('self-paced') || lt.includes('tutorial') || lt.includes('course')) finalValue = 'theorist';
-                else if (lt.includes('hands-on') || lt.includes('experiment') || lt.includes('project') || lt.includes('build')) finalValue = 'activist';
-                else if (lt.includes('collaborat') || lt.includes('group') || lt.includes('discuss') || lt.includes('team')) finalValue = 'reflector';
-                else if (lt.includes('mentor') || lt.includes('coach') || lt.includes('structured') || lt.includes('guided')) finalValue = 'pragmatist';
-                // If still no match, leave as-is — dossier builder will handle gracefully
-            }
-        }
-
-        // MOTIVATION TYPE: Normalize common MCQ text answers
-        if (field === 'motivation_type' && typeof finalValue === 'string') {
-            const mt = finalValue;
-            if (mt.includes('goal') || mt.includes('achiev') || mt.includes('excell') || mt === 'outcome') finalValue = 'outcome';
-            else if (mt.includes('curiosity') || mt.includes('intellectual') || mt === 'intrinsic') finalValue = 'intrinsic';
-            else if (mt.includes('collaborat') || mt.includes('both') || mt === 'hybrid') finalValue = 'hybrid';
-        }
-
         status = 'confirmed';
     }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Shield, Target, Zap, Brain, CheckCircle2, Lightbulb, TrendingUp, User, Wrench, MessageSquare } from 'lucide-react';
+import { Shield, Target, Zap, Brain, CheckCircle2, Lightbulb, TrendingUp, User, Wrench } from 'lucide-react';
 import ResultsHeader from './ResultsHeader';
 import VisualInsights from './VisualInsights';
 import ExpandableSection from './ExpandableSection';
@@ -351,30 +351,6 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                                 })()}
                             </div>
                         </ExpandableSection>
-
-                        {/* 5B. Mentoring Next Steps (Unasked Probes) */}
-                        {data?.unasked_probes && data.unasked_probes.length > 0 && (
-                            <ExpandableSection
-                                title="💬 For Your 1:1 Strategy Session"
-                                icon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
-                                isExpanded={expandedSections.strategy}
-                                onToggle={() => toggleSection('strategy')}
-                            >
-                                <div className="space-y-4 text-slate-700 leading-relaxed pt-2">
-                                    <p className="text-sm font-medium">
-                                        Our AI engine identified these high-value questions that will give this analysis further depth. These make a perfect starting point for your 1:1 session with Irfan, as they provide significant inputs to make this strategy even more personalized.
-                                    </p>
-                                    <ul className="space-y-3">
-                                        {data.unasked_probes.map((probe: string, idx: number) => (
-                                            <li key={idx} className="flex gap-3 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                                                <span className="text-indigo-500 font-bold">Q:</span>
-                                                <span className="text-indigo-900 leading-snug">{probe}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </ExpandableSection>
-                        )}
 
                         {/* 6. Consultation CTA */}
                         <div className="mt-12">
