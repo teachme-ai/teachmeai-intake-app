@@ -358,7 +358,7 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                                 title="💬 For Your 1:1 Strategy Session"
                                 icon={<MessageSquare className="w-6 h-6 text-indigo-600" />}
                                 isExpanded={expandedSections.strategy}
-                                onToggle={() => toggleSection('strategy')}
+                                onToggle={() => setExpandedSections(prev => ({ ...prev, strategy: !prev.strategy }))}
                             >
                                 <div className="space-y-4 text-slate-700 leading-relaxed pt-2">
                                     <p className="text-sm font-medium">
