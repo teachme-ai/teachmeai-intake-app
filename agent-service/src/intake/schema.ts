@@ -74,10 +74,15 @@ export interface IntakeState {
     isComplete: boolean;
     lastUserMessage?: string;
     lastAssistantMessage?: string;
-    nextAction: 'ask_next' | 'clarify' | 'confirm' | 'run_analysis' | 'done';
+    nextAction: 'ask_next' | 'clarify' | 'confirm' | 'run_analysis' | 'dynamic_probe' | 'done';
     nextField?: keyof IntakeData;
     lastQuestionField?: keyof IntakeData;
     repeatCountByField?: Partial<Record<keyof IntakeData, number>>;
+
+    // Dynamic Probing Budgets
+    agentProbesUsed?: Partial<Record<string, number>>;
+    pendingProbe?: string;
+    unasked_probes?: string[];
 
     // Agent Sequencing
     activeAgent: "guide" | "profiler" | "strategist" | "learner_dimensions" | "tactician";

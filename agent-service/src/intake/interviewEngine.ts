@@ -195,6 +195,39 @@ export async function processUserTurn(
 
         // B. FIND NEXT FIELD
         // Agent is not done, what's next?
+
+        // >>> DYNAMIC PROBE INTERCEPTION & POOLING <<<
+        state.agentProbesUsed = state.agentProbesUsed || {};
+        const used = state.agentProbesUsed[currentAgentId] || 0;
+        const extractedProbe = extraction.ok && extraction.probe ? extraction.probe : undefined;
+
+        if (extractedProbe) {
+            if (used < 1 && (currentAgentId === 'strategist' || currentAgentId === 'tactician')) {
+                state.agentProbesUsed[currentAgentId] = 1;
+                state.nextAction = 'dynamic_probe';
+                state.pendingProbe = extractedProbe;
+                
+                log.info({
+                    event: 'agent.dynamic_probe_generated',
+                    agent: currentAgentId,
+                    probe: extractedProbe,
+                    status: 'asked'
+                });
+                break; // Ready to compose the probe
+            } else {
+                // Budget exhausted or unauthorized agent. Pool it for 1:1 mentoring!
+                state.unasked_probes = state.unasked_probes || [];
+                state.unasked_probes.push(extractedProbe);
+                log.info({
+                    event: 'agent.dynamic_probe_generated',
+                    agent: currentAgentId,
+                    probe: extractedProbe,
+                    status: 'pooled'
+                });
+            }
+        }
+
+        // Standard route: Find the next missing field in the checklist
         state.nextAction = 'ask_next';
 
         // Find first missing owned field

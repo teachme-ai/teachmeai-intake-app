@@ -22,6 +22,12 @@ export async function composeMoreQuestions(
 
     const activeAgentId = state.activeAgent || 'guide';
 
+    // Fast-pass bypass for Dynamic Probes:
+    if (state.nextAction === 'dynamic_probe' && state.pendingProbe) {
+        log.info({ event: 'compose.bypass_for_probe', probe: state.pendingProbe });
+        return state.pendingProbe;
+    }
+
     // We deterministically decide WHAT to ask based on 'nextField' or 'nextAction'
     // But we let the LLM phrase it naturally.
     let goal = "";

@@ -111,15 +111,16 @@ export const AGENTS: Record<AgentId, AgentConfig> = {
     tactician: {
         id: 'tactician',
         name: 'Tactician (Agile Coach)',
-        ownedFields: ['time_per_week_mins', 'constraints', 'current_tools', 'frustrations'],
+        ownedFields: ['time_per_week_mins', 'frustrations', 'constraints', 'current_tools'],
         introMessage: "Finally, I'm the Tactician. Let's make this actionable.",
         shouldExit: (state) => {
-            // Require 2 fields: time and constraints
+            // Require 3 fields: time, frustrations, AND constraints
             const hasTime = isFieldFilled(state, 'time_per_week_mins');
-            const hasConstraint = isFieldFilled(state, 'constraints') || isFieldFilled(state, 'frustrations');
+            const hasConstraint = isFieldFilled(state, 'constraints');
+            const hasFrustrations = isFieldFilled(state, 'frustrations');
             const hasTools = isFieldFilled(state, 'current_tools');
 
-            return hasTime && hasConstraint && hasTools;
+            return hasTime && hasConstraint && hasFrustrations && hasTools;
         }
     }
 };
