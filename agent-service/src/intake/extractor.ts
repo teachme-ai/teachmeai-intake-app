@@ -76,11 +76,16 @@ export async function extractFields(
     } else if (minMatch) {
         quickExtract.time_per_week_mins = parseInt(minMatch[1]);
     } else if (targetField === 'time_per_week_mins') {
-        // Fallback: If targeted, assume raw number is hours (unless > 20, then maybe mins? No, keep simple)
         const rawNum = userMessage.match(/(\d+)/);
         if (rawNum) {
-            // Assume hours for now as per common inputs
-            quickExtract.time_per_week_mins = parseInt(rawNum[1]) * 60;
+            const val = parseInt(rawNum[1]);
+            // Heuristic: If they say "2", it's hours. If they say "90", it's minutes.
+            // threshold of 24 (max hours in a day x some buffer)
+            if (val <= 20) {
+                quickExtract.time_per_week_mins = val * 60;
+            } else {
+                quickExtract.time_per_week_mins = val;
+            }
         }
     }
 

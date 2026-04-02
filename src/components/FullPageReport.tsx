@@ -18,14 +18,22 @@ function RichTextRenderer({ text, className = "" }: { text: string; className?: 
     if (!text) return null;
     
     // Split by newlines and filter out empty lines
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    let lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     
+    // If we only have ONE long line (>200 chars), try splitting by sentences for better readability
+    if (lines.length === 1 && lines[0].length > 200) {
+        lines = lines[0].match(/[^.!?]+[.!?]+/g) || [lines[0]];
+    }
+
     return (
         <div className={`space-y-6 ${className}`}>
             {lines.map((line, i) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return null;
+
                 // Detect Bullet Points
-                if (line.startsWith('*') || line.startsWith('-') || line.startsWith('•')) {
-                    const content = line.replace(/^[*•-]\s*/, '');
+                if (trimmedLine.startsWith('*') || trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
+                    const content = trimmedLine.replace(/^[*•-]\s*/, '');
                     return (
                         <div key={i} className="flex gap-3 pl-4 border-l-2 border-indigo-100 py-1 animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
                             <span className="text-indigo-400 mt-1.5">•</span>
@@ -35,9 +43,9 @@ function RichTextRenderer({ text, className = "" }: { text: string; className?: 
                 }
                 
                 // Detect Numbers (1. 2. etc)
-                if (/^\d+\./.test(line)) {
-                    const content = line.replace(/^\d+\.\s*/, '');
-                    const num = line.match(/^\d+/)?.[0];
+                if (/^\d+\./.test(trimmedLine)) {
+                    const content = trimmedLine.replace(/^\d+\.\s*/, '');
+                    const num = trimmedLine.match(/^\d+/)?.[0];
                     return (
                         <div key={i} className="flex gap-4 pl-4 border-l-2 border-slate-100 py-2 animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
                             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-black">{num}</span>
@@ -47,8 +55,8 @@ function RichTextRenderer({ text, className = "" }: { text: string; className?: 
                 }
 
                 // Detect "Bold Title: Content" pattern
-                if (line.includes(':') && line.indexOf(':') < 30) {
-                    const [title, ...rest] = line.split(':');
+                if (trimmedLine.includes(':') && trimmedLine.indexOf(':') < 30) {
+                    const [title, ...rest] = trimmedLine.split(':');
                     return (
                         <div key={i} className="animate-in fade-in duration-700">
                             <p className="text-gray-900 font-black text-sm uppercase tracking-widest mb-1">{title}:</p>
@@ -60,7 +68,7 @@ function RichTextRenderer({ text, className = "" }: { text: string; className?: 
                 // Standard Paragraph
                 return (
                     <p key={i} className="text-gray-700 leading-relaxed text-base lg:text-lg animate-in fade-in duration-700">
-                        {line}
+                        {trimmedLine}
                     </p>
                 );
             })}

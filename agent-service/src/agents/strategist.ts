@@ -68,16 +68,16 @@ RESEARCH INSIGHTS:
 ${input.deepResearchResult ? JSON.stringify(input.deepResearchResult, null, 2) : 'No research available'}
 
 RULES for IMPACT Framework:
-1. identify: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal.
-2. motivate: A 2-3 sentence compelling reason why this matters for their career/impact.
-3. plan: SCALE THIS TO TIME AVAILABLE.
+1. identify: A 2-3 sentence strategic insight identifying the specific AI opportunity most relevant to their role and goal. USE MARKDOWN BULLETS OR BOLDING for key insights to ensure high readability. Avoid dense blocks.
+2. motivate: A 2-3 sentence compelling reason why this matters for their career/impact. Use bolding for emphasis on key benefits.
+3. plan: SCALE THIS TO TIME AVAILABLE. Use structured steps (Step 1, Step 2, etc.).
    - If < 120 mins/week: Plan must be ultra-efficient, focus on "one-click" tools and low-barrier activities.
    - If 120-300 mins/week: Plan can include structured learning and setup of custom workflows.
    - If > 300 mins/week: Suggest deep dives, fine-tuning, or architectural changes.
 4. priorities: 3-5 strategic priorities as an array of strings.
 5. recommendedWorkflows: 2-3 specific AI workflows they should implement.
 
-Be specific, actionable, and personalized to their context.
+Be specific, actionable, and personalized to their context. Ensure all text is formatted for a premium dashboard UI.
 
 ## User's Own Words (Interview Transcript)
 Here is the verbatim transcript of the user's interview. Use their exact phrasing (e.g., specific frustrations, specific goals) to make your strategy highly relatable and empathetic:
