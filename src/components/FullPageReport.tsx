@@ -13,6 +13,61 @@ interface FullPageReportProps {
     analysis: any;
 }
 
+// Utility to render dense text as structured paragraphs and lists
+function RichTextRenderer({ text, className = "" }: { text: string; className?: string }) {
+    if (!text) return null;
+    
+    // Split by newlines and filter out empty lines
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    return (
+        <div className={`space-y-6 ${className}`}>
+            {lines.map((line, i) => {
+                // Detect Bullet Points
+                if (line.startsWith('*') || line.startsWith('-') || line.startsWith('•')) {
+                    const content = line.replace(/^[*•-]\s*/, '');
+                    return (
+                        <div key={i} className="flex gap-3 pl-4 border-l-2 border-indigo-100 py-1 animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+                            <span className="text-indigo-400 mt-1.5">•</span>
+                            <p className="text-gray-700 leading-relaxed text-base lg:text-lg">{content}</p>
+                        </div>
+                    );
+                }
+                
+                // Detect Numbers (1. 2. etc)
+                if (/^\d+\./.test(line)) {
+                    const content = line.replace(/^\d+\.\s*/, '');
+                    const num = line.match(/^\d+/)?.[0];
+                    return (
+                        <div key={i} className="flex gap-4 pl-4 border-l-2 border-slate-100 py-2 animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-black">{num}</span>
+                            <p className="text-gray-700 leading-relaxed text-base lg:text-lg">{content}</p>
+                        </div>
+                    );
+                }
+
+                // Detect "Bold Title: Content" pattern
+                if (line.includes(':') && line.indexOf(':') < 30) {
+                    const [title, ...rest] = line.split(':');
+                    return (
+                        <div key={i} className="animate-in fade-in duration-700">
+                            <p className="text-gray-900 font-black text-sm uppercase tracking-widest mb-1">{title}:</p>
+                            <p className="text-gray-700 leading-relaxed text-base lg:text-lg">{rest.join(':').trim()}</p>
+                        </div>
+                    )
+                }
+
+                // Standard Paragraph
+                return (
+                    <p key={i} className="text-gray-700 leading-relaxed text-base lg:text-lg animate-in fade-in duration-700">
+                        {line}
+                    </p>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function FullPageReport({ data, analysis }: FullPageReportProps) {
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         strategy: true,
@@ -101,7 +156,9 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                                 summary={analysis?.personalizedSummary || 'Strategic roadmap for AI mastery.'} 
                                 industry={data?.industry?.value}
                             />
-                            <p className="text-gray-700 leading-relaxed text-lg bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">{analysis?.Identify}</p>
+                            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                                <RichTextRenderer text={analysis?.identify || analysis?.Identify} />
+                            </div>
                         </ExpandableSection>
 
                         {/* 2. AI Opportunities Matrix */}
@@ -125,7 +182,7 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-gray-900 text-base">{item.opportunity}</p>
-                                                    <p className="text-gray-600 text-sm mt-2 leading-relaxed">{item.impact}</p>
+                                                    <RichTextRenderer text={item.impact} className="mt-2" />
                                                     {item.tools && item.tools.length > 0 && (
                                                         <div className="mt-4 flex flex-wrap gap-2">
                                                             {item.tools.map((tool: string, ti: number) => (
@@ -157,13 +214,13 @@ export default function FullPageReport({ data, analysis }: FullPageReportProps) 
                             <div className="space-y-4 mt-8">
                                 {roadmapSteps.map((item, i) => (
                                     <div key={i} className={`bg-white border border-slate-200 border-l-4 border-l-${item.color}-500 rounded-xl rounded-l-none p-6 shadow-sm`}>
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className={`w-10 h-10 rounded-full bg-${item.color}-50 flex items-center justify-center text-xl`}>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className={`w-10 h-10 rounded-full bg-${item.color}-50 flex items-center justify-center text-xl shadow-sm border border-${item.color}-100`}>
                                                 {item.icon}
                                             </div>
                                             <h4 className={`font-black uppercase tracking-wider text-${item.color}-700`}>{item.step}</h4>
                                         </div>
-                                        <p className="text-slate-700 text-base leading-relaxed">{item.content}</p>
+                                        <RichTextRenderer text={item.content} />
                                     </div>
                                 ))}
                             </div>
